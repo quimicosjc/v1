@@ -1408,7 +1408,18 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                     </div>
                   )}
                   <div style={{ fontSize: '12px', color: '#71636a' }}>
-                    quimicosjc.org.br/noticias/{slug || '…'}
+                    {status === 'publicado' && slug ? (
+                      <a
+                        href={`/noticias/${slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: '#861e32', fontWeight: 600, textDecoration: 'underline' }}
+                      >
+                        quimicosjc.org.br/noticias/{slug} ↗ (Ver no site)
+                      </a>
+                    ) : (
+                      `quimicosjc.org.br/noticias/${slug || '…'}`
+                    )}
                   </div>
                 </div>
               </div>
@@ -1553,6 +1564,24 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
             >
               Retirar do ar
             </button>
+            {slug && (
+              <a
+                href={`/noticias/${slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  ...btnNeutro,
+                  color: '#65172a',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontWeight: 600,
+                }}
+              >
+                Ver no site ↗
+              </a>
+            )}
             <button
               onClick={atualizarPublicacao}
               disabled={isPending}

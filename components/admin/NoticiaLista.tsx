@@ -506,6 +506,31 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
                   </td>
                   <td style={{ padding: '19px 24px', borderBottom: '1px solid #e8eef1' }}>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      {noticia.status === 'publicado' && noticia.slug && (
+                        <a
+                          href={`/noticias/${noticia.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Visualizar no site (nova aba)"
+                          style={{
+                            border: '1px solid #ced9df',
+                            background: '#f8fafb',
+                            color: '#861e32',
+                            borderRadius: '5px',
+                            padding: '7px 12px',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            textDecoration: 'none',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontFamily: 'inherit',
+                          }}
+                        >
+                          Ver ↗
+                        </a>
+                      )}
                       <button
                         onClick={() => router.push(`/admin/noticias/${noticia.id}`)}
                         style={{
