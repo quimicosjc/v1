@@ -8,6 +8,49 @@ import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
 import Placeholder from '@tiptap/extension-placeholder'
+import { Node } from '@tiptap/core'
+
+const Iframe = Node.create({
+  name: 'iframe',
+  group: 'block',
+  atom: true,
+
+  addAttributes() {
+    return {
+      src: {
+        default: null,
+      },
+      frameborder: {
+        default: '0',
+      },
+      allowfullscreen: {
+        default: 'true',
+      },
+      allow: {
+        default: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
+      },
+      title: {
+        default: 'Vídeo / Conteúdo Incorporado',
+      },
+    }
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: 'iframe',
+      },
+    ]
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return [
+      'div',
+      { class: 'iframe-wrapper' },
+      ['iframe', HTMLAttributes],
+    ]
+  },
+})
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -209,6 +252,7 @@ export default function RichEditor({
       Placeholder.configure({
         placeholder: placeholder ?? 'Escreva o conteúdo completo da notícia aqui…',
       }),
+      Iframe,
     ],
     content,
     onUpdate({ editor: ed }) {
@@ -333,7 +377,10 @@ export default function RichEditor({
           height: 0;
         }
         .ProseMirror:focus { outline: none; }
-        .ProseMirror img { width: 100%; height: auto; display: block; border-radius: 4px; margin: 8px 0; }
+        .ProseMirror img { width: 100%; height: auto; display: block; border-radius: 4px; margin: 12px 0; }
+        .ProseMirror iframe { width: 100%; aspect-ratio: 16 / 9; border: none; border-radius: 4px; margin: 12px 0; display: block; }
+        .ProseMirror .iframe-wrapper { position: relative; width: 100%; aspect-ratio: 16 / 9; margin: 12px 0; border-radius: 4px; overflow: hidden; background: #000; }
+        .ProseMirror .iframe-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; margin: 0; }
         .ProseMirror table { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 12px 0; }
         .ProseMirror th, .ProseMirror td { border: 1px solid #e4dce0; padding: 8px 12px; text-align: left; }
         .ProseMirror th { background: #f8fafb; font-weight: 600; }

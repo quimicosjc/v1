@@ -114,6 +114,11 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
     }
   }
 
+  // Recupera tags de iframe reais caso tenham sido salvas como texto escapado
+  const corpoFormatado = (noticia.corpo || '')
+    .replace(/&lt;iframe([\s\S]*?)&gt;&lt;\/iframe&gt;/gi, '<iframe$1></iframe>')
+    .replace(/&lt;iframe([\s\S]*?)\/&gt;/gi, '<iframe$1></iframe>')
+
   return (
     <div style={{ minHeight: '100vh', background: '#f7f5f6', display: 'flex', flexDirection: 'column', color: '#30252a', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       {/* Topo institucional */}
@@ -319,8 +324,58 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
           {/* Corpo da Notícia com Estilização HTML Scoped */}
           <div
             className="noticia-corpo"
-            dangerouslySetInnerHTML={{ __html: noticia.corpo || '' }}
+            dangerouslySetInnerHTML={{ __html: corpoFormatado }}
           />
+
+          {/* Fotos adicionais da matéria — 100% de largura no fluxo da matéria */}
+          {fotosGaleria.length > 0 && (
+            <div style={{ marginTop: '36px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+              {fotosGaleria.map((foto, idx) => (
+                <figure key={idx} style={{ margin: 0 }}>
+                  <div
+                    style={{
+                      width: '100%',
+                      aspectRatio: '16 / 9',
+                      borderRadius: '6px',
+                      overflow: 'hidden',
+                      background: '#f0e8ea',
+                    }}
+                  >
+                    <img
+                      src={foto.url}
+                      alt={foto.legenda || `Foto ${idx + 2}`}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: `50% ${foto.foco ?? 50}%`,
+                        display: 'block',
+                      }}
+                    />
+                  </div>
+                  {(foto.legenda || foto.credito) && (
+                    <figcaption
+                      style={{
+                        fontSize: '13px',
+                        color: '#71636a',
+                        marginTop: '8px',
+                        lineHeight: 1.4,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '6px',
+                      }}
+                    >
+                      <span>{foto.legenda}</span>
+                      {foto.credito && (
+                        <span style={{ fontStyle: 'italic', opacity: 0.85 }}>Foto: {foto.credito}</span>
+                      )}
+                    </figcaption>
+                  )}
+                </figure>
+              ))}
+            </div>
+          )}
 
           {/* URL de Referência */}
           {noticia.url_referencia && (
@@ -345,53 +400,6 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
                 {noticia.url_referencia}
               </a>
             </div>
-          )}
-
-          {/* Galeria de Fotos Adicionais */}
-          {fotosGaleria.length > 0 && (
-            <section style={{ marginTop: '40px', borderTop: '1px solid #e4dce0', paddingTop: '28px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#30252a', margin: '0 0 16px 0' }}>
-                Mais fotos da matéria ({fotosGaleria.length})
-              </h3>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-                  gap: '16px',
-                }}
-              >
-                {fotosGaleria.map((foto, idx) => (
-                  <figure key={idx} style={{ margin: 0 }}>
-                    <div
-                      style={{
-                        width: '100%',
-                        aspectRatio: '3 / 2',
-                        borderRadius: '6px',
-                        overflow: 'hidden',
-                        background: '#f0e8ea',
-                      }}
-                    >
-                      <img
-                        src={foto.url}
-                        alt={foto.legenda || `Foto ${idx + 2}`}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          objectPosition: `50% ${foto.foco ?? 50}%`,
-                          display: 'block',
-                        }}
-                      />
-                    </div>
-                    {foto.legenda && (
-                      <figcaption style={{ fontSize: '12px', color: '#71636a', marginTop: '6px' }}>
-                        {foto.legenda}
-                      </figcaption>
-                    )}
-                  </figure>
-                ))}
-              </div>
-            </section>
           )}
 
           {/* Documentos Anexos */}
@@ -576,12 +584,23 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
         .noticia-corpo li {
           margin-bottom: 8px;
         }
-        .noticia-corpo iframe {
+        .noticia-corpo iframe,
+        .noticia-corpo .iframe-wrapper iframe {
           width: 100% !important;
-          aspect-ratio: 16 / 9;
-          border: none;
-          border-radius: 6px;
-          margin: 24px 0;
+          aspect-ratio: 16 / 9 !important;
+          border: none !important;
+          border-radius: 6px !important;
+          margin: 24px 0 !important;
+          display: block !important;
+        }
+        .noticia-corpo .iframe-wrapper {
+          position: relative !important;
+          width: 100% !important;
+          aspect-ratio: 16 / 9 !important;
+          margin: 24px 0 !important;
+          border-radius: 6px !important;
+          overflow: hidden !important;
+          background: #000 !important;
         }
       `}</style>
     </div>

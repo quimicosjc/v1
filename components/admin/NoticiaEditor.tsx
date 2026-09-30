@@ -316,14 +316,18 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
 
   // ── Computed slug ─────────────────────────────────────────────────────────
 
-  const slug = titulo
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-') || noticia?.slug || ''
+  const slug = (
+    titulo
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .slice(0, 100)
+      .replace(/-$/, '')
+  ) || noticia?.slug || ''
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -463,7 +467,16 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
 
   function adicionarTag(valor: string) {
     const tag = valor.trim().toLowerCase().replace(/,/g, '')
-    if (!tag || tags.includes(tag)) return
+    if (!tag) return
+    if (tags.length >= 8) {
+      showToast('Limite de 8 tags por matéria atingido.', 'erro')
+      return
+    }
+    if (tag.length > 30) {
+      showToast('Cada tag pode ter no máximo 30 caracteres.', 'erro')
+      return
+    }
+    if (tags.includes(tag)) return
     setTags((prev) => [...prev, tag])
     setTagInput('')
     markAlterado()
@@ -810,33 +823,51 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
 
           {/* Chapéu */}
           <div style={cardStyle}>
-            <label style={labelStyle} htmlFor="chapeu">
-              Chapéu / assunto{' '}
-              <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
+              <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="chapeu">
+                Chapéu / assunto{' '}
+                <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
+              </label>
+              <span style={{ fontSize: '12px', color: chapeu.length > 35 ? '#861e32' : '#71636a' }}>
+                {chapeu.length}/40
+              </span>
+            </div>
             <input
               id="chapeu"
               type="text"
               value={chapeu}
-              onChange={(e) => { setChapeu(e.target.value); markAlterado() }}
+              maxLength={40}
+              onChange={(e) => { if (e.target.value.length <= 40) { setChapeu(e.target.value); markAlterado() } }}
               placeholder="Ex.: Negociação salarial, Saúde do trabalhador…"
               style={inputStyle}
             />
+            <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
+              Máximo 40 caracteres. Etiqueta curta sobre a categoria da matéria.
+            </p>
           </div>
 
           {/* Título */}
           <div style={cardStyle}>
-            <label style={labelStyle} htmlFor="titulo">
-              Título <span style={{ color: '#861e32' }}>*</span>
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
+              <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="titulo">
+                Título <span style={{ color: '#861e32' }}>*</span>
+              </label>
+              <span style={{ fontSize: '12px', color: titulo.length > 90 ? '#861e32' : '#71636a' }}>
+                {titulo.length}/100
+              </span>
+            </div>
             <input
               id="titulo"
               type="text"
               value={titulo}
-              onChange={(e) => { setTitulo(e.target.value); markAlterado() }}
+              maxLength={100}
+              onChange={(e) => { if (e.target.value.length <= 100) { setTitulo(e.target.value); markAlterado() } }}
               placeholder="Digite o título da notícia…"
               style={inputStyle}
             />
+            <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
+              Máximo 100 caracteres. Obrigatório para publicar.
+            </p>
           </div>
 
           {/* Subtítulo */}
@@ -846,21 +877,21 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                 Subtítulo{' '}
                 <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
               </label>
-              <span style={{ fontSize: '12px', color: subtitulo.length > 230 ? '#861e32' : '#71636a' }}>
-                {subtitulo.length}/250
+              <span style={{ fontSize: '12px', color: subtitulo.length > 135 ? '#861e32' : '#71636a' }}>
+                {subtitulo.length}/150
               </span>
             </div>
             <textarea
               id="subtitulo"
               value={subtitulo}
-              onChange={(e) => { if (e.target.value.length <= 250) { setSubtitulo(e.target.value); markAlterado() } }}
+              onChange={(e) => { if (e.target.value.length <= 150) { setSubtitulo(e.target.value); markAlterado() } }}
               placeholder="Complemento do título exibido na notícia…"
               rows={2}
-              maxLength={250}
+              maxLength={150}
               style={{ ...inputStyle, resize: 'vertical' }}
             />
             <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
-              Máximo 250 caracteres. Exibido logo abaixo do título na notícia.
+              Máximo 150 caracteres. Exibido logo abaixo do título na notícia.
             </p>
           </div>
 
@@ -870,24 +901,23 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
               <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="resumo">
                 Resumo <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
               </label>
-              <span style={{ fontSize: '12px', color: resumo.length > 450 ? '#861e32' : '#71636a' }}>
-                {resumo.length}/500
+              <span style={{ fontSize: '12px', color: resumo.length > 135 ? '#861e32' : '#71636a' }}>
+                {resumo.length}/150
               </span>
             </div>
             <textarea
               id="resumo"
               value={resumo}
-              onChange={(e) => { if (e.target.value.length <= 500) { setResumo(e.target.value); markAlterado() } }}
+              onChange={(e) => { if (e.target.value.length <= 150) { setResumo(e.target.value); markAlterado() } }}
               placeholder="Breve descrição exibida nos cartões e nas redes sociais…"
               rows={3}
-              maxLength={500}
+              maxLength={150}
               style={{ ...inputStyle, resize: 'vertical' }}
             />
             <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
-              Máximo 500 caracteres. Usado nos cartões de listagem e no compartilhamento.
+              Máximo 150 caracteres. Usado nos cartões de listagem e no compartilhamento.
             </p>
           </div>
-
 
           {/* Corpo */}
           <div style={cardStyle}>
@@ -899,10 +929,14 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
               onChange={(html) => { setCorpo(html); markAlterado() }}
               placeholder="Escreva o conteúdo completo da notícia aqui…"
               onUploadImage={async (file) => {
+                const comprimido = await comprimirImagem(file)
                 const formData = new FormData()
-                formData.append('arquivo', file)
+                formData.append('arquivo', comprimido)
                 const result = await uploadMidia(formData)
-                if ('error' in result) throw new Error(result.error)
+                if ('error' in result) {
+                  showToast(result.error, 'erro')
+                  throw new Error(result.error)
+                }
                 return result.url
               }}
             />
@@ -1026,25 +1060,37 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                     {/* Legenda + crédito */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
                       <div>
-                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#30252a', display: 'block', marginBottom: '4px' }}>
-                          Legenda
-                        </label>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
+                          <label style={{ fontSize: '12px', fontWeight: 600, color: '#30252a', marginBottom: 0 }}>
+                            Legenda
+                          </label>
+                          <span style={{ fontSize: '11px', color: foto.legenda.length > 135 ? '#861e32' : '#71636a' }}>
+                            {foto.legenda.length}/150
+                          </span>
+                        </div>
                         <input
                           type="text"
                           value={foto.legenda}
-                          onChange={(e) => atualizarFoto(idx, { legenda: e.target.value })}
+                          maxLength={150}
+                          onChange={(e) => { if (e.target.value.length <= 150) atualizarFoto(idx, { legenda: e.target.value }) }}
                           placeholder="Descreva a foto…"
                           style={{ ...inputStyle, fontSize: '12px', padding: '7px 10px' }}
                         />
                       </div>
                       <div>
-                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#30252a', display: 'block', marginBottom: '4px' }}>
-                          Crédito
-                        </label>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
+                          <label style={{ fontSize: '12px', fontWeight: 600, color: '#30252a', marginBottom: 0 }}>
+                            Crédito
+                          </label>
+                          <span style={{ fontSize: '11px', color: foto.credito.length > 50 ? '#861e32' : '#71636a' }}>
+                            {foto.credito.length}/60
+                          </span>
+                        </div>
                         <input
                           type="text"
                           value={foto.credito}
-                          onChange={(e) => atualizarFoto(idx, { credito: e.target.value })}
+                          maxLength={60}
+                          onChange={(e) => { if (e.target.value.length <= 60) atualizarFoto(idx, { credito: e.target.value }) }}
                           placeholder="Fotógrafo / fonte…"
                           style={{ ...inputStyle, fontSize: '12px', padding: '7px 10px' }}
                         />
@@ -1242,9 +1288,11 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
               <input
                 type="text"
                 value={tagInput}
+                maxLength={30}
+                disabled={tags.length >= 8}
                 onChange={handleTagChange}
                 onKeyDown={handleTagKeyDown}
-                placeholder={tags.length === 0 ? 'Adicionar tag…' : ''}
+                placeholder={tags.length >= 8 ? 'Limite de 8 tags atingido' : tags.length === 0 ? 'Adicionar tag…' : ''}
                 style={{
                   border: 'none',
                   outline: 'none',
@@ -1257,6 +1305,9 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                 }}
               />
             </div>
+            <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#71636a' }}>
+              Até 8 tags, com no máximo 30 caracteres cada. {tags.length}/8 adicionadas.
+            </p>
           </div>
 
           {/* ── Mais opções editoriais ── */}
@@ -1283,30 +1334,48 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
             {showMaisOpcoes && (
               <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div>
-                  <label style={labelStyle} htmlFor="url-referencia">
-                    URL de referência
-                  </label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
+                    <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="url-referencia">
+                      URL de referência
+                    </label>
+                    <span style={{ fontSize: '12px', color: urlReferencia.length > 230 ? '#861e32' : '#71636a' }}>
+                      {urlReferencia.length}/250
+                    </span>
+                  </div>
                   <input
                     id="url-referencia"
                     type="url"
                     value={urlReferencia}
-                    onChange={(e) => { setUrlReferencia(e.target.value); markAlterado() }}
+                    maxLength={250}
+                    onChange={(e) => { if (e.target.value.length <= 250) { setUrlReferencia(e.target.value); markAlterado() } }}
                     placeholder="https://…"
                     style={inputStyle}
                   />
+                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
+                    Máximo 250 caracteres. Link para a matéria original ou fonte.
+                  </p>
                 </div>
                 <div>
-                  <label style={labelStyle} htmlFor="credito">
-                    Crédito / fonte
-                  </label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
+                    <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="credito">
+                      Crédito / fonte
+                    </label>
+                    <span style={{ fontSize: '12px', color: credito.length > 50 ? '#861e32' : '#71636a' }}>
+                      {credito.length}/60
+                    </span>
+                  </div>
                   <input
                     id="credito"
                     type="text"
                     value={credito}
-                    onChange={(e) => { setCredito(e.target.value); markAlterado() }}
+                    maxLength={60}
+                    onChange={(e) => { if (e.target.value.length <= 60) { setCredito(e.target.value); markAlterado() } }}
                     placeholder="Nome do veículo ou autor"
                     style={inputStyle}
                   />
+                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
+                    Máximo 60 caracteres.
+                  </p>
                 </div>
               </div>
             )}

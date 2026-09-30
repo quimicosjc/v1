@@ -55,7 +55,7 @@ function gerarSlug(titulo: string): string {
     .trim()
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
-    .slice(0, 200)        // nunca excede 200 caracteres
+    .slice(0, 100)        // nunca excede 100 caracteres
     .replace(/-$/, '')    // remove hífen final se o corte cair no meio de uma palavra
 }
 
