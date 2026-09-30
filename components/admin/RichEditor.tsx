@@ -211,7 +211,12 @@ export default function RichEditor({
     ],
     content,
     onUpdate({ editor: ed }) {
-      onChange(ed.getHTML())
+      const html = ed.getHTML()
+      // Atualizar ref ANTES de chamar onChange — evita que useEffect reponha
+      // o conteúdo e apague o histórico a cada tecla (bug do desfazer/refazer)
+      lastHtmlRef.current = html
+      onChange(html)
+
     },
     editorProps: {
       attributes: { style: Object.entries(editorAreaStyle).map(([k, v]) => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}:${v}`).join(';') },

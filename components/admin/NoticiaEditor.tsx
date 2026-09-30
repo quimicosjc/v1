@@ -862,34 +862,53 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
 
           {/* Subtítulo */}
           <div style={cardStyle}>
-            <label style={labelStyle} htmlFor="subtitulo">
-              Subtítulo{' '}
-              <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
+              <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="subtitulo">
+                Subtítulo{' '}
+                <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
+              </label>
+              <span style={{ fontSize: '12px', color: subtitulo.length > 230 ? '#861e32' : '#71636a' }}>
+                {subtitulo.length}/250
+              </span>
+            </div>
             <textarea
               id="subtitulo"
               value={subtitulo}
-              onChange={(e) => { setSubtitulo(e.target.value); markAlterado() }}
+              onChange={(e) => { if (e.target.value.length <= 250) { setSubtitulo(e.target.value); markAlterado() } }}
               placeholder="Complemento do título exibido na notícia…"
               rows={2}
+              maxLength={250}
               style={{ ...inputStyle, resize: 'vertical' }}
             />
+            <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
+              Máximo 250 caracteres. Exibido logo abaixo do título na notícia.
+            </p>
           </div>
 
           {/* Resumo */}
           <div style={cardStyle}>
-            <label style={labelStyle} htmlFor="resumo">
-              Resumo <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
+              <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="resumo">
+                Resumo <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
+              </label>
+              <span style={{ fontSize: '12px', color: resumo.length > 450 ? '#861e32' : '#71636a' }}>
+                {resumo.length}/500
+              </span>
+            </div>
             <textarea
               id="resumo"
               value={resumo}
-              onChange={(e) => { setResumo(e.target.value); markAlterado() }}
+              onChange={(e) => { if (e.target.value.length <= 500) { setResumo(e.target.value); markAlterado() } }}
               placeholder="Breve descrição exibida nos cartões e nas redes sociais…"
               rows={3}
+              maxLength={500}
               style={{ ...inputStyle, resize: 'vertical' }}
             />
+            <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
+              Máximo 500 caracteres. Usado nos cartões de listagem e no compartilhamento.
+            </p>
           </div>
+
 
           {/* Corpo */}
           <div style={cardStyle}>
