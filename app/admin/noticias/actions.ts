@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { getUsuarioLogado } from '@/lib/supabase/auth'
 
 export interface Noticia {
@@ -13,7 +14,7 @@ export interface Noticia {
   status: 'rascunho' | 'publicado' | 'lixeira' | 'programado'
   destaque: boolean
   banner_url: string | null
-  autor_id: string | null
+  criado_por: string | null
   publicado_em: string | null
   criado_em: string
   atualizado_em: string
@@ -91,7 +92,7 @@ export async function criarNoticia(
         status: data.status ?? 'rascunho',
         destaque: data.destaque ?? false,
         banner_url: data.banner_url ?? null,
-        autor_id: usuario.id,
+        criado_por: usuario.id,
         publicado_em: data.publicado_em ?? null,
       })
       .select('id')
@@ -190,6 +191,72 @@ export async function moverParaLixeira(
     return { ok: true }
   } catch (err) {
     console.error('Erro inesperado ao mover notícia para lixeira:', err)
+    return { error: 'Erro inesperado. Tente novamente.' }
+  }
+}
+
+const TIPOS_PERMITIDOS = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'application/pdf',
+]
+const TAMANHO_MAXIMO = 5 * 1024 * 1024 // 5 MB
+
+export async function uploadMidia(
+  formData: FormData
+): Promise<{ url: string } | { error: string }> {
+  try {
+    await getUsuarioLogado()
+
+    const arquivo = formData.get('arquivo') as File | null
+    if (!arquivo || typeof arquivo === 'string') {
+      return { error: 'Nenhum arquivo selecionado.' }
+    }
+
+    if (!TIPOS_PERMITIDOS.includes(arquivo.type)) {
+      return { error: 'Tipo de arquivo não permitido. Use JPG, PNG, WebP, GIF ou PDF.' }
+    }
+
+    if (arquivo.size > TAMANHO_MAXIMO) {
+      return { error: 'O arquivo é muito grande. O limite é de 5 MB.' }
+    }
+
+    // Gera nome único para evitar colisões
+    const extensao = arquivo.name.split('.').pop()?.toLowerCase() ?? 'bin'
+    const timestamp = Date.now()
+    const aleatorio = Math.random().toString(36).slice(2, 8)
+    const caminho = `noticias/${timestamp}-${aleatorio}.${extensao}`
+
+    // Usa service role key para upload (bypass RLS)
+    const supabaseAdmin = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    )
+
+    const buffer = Buffer.from(await arquivo.arrayBuffer())
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from('midias')
+      .upload(caminho, buffer, {
+        contentType: arquivo.type,
+        upsert: false,
+      })
+
+    if (uploadError) {
+      console.error('Erro no upload:', uploadError)
+      return { error: 'Falha ao enviar o arquivo. Tente novamente.' }
+    }
+
+    // Constrói a URL pública
+    const { data: urlData } = supabaseAdmin.storage
+      .from('midias')
+      .getPublicUrl(caminho)
+
+    return { url: urlData.publicUrl }
+  } catch (err) {
+    console.error('Erro inesperado no upload:', err)
     return { error: 'Erro inesperado. Tente novamente.' }
   }
 }

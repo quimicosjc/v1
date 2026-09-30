@@ -8,6 +8,7 @@ import {
   atualizarNoticia,
   publicarNoticia,
   moverParaLixeira,
+  uploadMidia,
 } from '@/app/admin/noticias/actions'
 
 interface NoticiaEditorProps {
@@ -57,6 +58,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
   const [status, setStatus] = useState<'rascunho' | 'publicado' | 'lixeira' | 'programado'>(noticia?.status ?? 'rascunho')
   const [noticiaId, setNoticiaId] = useState(noticia?.id ?? null as string | null)
   const [alterado, setAlterado] = useState(false)
+  const [enviandoFoto, setEnviandoFoto] = useState(false)
 
   // Toast
   const [toast, setToast] = useState<{ msg: string; type: ToastType } | null>(null)
@@ -176,14 +178,43 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
     })
   }
 
-  function handleBannerChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleBannerChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    const url = URL.createObjectURL(file)
-    setBannerPreview(url)
-    // Nota: upload real para Supabase Storage seria feito aqui
-    // Por ora, guardamos a URL temporária para preview e o campo bannerUrl para texto
+
+    // Validação local antes do upload
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('O arquivo é muito grande. O limite é de 5 MB.', 'erro')
+      return
+    }
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+      showToast('Use imagens JPG, PNG, WebP ou GIF.', 'erro')
+      return
+    }
+
+    // Preview local imediato
+    const localUrl = URL.createObjectURL(file)
+    setBannerPreview(localUrl)
+
+    // Upload real para o Supabase Storage
+    setEnviandoFoto(true)
+    const formData = new FormData()
+    formData.append('arquivo', file)
+
+    const result = await uploadMidia(formData)
+
+    if ('error' in result) {
+      showToast(result.error, 'erro')
+      setBannerPreview(bannerUrl) // Reverte preview para URL anterior
+      setEnviandoFoto(false)
+      return
+    }
+
+    setBannerUrl(result.url)
+    setBannerPreview(result.url)
+    setEnviandoFoto(false)
     markAlterado()
+    showToast('Foto enviada com sucesso.')
   }
 
   const inputStyle: React.CSSProperties = {
@@ -354,23 +385,27 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
             <label
               htmlFor="banner-upload"
               style={{
-                display: 'inline-block',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
                 border: '1px solid #ced9df',
                 background: 'white',
-                color: '#30252a',
+                color: enviandoFoto ? '#71636a' : '#30252a',
                 borderRadius: '5px',
                 padding: '9px 16px',
                 fontSize: '14px',
-                cursor: 'pointer',
+                cursor: enviandoFoto ? 'not-allowed' : 'pointer',
+                opacity: enviandoFoto ? 0.7 : 1,
               }}
             >
-              {bannerPreview ? 'Trocar imagem' : 'Escolher imagem'}
+              {enviandoFoto ? 'Enviando foto…' : bannerPreview ? 'Trocar imagem' : 'Escolher imagem'}
             </label>
             <input
               id="banner-upload"
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp,image/gif"
               onChange={handleBannerChange}
+              disabled={enviandoFoto}
               style={{ display: 'none' }}
             />
 
