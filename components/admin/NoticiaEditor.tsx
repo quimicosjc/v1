@@ -2,6 +2,7 @@
 
 import { useState, useRef, useTransition, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import type { Noticia, NoticiaFormData } from '@/app/admin/noticias/actions'
 import {
   criarNoticia,
@@ -11,6 +12,20 @@ import {
   uploadMidia,
   uploadDocumento,
 } from '@/app/admin/noticias/actions'
+
+const RichEditor = dynamic(() => import('@/components/admin/RichEditor'), {
+  ssr: false,
+  loading: () => (
+    <div
+      style={{
+        border: '1px solid #cbd7de',
+        borderRadius: '5px',
+        minHeight: '280px',
+        background: 'white',
+      }}
+    />
+  ),
+})
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -536,7 +551,8 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
 
   function handlePublicar() {
     if (!titulo.trim()) { showToast('O título é obrigatório para publicar.', 'erro'); return }
-    if (!corpo.trim()) { showToast('O texto da notícia é obrigatório para publicar.', 'erro'); return }
+    const corpoTexto = corpo.replace(/<[^>]*>/g, '').trim()
+    if (!corpoTexto) { showToast('O texto da notícia é obrigatório para publicar.', 'erro'); return }
     setShowConfirm(true)
   }
 
@@ -725,16 +741,20 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
 
           {/* Corpo */}
           <div style={cardStyle}>
-            <label style={labelStyle} htmlFor="corpo">
+            <label style={labelStyle}>
               Texto da notícia <span style={{ color: '#861e32' }}>*</span>
             </label>
-            <textarea
-              id="corpo"
-              value={corpo}
-              onChange={(e) => { setCorpo(e.target.value); markAlterado() }}
+            <RichEditor
+              content={corpo}
+              onChange={(html) => { setCorpo(html); markAlterado() }}
               placeholder="Escreva o conteúdo completo da notícia aqui…"
-              rows={14}
-              style={{ ...inputStyle, resize: 'vertical' }}
+              onUploadImage={async (file) => {
+                const formData = new FormData()
+                formData.append('arquivo', file)
+                const result = await uploadMidia(formData)
+                if ('error' in result) throw new Error(result.error)
+                return result.url
+              }}
             />
           </div>
 
