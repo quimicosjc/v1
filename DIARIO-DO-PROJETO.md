@@ -36,7 +36,7 @@
 
 ## Histórico de etapas
 
-### 29/09/2026 — Dia 1 (preparação)
+### 29/09/2026 — Dia 1 ✅ CONCLUÍDO
 
 - [x] Leitura completa de todos os arquivos do pacote GPT
 - [x] Análise crítica do material (ver conversa inicial)
@@ -44,9 +44,17 @@
 - [x] Pasta `v1/` criada com Git inicializado
 - [x] Diário do projeto criado
 - [x] Documentação de pendências criada
-- [ ] Node.js instalado (aguardando Rodrigo)
-- [ ] Contas nos serviços criadas (aguardando Rodrigo)
-- [ ] Projeto Next.js iniciado (aguarda Node.js)
+- [x] Node.js v24.21.0 (LTS) instalado e funcionando
+- [x] Projeto Next.js 16.3.7 estruturado
+- [x] Schema completo do banco de dados (15 tabelas)
+- [x] Configurações de segurança (headers, cache, gitignore, .env.example)
+- [x] Paleta oficial do Sindicato aplicada no CSS
+- [x] Vercel Cron: 4 jobs automáticos (keepalive, publicação, lixeira, backup)
+- [x] "Toque automático" do Supabase implementado e documentado
+- [x] Build limpo: compilação OK, TypeScript OK, 0 vulnerabilidades
+- [x] Tag `v1.0-base` criada no Git
+- [ ] Contas nos serviços criadas (aguardando Rodrigo — amanhã)
+- [ ] Projeto publicado no Vercel (aguarda contas)
 
 ---
 
