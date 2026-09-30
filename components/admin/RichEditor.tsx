@@ -215,6 +215,27 @@ export default function RichEditor({
     },
     editorProps: {
       attributes: { style: Object.entries(editorAreaStyle).map(([k, v]) => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}:${v}`).join(';') },
+      // §3.3: Colar sem formatação — remove fontes, cores, negritos, links do Word/Google Docs.
+      // Preserva o conteúdo e as separações entre parágrafos.
+      handlePaste(_view, event) {
+        const text = event.clipboardData?.getData('text/plain')
+        if (!text) return false
+        event.preventDefault()
+        // Blocos separados por linha em branco → parágrafos distintos
+        // Linhas simples dentro do mesmo bloco → <br> dentro do parágrafo
+        const html = text
+          .split(/\n{2,}/)
+          .map((block) =>
+            `<p>${block
+              .split(/\n/)
+              .map((line) => line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'))
+              .join('<br>')
+            }</p>`
+          )
+          .join('')
+        editor?.commands.insertContent(html)
+        return true
+      },
     },
   })
 
