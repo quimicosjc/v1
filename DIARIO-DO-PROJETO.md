@@ -58,6 +58,7 @@
 - [x] Deploy em produção no Vercel: https://v1-three-hazel.vercel.app
 - [x] Banco de dados Supabase estruturado com 15 tabelas (São Paulo - sa-east-1)
 - [x] Integração Vercel + Supabase validada e ativa ("toque automático" respondendo com sucesso)
+- [x] Serviço de e-mails Resend configurado e integrado (local e Vercel)
 
 ---
 
