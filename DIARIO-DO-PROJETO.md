@@ -53,8 +53,11 @@
 - [x] "Toque automático" do Supabase implementado e documentado
 - [x] Build limpo: compilação OK, TypeScript OK, 0 vulnerabilidades
 - [x] Tag `v1.0-base` criada no Git
-- [ ] Contas nos serviços criadas (aguardando Rodrigo — amanhã)
-- [ ] Projeto publicado no Vercel (aguarda contas)
+- [x] Contas criadas: GitHub (quimicosjc), Vercel (quimicosjc) e Supabase (quimicos-sjc)
+- [x] Repositório sincronizado via GitHub Desktop (quimicosjc/v1)
+- [x] Deploy em produção no Vercel: https://v1-three-hazel.vercel.app
+- [x] Banco de dados Supabase estruturado com 15 tabelas (São Paulo - sa-east-1)
+- [x] Integração Vercel + Supabase validada e ativa ("toque automático" respondendo com sucesso)
 
 ---
 
