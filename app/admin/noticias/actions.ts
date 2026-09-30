@@ -95,13 +95,16 @@ export async function criarNoticia(
     const usuario = await getUsuarioLogado()
     const supabase = await createClient()
 
-    const slug = gerarSlug(data.titulo)
+    // Gera slug a partir do título; se vazio, usa timestamp para não violar constraint
+    const tituloBase = data.titulo?.trim() || 'noticia-sem-titulo'
+    let slug = gerarSlug(tituloBase)
+    if (!slug) slug = `noticia-${Date.now()}`
 
     const { data: novaNoticia, error } = await supabase
       .from('conteudos')
       .insert({
         tipo: 'noticia',
-        titulo: data.titulo,
+        titulo: data.titulo || 'Notícia sem título',
         slug,
         resumo: data.resumo ?? null,
         corpo: data.corpo ?? null,
@@ -123,13 +126,14 @@ export async function criarNoticia(
 
     if (error) {
       console.error('Erro ao criar notícia:', error)
-      return { error: 'Não foi possível criar a notícia. Tente novamente.' }
+      // Retorna o código do erro para facilitar diagnóstico
+      return { error: `Erro ao salvar (${error.code}): ${error.message}` }
     }
 
     return { id: novaNoticia.id }
   } catch (err) {
     console.error('Erro inesperado ao criar notícia:', err)
-    return { error: 'Erro inesperado. Tente novamente.' }
+    return { error: `Erro inesperado: ${err instanceof Error ? err.message : String(err)}` }
   }
 }
 
