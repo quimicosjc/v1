@@ -14,6 +14,9 @@ export interface Noticia {
   status: 'rascunho' | 'publicado' | 'lixeira' | 'programado'
   destaque: boolean
   banner_url: string | null
+  imagem_y: number | null
+  fotos_json: string | null
+  documentos_json: string | null
   criado_por: string | null
   publicado_em: string | null
   criado_em: string
@@ -24,10 +27,13 @@ export interface NoticiaFormData {
   titulo: string
   resumo?: string
   corpo?: string
-  status?: 'rascunho' | 'publicado' | 'lixeira'
+  status?: 'rascunho' | 'publicado' | 'lixeira' | 'programado'
   destaque?: boolean
   banner_url?: string | null
   publicado_em?: string | null
+  imagem_y?: number
+  fotos_json?: string | null
+  documentos_json?: string | null
 }
 
 function gerarSlug(titulo: string): string {
@@ -257,6 +263,68 @@ export async function uploadMidia(
     return { url: urlData.publicUrl }
   } catch (err) {
     console.error('Erro inesperado no upload:', err)
+    return { error: 'Erro inesperado. Tente novamente.' }
+  }
+}
+
+const TIPOS_DOCUMENTO = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/zip',
+  'application/x-zip-compressed',
+]
+const TAMANHO_MAXIMO_DOC = 20 * 1024 * 1024 // 20 MB
+
+export async function uploadDocumento(
+  formData: FormData
+): Promise<{ url: string; nome: string; tipo: string } | { error: string }> {
+  try {
+    await getUsuarioLogado()
+
+    const arquivo = formData.get('arquivo') as File | null
+    if (!arquivo || typeof arquivo === 'string') {
+      return { error: 'Nenhum arquivo selecionado.' }
+    }
+
+    if (!TIPOS_DOCUMENTO.includes(arquivo.type)) {
+      return { error: 'Tipo de arquivo não permitido. Use PDF, DOCX ou ZIP.' }
+    }
+
+    if (arquivo.size > TAMANHO_MAXIMO_DOC) {
+      return { error: 'O arquivo é muito grande. O limite é de 20 MB.' }
+    }
+
+    const extensao = arquivo.name.split('.').pop()?.toLowerCase() ?? 'bin'
+    const timestamp = Date.now()
+    const aleatorio = Math.random().toString(36).slice(2, 8)
+    const caminho = `noticias/docs/${timestamp}-${aleatorio}.${extensao}`
+
+    const supabaseAdmin = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    )
+
+    const buffer = Buffer.from(await arquivo.arrayBuffer())
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from('midias')
+      .upload(caminho, buffer, {
+        contentType: arquivo.type,
+        upsert: false,
+      })
+
+    if (uploadError) {
+      console.error('Erro no upload de documento:', uploadError)
+      return { error: 'Falha ao enviar o documento. Tente novamente.' }
+    }
+
+    const { data: urlData } = supabaseAdmin.storage
+      .from('midias')
+      .getPublicUrl(caminho)
+
+    return { url: urlData.publicUrl, nome: arquivo.name, tipo: extensao }
+  } catch (err) {
+    console.error('Erro inesperado no upload de documento:', err)
     return { error: 'Erro inesperado. Tente novamente.' }
   }
 }
