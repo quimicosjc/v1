@@ -21,6 +21,11 @@ export interface Noticia {
   publicado_em: string | null
   criado_em: string
   atualizado_em: string
+  chapeu: string | null
+  subtitulo: string | null
+  tags_json: string | null
+  url_referencia: string | null
+  credito: string | null
 }
 
 export interface NoticiaFormData {
@@ -34,6 +39,11 @@ export interface NoticiaFormData {
   imagem_y?: number
   fotos_json?: string | null
   documentos_json?: string | null
+  chapeu?: string | null
+  subtitulo?: string | null
+  tags_json?: string | null
+  url_referencia?: string | null
+  credito?: string | null
 }
 
 function gerarSlug(titulo: string): string {
@@ -100,6 +110,13 @@ export async function criarNoticia(
         banner_url: data.banner_url ?? null,
         criado_por: usuario.id,
         publicado_em: data.publicado_em ?? null,
+        fotos_json: data.fotos_json ?? null,
+        documentos_json: data.documentos_json ?? null,
+        chapeu: data.chapeu ?? null,
+        subtitulo: data.subtitulo ?? null,
+        tags_json: data.tags_json ?? null,
+        url_referencia: data.url_referencia ?? null,
+        credito: data.credito ?? null,
       })
       .select('id')
       .single()
@@ -172,6 +189,31 @@ export async function publicarNoticia(
     return { ok: true }
   } catch (err) {
     console.error('Erro inesperado ao publicar notícia:', err)
+    return { error: 'Erro inesperado. Tente novamente.' }
+  }
+}
+
+export async function retirarDoAr(
+  id: string
+): Promise<{ ok: boolean } | { error: string }> {
+  try {
+    await getUsuarioLogado()
+    const supabase = await createClient()
+
+    const { error } = await supabase
+      .from('conteudos')
+      .update({ status: 'rascunho' })
+      .eq('id', id)
+      .eq('tipo', 'noticia')
+
+    if (error) {
+      console.error('Erro ao retirar notícia do ar:', error)
+      return { error: 'Não foi possível retirar a notícia do ar. Tente novamente.' }
+    }
+
+    return { ok: true }
+  } catch (err) {
+    console.error('Erro inesperado ao retirar notícia do ar:', err)
     return { error: 'Erro inesperado. Tente novamente.' }
   }
 }

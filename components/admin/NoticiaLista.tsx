@@ -3,8 +3,11 @@
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Noticia } from '@/app/admin/noticias/actions'
+import { moverParaLixeira } from '@/app/admin/noticias/actions'
 
 type Tab = 'todos' | 'rascunho' | 'publicado' | 'programado'
+
+const ITENS_POR_PAGINA = 20
 
 interface NoticiaListaProps {
   noticias: Noticia[]
@@ -46,25 +49,167 @@ function BadgeStatus({ status }: { status: string }) {
   )
 }
 
-export default function NoticiaLista({ noticias }: NoticiaListaProps) {
+// ── Dialog de confirmação de exclusão ──────────────────────────────────────────
+
+interface ConfirmDialogProps {
+  titulo: string
+  onConfirmar: () => void
+  onCancelar: () => void
+}
+
+function ConfirmDeleteDialog({ titulo, onConfirmar, onCancelar }: ConfirmDialogProps) {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(30,20,25,0.45)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+      }}
+      onClick={onCancelar}
+    >
+      <div
+        style={{
+          background: 'white',
+          borderRadius: '8px',
+          padding: '32px',
+          maxWidth: '420px',
+          width: '90%',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 style={{ margin: '0 0 12px', fontSize: '20px', color: '#30252a' }}>
+          Mover para a lixeira?
+        </h2>
+        <p style={{ margin: '0 0 24px', color: '#71636a', fontSize: '14px', lineHeight: '1.6' }}>
+          Mover{' '}
+          <strong style={{ color: '#30252a' }}>
+            &quot;{titulo}&quot;
+          </strong>{' '}
+          para a lixeira?
+        </p>
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+          <button
+            onClick={onCancelar}
+            style={{
+              border: '1px solid #ced9df',
+              background: 'white',
+              color: '#30252a',
+              borderRadius: '5px',
+              padding: '9px 14px',
+              fontSize: '13px',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirmar}
+            style={{
+              background: '#861e32',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              padding: '10px 16px',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            Mover para lixeira
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaProps) {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('todos')
   const [busca, setBusca] = useState('')
+  const [soDestaques, setSoDestaques] = useState(false)
+  const [pagina, setPagina] = useState(1)
+  const [lista, setLista] = useState<Noticia[]>(noticiasProp)
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; titulo: string } | null>(null)
 
   const contagens = useMemo(() => ({
-    todos:      noticias.length,
-    rascunho:   noticias.filter((n) => n.status === 'rascunho').length,
-    programado: noticias.filter((n) => n.status === 'programado').length,
-    publicado:  noticias.filter((n) => n.status === 'publicado').length,
-  }), [noticias])
+    todos:      lista.length,
+    rascunho:   lista.filter((n) => n.status === 'rascunho').length,
+    programado: lista.filter((n) => n.status === 'programado').length,
+    publicado:  lista.filter((n) => n.status === 'publicado').length,
+  }), [lista])
+
+  const ordemInfo: Record<Tab, string> = {
+    publicado:  'data de publicação (mais recente primeiro)',
+    programado: 'data de publicação (próxima primeiro)',
+    rascunho:   'última atualização',
+    todos:      'data de criação',
+  }
 
   const filtradas = useMemo(() => {
-    return noticias.filter((n) => {
+    let resultado = lista.filter((n) => {
       const matchTab = tab === 'todos' || n.status === tab
       const matchBusca = busca === '' || n.titulo.toLowerCase().includes(busca.toLowerCase())
-      return matchTab && matchBusca
+      const matchDestaque = !soDestaques || n.destaque
+      return matchTab && matchBusca && matchDestaque
     })
-  }, [noticias, tab, busca])
+
+    // Ordenação por aba
+    resultado = [...resultado].sort((a, b) => {
+      if (tab === 'publicado') {
+        return new Date(b.publicado_em ?? b.criado_em).getTime() - new Date(a.publicado_em ?? a.criado_em).getTime()
+      } else if (tab === 'programado') {
+        return new Date(a.publicado_em ?? a.criado_em).getTime() - new Date(b.publicado_em ?? b.criado_em).getTime()
+      } else if (tab === 'rascunho') {
+        return new Date(b.atualizado_em).getTime() - new Date(a.atualizado_em).getTime()
+      } else {
+        return new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime()
+      }
+    })
+
+    return resultado
+  }, [lista, tab, busca, soDestaques])
+
+  const totalPaginas = Math.ceil(filtradas.length / ITENS_POR_PAGINA)
+  const inicio = (pagina - 1) * ITENS_POR_PAGINA
+  const fim = Math.min(inicio + ITENS_POR_PAGINA, filtradas.length)
+  const paginaAtual = filtradas.slice(inicio, fim)
+
+  function mudarTab(novaTab: Tab) {
+    setTab(novaTab)
+    setPagina(1)
+  }
+
+  function mudarBusca(valor: string) {
+    setBusca(valor)
+    setPagina(1)
+  }
+
+  function mudarSoDestaques(valor: boolean) {
+    setSoDestaques(valor)
+    setPagina(1)
+  }
+
+  async function handleApagar(id: string, titulo: string) {
+    setConfirmDelete({ id, titulo })
+  }
+
+  async function confirmarApagar() {
+    if (!confirmDelete) return
+    const { id } = confirmDelete
+    setConfirmDelete(null)
+    const result = await moverParaLixeira(id)
+    if ('ok' in result) {
+      setLista((prev) => prev.filter((n) => n.id !== id))
+    }
+  }
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'todos',      label: 'Todas' },
@@ -72,6 +217,21 @@ export default function NoticiaLista({ noticias }: NoticiaListaProps) {
     { key: 'programado', label: 'Programadas' },
     { key: 'publicado',  label: 'Publicadas' },
   ]
+
+  // Gerar páginas para paginação
+  function gerarPaginas(): Array<number | '...'> {
+    if (totalPaginas <= 7) {
+      return Array.from({ length: totalPaginas }, (_, i) => i + 1)
+    }
+    const paginas: Array<number | '...'> = [1]
+    if (pagina > 3) paginas.push('...')
+    for (let i = Math.max(2, pagina - 1); i <= Math.min(totalPaginas - 1, pagina + 1); i++) {
+      paginas.push(i)
+    }
+    if (pagina < totalPaginas - 2) paginas.push('...')
+    paginas.push(totalPaginas)
+    return paginas
+  }
 
   return (
     <div>
@@ -113,7 +273,7 @@ export default function NoticiaLista({ noticias }: NoticiaListaProps) {
           overflow: 'hidden',
         }}
       >
-        {/* Tabs + busca */}
+        {/* Tabs + filtros + busca */}
         <div
           style={{
             display: 'flex',
@@ -122,13 +282,14 @@ export default function NoticiaLista({ noticias }: NoticiaListaProps) {
             padding: '0 24px',
             borderBottom: '1px solid #e4dce0',
             gap: '16px',
+            flexWrap: 'wrap',
           }}
         >
-          <div style={{ display: 'flex', gap: '0' }}>
+          <div style={{ display: 'flex', gap: '0', alignItems: 'center', flexWrap: 'wrap' }}>
             {tabs.map((t) => (
               <button
                 key={t.key}
-                onClick={() => setTab(t.key)}
+                onClick={() => mudarTab(t.key)}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -159,12 +320,35 @@ export default function NoticiaLista({ noticias }: NoticiaListaProps) {
                 </span>
               </button>
             ))}
+
+            {/* Checkbox somente destaques */}
+            <label
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '13px',
+                color: '#71636a',
+                cursor: 'pointer',
+                marginLeft: '8px',
+                padding: '16px 0 14px',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={soDestaques}
+                onChange={(e) => mudarSoDestaques(e.target.checked)}
+                style={{ accentColor: '#861e32', cursor: 'pointer' }}
+              />
+              Somente destaques
+            </label>
           </div>
+
           <input
             type="text"
             placeholder="Buscar por título…"
             value={busca}
-            onChange={(e) => setBusca(e.target.value)}
+            onChange={(e) => mudarBusca(e.target.value)}
             style={{
               border: '1px solid #cbd7de',
               borderRadius: '5px',
@@ -178,11 +362,31 @@ export default function NoticiaLista({ noticias }: NoticiaListaProps) {
           />
         </div>
 
+        {/* Info de ordenação + contagem */}
+        <div
+          style={{
+            padding: '8px 24px',
+            borderBottom: '1px solid #f0eeef',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <span style={{ fontSize: '12px', color: '#71636a' }}>
+            Ordenado por: {ordemInfo[tab]}
+          </span>
+          {filtradas.length > 0 && (
+            <span style={{ fontSize: '12px', color: '#71636a' }}>
+              {inicio + 1}–{fim} de {filtradas.length} notícia{filtradas.length !== 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+
         {/* Tabela */}
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              {['NOTÍCIA', 'SITUAÇÃO', 'DATA', 'AÇÃO'].map((col) => (
+              {['NOTÍCIA', 'DESTAQUE', 'SITUAÇÃO', 'DATA', 'AÇÃO'].map((col) => (
                 <th
                   key={col}
                   style={{
@@ -202,10 +406,10 @@ export default function NoticiaLista({ noticias }: NoticiaListaProps) {
             </tr>
           </thead>
           <tbody>
-            {filtradas.length === 0 ? (
+            {paginaAtual.length === 0 ? (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   style={{
                     padding: '48px 24px',
                     textAlign: 'center',
@@ -217,13 +421,13 @@ export default function NoticiaLista({ noticias }: NoticiaListaProps) {
                 </td>
               </tr>
             ) : (
-              filtradas.map((noticia) => (
+              paginaAtual.map((noticia) => (
                 <tr key={noticia.id} style={{ background: 'white' }}>
                   <td
                     style={{
                       padding: '19px 24px',
                       borderBottom: '1px solid #e8eef1',
-                      maxWidth: '420px',
+                      maxWidth: '380px',
                     }}
                   >
                     <div
@@ -254,6 +458,24 @@ export default function NoticiaLista({ noticias }: NoticiaListaProps) {
                     )}
                   </td>
                   <td style={{ padding: '19px 24px', borderBottom: '1px solid #e8eef1' }}>
+                    {noticia.destaque ? (
+                      <span
+                        style={{
+                          background: '#fff2df',
+                          color: '#825914',
+                          borderRadius: '4px',
+                          padding: '3px 9px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          display: 'inline-block',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        ★ Destaque
+                      </span>
+                    ) : null}
+                  </td>
+                  <td style={{ padding: '19px 24px', borderBottom: '1px solid #e8eef1' }}>
                     <BadgeStatus status={noticia.status} />
                   </td>
                   <td
@@ -268,28 +490,129 @@ export default function NoticiaLista({ noticias }: NoticiaListaProps) {
                     {formatarData(noticia.publicado_em ?? noticia.criado_em)}
                   </td>
                   <td style={{ padding: '19px 24px', borderBottom: '1px solid #e8eef1' }}>
-                    <button
-                      onClick={() => router.push(`/admin/noticias/${noticia.id}`)}
-                      style={{
-                        border: '1px solid #ced9df',
-                        background: 'white',
-                        color: '#30252a',
-                        borderRadius: '5px',
-                        padding: '7px 14px',
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                      }}
-                    >
-                      Editar
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <button
+                        onClick={() => router.push(`/admin/noticias/${noticia.id}`)}
+                        style={{
+                          border: '1px solid #ced9df',
+                          background: 'white',
+                          color: '#30252a',
+                          borderRadius: '5px',
+                          padding: '7px 14px',
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleApagar(noticia.id, noticia.titulo)}
+                        style={{
+                          border: '1px solid #e8c8ce',
+                          background: 'white',
+                          color: '#861e32',
+                          borderRadius: '5px',
+                          padding: '7px 14px',
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        Lixeira
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
+
+        {/* Paginação */}
+        {totalPaginas > 1 && (
+          <div
+            style={{
+              padding: '16px 24px',
+              borderTop: '1px solid #e4dce0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px',
+            }}
+          >
+            <button
+              onClick={() => setPagina(1)}
+              disabled={pagina === 1}
+              style={{
+                border: '1px solid #ced9df',
+                background: 'white',
+                color: pagina === 1 ? '#c0b8bc' : '#30252a',
+                borderRadius: '5px',
+                padding: '6px 10px',
+                fontSize: '13px',
+                cursor: pagina === 1 ? 'default' : 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              Início
+            </button>
+
+            {gerarPaginas().map((p, i) =>
+              p === '...' ? (
+                <span key={`ellipsis-${i}`} style={{ padding: '6px 4px', color: '#71636a', fontSize: '13px' }}>
+                  …
+                </span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => setPagina(p as number)}
+                  style={{
+                    border: '1px solid ' + (pagina === p ? '#861e32' : '#ced9df'),
+                    background: pagina === p ? '#861e32' : 'white',
+                    color: pagina === p ? 'white' : '#30252a',
+                    borderRadius: '5px',
+                    padding: '6px 11px',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontWeight: pagina === p ? 600 : 400,
+                    minWidth: '34px',
+                  }}
+                >
+                  {p}
+                </button>
+              )
+            )}
+
+            <button
+              onClick={() => setPagina(totalPaginas)}
+              disabled={pagina === totalPaginas}
+              style={{
+                border: '1px solid #ced9df',
+                background: 'white',
+                color: pagina === totalPaginas ? '#c0b8bc' : '#30252a',
+                borderRadius: '5px',
+                padding: '6px 10px',
+                fontSize: '13px',
+                cursor: pagina === totalPaginas ? 'default' : 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              Fim
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Dialog de confirmação de exclusão */}
+      {confirmDelete && (
+        <ConfirmDeleteDialog
+          titulo={confirmDelete.titulo || '(sem título)'}
+          onConfirmar={confirmarApagar}
+          onCancelar={() => setConfirmDelete(null)}
+        />
+      )}
     </div>
   )
 }

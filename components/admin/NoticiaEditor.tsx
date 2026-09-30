@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useTransition, useEffect, useCallback } from 'react'
+import { useState, useRef, useTransition, useEffect, useCallback, KeyboardEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import type { Noticia, NoticiaFormData } from '@/app/admin/noticias/actions'
@@ -9,6 +9,7 @@ import {
   atualizarNoticia,
   publicarNoticia,
   moverParaLixeira,
+  retirarDoAr,
   uploadMidia,
   uploadDocumento,
 } from '@/app/admin/noticias/actions'
@@ -57,6 +58,25 @@ function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+// ── Helper: strip HTML ────────────────────────────────────────────────────────
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
+}
+
+// ── Helper: format datetime ───────────────────────────────────────────────────
+
+function formatDatetimeLocal(val: string): string {
+  if (!val) return ''
+  try {
+    const d = new Date(val)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} às ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  } catch {
+    return ''
+  }
 }
 
 // ── Helper: browser image compression ────────────────────────────────────────
@@ -188,9 +208,18 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
   const [isPending, startTransition] = useTransition()
 
   // --- Form state ---
+  const [chapeu, setChapeu] = useState(noticia?.chapeu ?? '')
   const [titulo, setTitulo] = useState(noticia?.titulo ?? '')
+  const [subtitulo, setSubtitulo] = useState(noticia?.subtitulo ?? '')
   const [resumo, setResumo] = useState(noticia?.resumo ?? '')
   const [corpo, setCorpo] = useState(noticia?.corpo ?? '')
+  const [tags, setTags] = useState<string[]>(() => {
+    if (noticia?.tags_json) {
+      try { return JSON.parse(noticia.tags_json) as string[] } catch { return [] }
+    }
+    return []
+  })
+  const [tagInput, setTagInput] = useState('')
   const [destaque, setDestaque] = useState(noticia?.destaque ?? false)
   const [publicadoEm, setPublicadoEm] = useState(
     noticia?.publicado_em ? noticia.publicado_em.slice(0, 16) : '',
@@ -201,6 +230,17 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
   const [noticiaId, setNoticiaId] = useState<string | null>(noticia?.id ?? null)
   const [alterado, setAlterado] = useState(false)
   const noticiaIdRef = useRef<string | null>(noticia?.id ?? null)
+
+  // Mais opções editoriais
+  const [showMaisOpcoes, setShowMaisOpcoes] = useState(false)
+  const [urlReferencia, setUrlReferencia] = useState(noticia?.url_referencia ?? '')
+  const [credito, setCredito] = useState(noticia?.credito ?? '')
+
+  // Endereço e prévia do link
+  const [showPrevia, setShowPrevia] = useState(false)
+
+  // --- Confirm retirar do ar dialog ---
+  const [showConfirmRetirar, setShowConfirmRetirar] = useState(false)
 
   // --- Photos ---
   const [fotos, setFotos] = useState<FotoItem[]>(() => {
@@ -271,6 +311,17 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
   const [draftDisponivel, setDraftDisponivel] = useState(false)
   const [draftIgnorado, setDraftIgnorado] = useState(false)
 
+  // ── Computed slug ─────────────────────────────────────────────────────────
+
+  const slug = titulo
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-') || noticia?.slug || ''
+
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   function showToast(msg: string, type: ToastType = 'sucesso') {
@@ -298,6 +349,11 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
       fotos_json: fotosParaSalvar.length > 0 ? JSON.stringify(fotosParaSalvar) : null,
       documentos_json: documentos.length > 0 ? JSON.stringify(documentos) : null,
       publicado_em: publicadoEm ? new Date(publicadoEm).toISOString() : null,
+      chapeu: chapeu || null,
+      subtitulo: subtitulo || null,
+      tags_json: tags.length > 0 ? JSON.stringify(tags) : null,
+      url_referencia: urlReferencia || null,
+      credito: credito || null,
     }
   }
 
@@ -324,21 +380,31 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
     if (!saved) return
     try {
       const draft = JSON.parse(saved) as {
+        chapeu?: string
         titulo?: string
+        subtitulo?: string
         resumo?: string
         corpo?: string
         destaque?: boolean
         publicadoEm?: string
         fotos?: FotoItem[]
         documentos?: DocumentoItem[]
+        tags?: string[]
+        urlReferencia?: string
+        credito?: string
       }
+      if (draft.chapeu !== undefined) setChapeu(draft.chapeu)
       if (draft.titulo !== undefined) setTitulo(draft.titulo)
+      if (draft.subtitulo !== undefined) setSubtitulo(draft.subtitulo)
       if (draft.resumo !== undefined) setResumo(draft.resumo)
       if (draft.corpo !== undefined) setCorpo(draft.corpo)
       if (draft.destaque !== undefined) setDestaque(draft.destaque)
       if (draft.publicadoEm !== undefined) setPublicadoEm(draft.publicadoEm)
       if (draft.fotos) setFotos(draft.fotos)
       if (draft.documentos) setDocumentos(draft.documentos)
+      if (draft.tags) setTags(draft.tags)
+      if (draft.urlReferencia !== undefined) setUrlReferencia(draft.urlReferencia)
+      if (draft.credito !== undefined) setCredito(draft.credito)
     } catch {
       // ignore parse errors
     }
@@ -352,11 +418,11 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
     const interval = setInterval(() => {
       if (!alterado) return
       const key = draftKey(noticiaIdRef.current)
-      const draft = { titulo, resumo, corpo, destaque, publicadoEm, fotos, documentos }
+      const draft = { chapeu, titulo, subtitulo, resumo, corpo, destaque, publicadoEm, fotos, documentos, tags, urlReferencia, credito }
       localStorage.setItem(key, JSON.stringify(draft))
     }, 5000)
     return () => clearInterval(interval)
-  }, [alterado, titulo, resumo, corpo, destaque, publicadoEm, fotos, documentos])
+  }, [alterado, chapeu, titulo, subtitulo, resumo, corpo, destaque, publicadoEm, fotos, documentos, tags, urlReferencia, credito])
 
   // ── Auto-save to server every 30 seconds ─────────────────────────────────
 
@@ -376,7 +442,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
       setAutoSaveStatus('')
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [alterado, titulo, resumo, corpo, destaque, publicadoEm, fotos, documentos])
+  }, [alterado, chapeu, titulo, subtitulo, resumo, corpo, destaque, publicadoEm, fotos, documentos, tags, urlReferencia, credito])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -389,6 +455,40 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
   useEffect(() => {
     noticiaIdRef.current = noticiaId
   }, [noticiaId])
+
+  // ── Tags handling ─────────────────────────────────────────────────────────
+
+  function adicionarTag(valor: string) {
+    const tag = valor.trim().toLowerCase().replace(/,/g, '')
+    if (!tag || tags.includes(tag)) return
+    setTags((prev) => [...prev, tag])
+    setTagInput('')
+    markAlterado()
+  }
+
+  function removerTag(tag: string) {
+    setTags((prev) => prev.filter((t) => t !== tag))
+    markAlterado()
+  }
+
+  function handleTagKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault()
+      adicionarTag(tagInput)
+    } else if (e.key === 'Backspace' && tagInput === '' && tags.length > 0) {
+      setTags((prev) => prev.slice(0, -1))
+      markAlterado()
+    }
+  }
+
+  function handleTagChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value
+    if (val.endsWith(',')) {
+      adicionarTag(val)
+    } else {
+      setTagInput(val)
+    }
+  }
 
   // ── Photo handling ────────────────────────────────────────────────────────
 
@@ -549,6 +649,29 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
     })
   }
 
+  async function atualizarPublicacao() {
+    startTransition(async () => {
+      if (!noticiaIdRef.current) return
+      const data = buildFormData()
+      const result = await atualizarNoticia(noticiaIdRef.current, { ...data, status: 'publicado' })
+      if ('error' in result) { showToast(result.error, 'erro'); return }
+      setAlterado(false)
+      setAutoSaveStatus('')
+      showToast('Publicação atualizada com sucesso.')
+    })
+  }
+
+  async function confirmarRetirarDoAr() {
+    setShowConfirmRetirar(false)
+    if (!noticiaIdRef.current) return
+    startTransition(async () => {
+      const result = await retirarDoAr(noticiaIdRef.current!)
+      if ('error' in result) { showToast(result.error, 'erro'); return }
+      setStatus('rascunho')
+      showToast('Notícia retirada do ar e movida para rascunho.')
+    })
+  }
+
   function handlePublicar() {
     if (!titulo.trim()) { showToast('O título é obrigatório para publicar.', 'erro'); return }
     const corpoTexto = corpo.replace(/<[^>]*>/g, '').trim()
@@ -576,15 +699,6 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
       setStatus('publicado')
       setAlterado(false)
       setAutoSaveStatus('')
-      // get slug for post-publish dialog
-      const slug = titulo
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9\s-]/g, '')
-        .trim()
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
       setPublishedSlug(slug)
       setShowPostPublish(true)
     })
@@ -659,6 +773,12 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
 
   const fotosValidas = fotos.filter((f) => f.url || f.enviando)
 
+  // Resumo da prévia (strip HTML, max 120 chars)
+  const resumoPrevia = (() => {
+    const texto = resumo || stripHtml(corpo)
+    return texto.length > 120 ? texto.slice(0, 120) + '…' : texto
+  })()
+
   return (
     <div>
       {/* ── Draft recovery bar ── */}
@@ -709,6 +829,22 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
         {/* ── Main column ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
+          {/* Chapéu */}
+          <div style={cardStyle}>
+            <label style={labelStyle} htmlFor="chapeu">
+              Chapéu / assunto{' '}
+              <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
+            </label>
+            <input
+              id="chapeu"
+              type="text"
+              value={chapeu}
+              onChange={(e) => { setChapeu(e.target.value); markAlterado() }}
+              placeholder="Ex.: Negociação salarial, Saúde do trabalhador…"
+              style={inputStyle}
+            />
+          </div>
+
           {/* Título */}
           <div style={cardStyle}>
             <label style={labelStyle} htmlFor="titulo">
@@ -724,10 +860,26 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
             />
           </div>
 
+          {/* Subtítulo */}
+          <div style={cardStyle}>
+            <label style={labelStyle} htmlFor="subtitulo">
+              Subtítulo{' '}
+              <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
+            </label>
+            <textarea
+              id="subtitulo"
+              value={subtitulo}
+              onChange={(e) => { setSubtitulo(e.target.value); markAlterado() }}
+              placeholder="Complemento do título exibido na notícia…"
+              rows={2}
+              style={{ ...inputStyle, resize: 'vertical' }}
+            />
+          </div>
+
           {/* Resumo */}
           <div style={cardStyle}>
             <label style={labelStyle} htmlFor="resumo">
-              Subtítulo <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
+              Resumo <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
             </label>
             <textarea
               id="resumo"
@@ -1036,6 +1188,234 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
               PDF, DOCX ou ZIP · Tamanho máximo: 20 MB
             </p>
           </div>
+
+          {/* ── Tags ── */}
+          <div style={cardStyle}>
+            <label style={labelStyle}>
+              Tags{' '}
+              <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional, tecle Enter ou vírgula para adicionar)</span>
+            </label>
+            <div
+              style={{
+                border: '1px solid #cbd7de',
+                borderRadius: '5px',
+                padding: '8px 10px',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '6px',
+                alignItems: 'center',
+                background: 'white',
+                minHeight: '44px',
+              }}
+            >
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  style={{
+                    background: '#f0e8ea',
+                    color: '#65172a',
+                    borderRadius: '4px',
+                    padding: '2px 8px',
+                    fontSize: '13px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  {tag}
+                  <button
+                    onClick={() => removerTag(tag)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#65172a',
+                      cursor: 'pointer',
+                      padding: '0 0 0 2px',
+                      fontSize: '14px',
+                      lineHeight: 1,
+                      fontFamily: 'inherit',
+                    }}
+                    title={`Remover tag "${tag}"`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+              <input
+                type="text"
+                value={tagInput}
+                onChange={handleTagChange}
+                onKeyDown={handleTagKeyDown}
+                placeholder={tags.length === 0 ? 'Adicionar tag…' : ''}
+                style={{
+                  border: 'none',
+                  outline: 'none',
+                  fontSize: '14px',
+                  fontFamily: 'inherit',
+                  color: '#30252a',
+                  flex: '1 1 100px',
+                  minWidth: '100px',
+                  background: 'transparent',
+                }}
+              />
+            </div>
+          </div>
+
+          {/* ── Mais opções editoriais ── */}
+          <div style={cardStyle}>
+            <button
+              onClick={() => setShowMaisOpcoes((v) => !v)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: '#30252a',
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              {showMaisOpcoes ? 'Mais opções editoriais ▾' : 'Mais opções editoriais ▸'}
+            </button>
+
+            {showMaisOpcoes && (
+              <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={labelStyle} htmlFor="url-referencia">
+                    URL de referência
+                  </label>
+                  <input
+                    id="url-referencia"
+                    type="url"
+                    value={urlReferencia}
+                    onChange={(e) => { setUrlReferencia(e.target.value); markAlterado() }}
+                    placeholder="https://…"
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle} htmlFor="credito">
+                    Crédito / fonte
+                  </label>
+                  <input
+                    id="credito"
+                    type="text"
+                    value={credito}
+                    onChange={(e) => { setCredito(e.target.value); markAlterado() }}
+                    placeholder="Nome do veículo ou autor"
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── Endereço e prévia do link ── */}
+          <div style={cardStyle}>
+            <button
+              onClick={() => setShowPrevia((v) => !v)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: '#30252a',
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              {showPrevia ? 'Endereço e prévia do link ▾' : 'Endereço e prévia do link ▸'}
+            </button>
+
+            {showPrevia && (
+              <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Slug */}
+                <div>
+                  <label style={labelStyle}>Slug (endereço)</label>
+                  <input
+                    type="text"
+                    value={slug}
+                    readOnly
+                    style={{ ...inputStyle, background: '#f7f5f6', color: '#71636a', cursor: 'default' }}
+                  />
+                  <p style={{ fontSize: '12px', color: '#71636a', margin: '5px 0 0' }}>
+                    Gerado automaticamente a partir do título
+                  </p>
+                </div>
+
+                {/* Prévia de compartilhamento */}
+                <div
+                  style={{
+                    background: '#f0f4f8',
+                    border: '1px solid #cbd7de',
+                    borderRadius: '6px',
+                    padding: '14px',
+                  }}
+                >
+                  {fotos[0]?.url ? (
+                    <div
+                      style={{
+                        width: '100%',
+                        aspectRatio: '3 / 2',
+                        borderRadius: '4px',
+                        overflow: 'hidden',
+                        marginBottom: '10px',
+                      }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={fotos[0].url}
+                        alt="Prévia"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          objectPosition: `50% ${fotos[0].foco ?? 50}%`,
+                          display: 'block',
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        width: '100%',
+                        aspectRatio: '3 / 2',
+                        borderRadius: '4px',
+                        background: '#dde5ed',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#71636a',
+                        fontSize: '12px',
+                        marginBottom: '10px',
+                      }}
+                    >
+                      Sem foto — será usada imagem institucional padrão
+                    </div>
+                  )}
+                  <div style={{ fontWeight: 700, fontSize: '14px', color: '#30252a', marginBottom: '4px' }}>
+                    {titulo || '(sem título)'}
+                  </div>
+                  {resumoPrevia && (
+                    <div style={{ fontSize: '13px', color: '#71636a', marginBottom: '6px' }}>
+                      {resumoPrevia}
+                    </div>
+                  )}
+                  <div style={{ fontSize: '12px', color: '#71636a' }}>
+                    quimicosjc.org.br/noticias/{slug || '…'}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ── Sidebar ── */}
@@ -1060,19 +1440,27 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
               <input
                 type="checkbox"
                 checked={destaque}
-                onChange={(e) => { setDestaque(e.target.checked); markAlterado() }}
+                onChange={(e) => {
+                  setDestaque(e.target.checked)
+                  markAlterado()
+                  if (e.target.checked) {
+                    showToast('Ao salvar, esta notícia estará em 1ª posição nos destaques.')
+                  }
+                }}
                 style={{ width: '16px', height: '16px', accentColor: '#861e32', cursor: 'pointer' }}
               />
               <div>
-                <div style={{ fontWeight: 600 }}>Destaque na homepage</div>
-                <div style={{ fontSize: '12px', color: '#71636a', marginTop: '2px' }}>Exibido em posição de destaque</div>
+                <div style={{ fontWeight: 600 }}>Destacar na homepage</div>
+                <div style={{ fontSize: '12px', color: '#71636a', marginTop: '2px' }}>
+                  Até 4 notícias em destaque. Marcar desloca as demais.
+                </div>
               </div>
             </label>
           </div>
 
-          {/* Data de publicação */}
+          {/* Data e hora da notícia */}
           <div style={{ ...cardStyle, padding: '20px' }}>
-            <label style={labelStyle} htmlFor="publicado-em">Data da notícia</label>
+            <label style={labelStyle} htmlFor="publicado-em">Data e hora da notícia</label>
             <input
               id="publicado-em"
               type="datetime-local"
@@ -1080,8 +1468,13 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
               onChange={(e) => { setPublicadoEm(e.target.value); markAlterado() }}
               style={inputStyle}
             />
-            <p style={{ fontSize: '12px', color: '#71636a', margin: '6px 0 0' }}>
-              Deixe em branco para usar a data atual ao publicar.
+            {publicadoEm && (
+              <p style={{ fontSize: '12px', color: '#71636a', margin: '6px 0 4px' }}>
+                {formatDatetimeLocal(publicadoEm)}
+              </p>
+            )}
+            <p style={{ fontSize: '12px', color: '#71636a', margin: '4px 0 0' }}>
+              Exibida na notícia. Não programa a publicação.
             </p>
           </div>
 
@@ -1137,29 +1530,61 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
             ← Notícias
           </a>
           <span style={{ fontSize: '13px', color: '#71636a' }}>{savebarStatus}</span>
+          {status === 'publicado' && <StatusBadge status="publicado" />}
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <button
-            onClick={handleLixeira}
-            disabled={isPending || !noticiaId}
-            style={{
-              ...btnNeutro,
-              color: '#71636a',
-              cursor: noticiaId ? 'pointer' : 'not-allowed',
-              opacity: noticiaId ? 1 : 0.5,
-            }}
-          >
-            Lixeira
-          </button>
-          <button
-            onClick={salvarRascunho}
-            disabled={isPending}
-            style={{ ...btnNeutro, opacity: isPending ? 0.6 : 1 }}
-          >
-            {isPending ? 'Salvando…' : 'Salvar rascunho'}
-          </button>
-          {status !== 'publicado' && (
+        {status === 'publicado' ? (
+          /* Savebar: notícia publicada */
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button
+              onClick={handleLixeira}
+              disabled={isPending || !noticiaId}
+              style={{
+                ...btnNeutro,
+                color: '#71636a',
+                cursor: noticiaId ? 'pointer' : 'not-allowed',
+                opacity: noticiaId ? 1 : 0.5,
+              }}
+            >
+              Mover para lixeira
+            </button>
+            <button
+              onClick={() => setShowConfirmRetirar(true)}
+              disabled={isPending}
+              style={{ ...btnNeutro, color: '#861e32', borderColor: '#e8c8ce', opacity: isPending ? 0.6 : 1 }}
+            >
+              Retirar do ar
+            </button>
+            <button
+              onClick={atualizarPublicacao}
+              disabled={isPending}
+              style={{ ...btnPrimario, opacity: isPending ? 0.6 : 1 }}
+            >
+              {isPending ? 'Salvando…' : 'Atualizar publicação'}
+            </button>
+          </div>
+        ) : (
+          /* Savebar: rascunho / programado */
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button
+              onClick={handleLixeira}
+              disabled={isPending || !noticiaId}
+              style={{
+                ...btnNeutro,
+                color: '#71636a',
+                cursor: noticiaId ? 'pointer' : 'not-allowed',
+                opacity: noticiaId ? 1 : 0.5,
+              }}
+            >
+              Lixeira
+            </button>
+            <button
+              onClick={salvarRascunho}
+              disabled={isPending}
+              style={{ ...btnNeutro, opacity: isPending ? 0.6 : 1 }}
+            >
+              {isPending ? 'Salvando…' : 'Salvar rascunho'}
+            </button>
             <button
               onClick={() => setShowAgendarDialog(true)}
               disabled={isPending}
@@ -1167,15 +1592,15 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
             >
               Programar
             </button>
-          )}
-          <button
-            onClick={handlePublicar}
-            disabled={isPending}
-            style={{ ...btnPrimario, opacity: isPending ? 0.6 : 1 }}
-          >
-            Publicar agora
-          </button>
-        </div>
+            <button
+              onClick={handlePublicar}
+              disabled={isPending}
+              style={{ ...btnPrimario, opacity: isPending ? 0.6 : 1 }}
+            >
+              Publicar agora
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── Dialog: confirm publish ── */}
@@ -1195,6 +1620,30 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button onClick={() => setShowConfirm(false)} style={btnNeutro}>Cancelar</button>
               <button onClick={confirmarPublicacao} style={btnPrimario}>Sim, publicar agora</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Dialog: confirm retirar do ar ── */}
+      {showConfirmRetirar && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(30,20,25,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
+          onClick={() => setShowConfirmRetirar(false)}
+        >
+          <div
+            style={{ background: 'white', borderRadius: '8px', padding: '32px', maxWidth: '420px', width: '90%', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ margin: '0 0 12px', fontSize: '20px', color: '#30252a' }}>Retirar do ar?</h2>
+            <p style={{ margin: '0 0 24px', color: '#71636a', fontSize: '14px', lineHeight: '1.6' }}>
+              A notícia será movida de volta para <strong>Rascunho</strong> e deixará de ser visível no site.
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowConfirmRetirar(false)} style={btnNeutro}>Cancelar</button>
+              <button onClick={confirmarRetirarDoAr} style={{ ...btnNeutro, color: '#861e32', borderColor: '#e8c8ce' }}>
+                Retirar do ar
+              </button>
             </div>
           </div>
         </div>
