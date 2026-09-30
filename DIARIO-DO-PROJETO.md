@@ -59,6 +59,9 @@
 - [x] Banco de dados Supabase estruturado com 15 tabelas (São Paulo - sa-east-1)
 - [x] Integração Vercel + Supabase validada e ativa ("toque automático" respondendo com sucesso)
 - [x] Serviço de e-mails Resend configurado e integrado (local e Vercel)
+- [x] Sistema de autenticação completo: login, proteção de rotas, logout
+- [x] Painel acessado com sucesso via login real (Supabase Auth)
+- [x] Visual do painel fiel ao protótipo v9 aprovado pelo Sindicato
 
 ---
 
