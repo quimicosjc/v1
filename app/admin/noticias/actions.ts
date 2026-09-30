@@ -17,7 +17,7 @@ export interface Noticia {
   imagem_y: number | null
   fotos_json: string | null
   documentos_json: string | null
-  criado_por: string | null
+  autor_id: string | null   // nome real da coluna no banco
   publicado_em: string | null
   criado_em: string
   atualizado_em: string
@@ -113,7 +113,7 @@ export async function criarNoticia(
         status: data.status ?? 'rascunho',
         destaque: data.destaque ?? false,
         banner_url: data.banner_url ?? null,
-        // criado_por é preenchido automaticamente pelo trigger set_criado_por
+        // autor_id não é enviado pelo cliente — coluna aceita null
         publicado_em: data.publicado_em ?? null,
         fotos_json: data.fotos_json ?? null,
         documentos_json: data.documentos_json ?? null,
