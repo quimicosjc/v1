@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Noticia } from '@/app/admin/noticias/actions'
-import { moverParaLixeira } from '@/app/admin/noticias/actions'
+import { moverParaLixeira, atualizarNoticia } from '@/app/admin/noticias/actions'
 
 type Tab = 'todos' | 'rascunho' | 'publicado' | 'programado'
 
@@ -208,6 +208,16 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
     const result = await moverParaLixeira(id)
     if ('ok' in result) {
       setLista((prev) => prev.filter((n) => n.id !== id))
+    }
+  }
+
+  async function handleToggleDestaque(noticiaId: string, atualDestaque: boolean) {
+    const newValue = !atualDestaque;
+    setLista(prev => prev.map(n => n.id === noticiaId ? { ...n, destaque: newValue } : n));
+    try {
+      await atualizarNoticia(noticiaId, { destaque: newValue });
+    } catch {
+      // Falha silenciosa, recarregaria no próximo load
     }
   }
 
@@ -458,22 +468,27 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
                     )}
                   </td>
                   <td style={{ padding: '19px 24px', borderBottom: '1px solid #e8eef1' }}>
-                    {noticia.destaque ? (
-                      <span
-                        style={{
-                          background: '#fff2df',
-                          color: '#825914',
-                          borderRadius: '4px',
-                          padding: '3px 9px',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          display: 'inline-block',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        ★ Destaque
-                      </span>
-                    ) : null}
+                    <button
+                      onClick={() => handleToggleDestaque(noticia.id, noticia.destaque)}
+                      title={noticia.destaque ? 'Remover destaque' : 'Destacar na homepage'}
+                      style={{
+                        background: noticia.destaque ? '#fff2df' : 'transparent',
+                        color: noticia.destaque ? '#825914' : '#c0b8bc',
+                        border: noticia.destaque ? '1px solid #fff2df' : '1px solid #e4dce0',
+                        borderRadius: '4px',
+                        padding: '4px 10px',
+                        fontSize: '12px',
+                        fontWeight: noticia.destaque ? 600 : 400,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        whiteSpace: 'nowrap',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      <span>★</span> {noticia.destaque ? 'Destaque' : 'Destacar'}
+                    </button>
                   </td>
                   <td style={{ padding: '19px 24px', borderBottom: '1px solid #e8eef1' }}>
                     <BadgeStatus status={noticia.status} />

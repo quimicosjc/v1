@@ -186,6 +186,7 @@ export default function RichEditor({
   const [linkDialog, setLinkDialog] = useState<LinkDialogState>({ open: false, url: '', text: '' })
   const [embedDialog, setEmbedDialog] = useState<EmbedDialogState>({ open: false, code: '' })
   const [embedError, setEmbedError] = useState('')
+  const [tableDialog, setTableDialog] = useState({ open: false, rows: 3, cols: 3 })
   const imgInputRef = useRef<HTMLInputElement>(null)
 
   // ── Editor ──────────────────────────────────────────────────────────────────
@@ -332,8 +333,8 @@ export default function RichEditor({
           height: 0;
         }
         .ProseMirror:focus { outline: none; }
-        .ProseMirror img { max-width: 100%; height: auto; display: block; border-radius: 4px; margin: 8px 0; }
-        .ProseMirror table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        .ProseMirror img { width: 100%; height: auto; display: block; border-radius: 4px; margin: 8px 0; }
+        .ProseMirror table { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 12px 0; }
         .ProseMirror th, .ProseMirror td { border: 1px solid #e4dce0; padding: 8px 12px; text-align: left; }
         .ProseMirror th { background: #f8fafb; font-weight: 600; }
         .ProseMirror blockquote { border-left: 3px solid #861e32; margin: 0 0 12px; padding-left: 16px; color: #71636a; font-style: italic; }
@@ -470,11 +471,9 @@ export default function RichEditor({
           </button>
           <button
             type="button"
-            title="Inserir tabela 3×3"
+            title="Inserir tabela"
             style={btnStyle(editor.isActive('table'))}
-            onClick={() =>
-              editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-            }
+            onClick={() => setTableDialog({ open: true, rows: 3, cols: 3 })}
           >
             ⊞ Tabela
           </button>
@@ -596,6 +595,55 @@ export default function RichEditor({
                 Cancelar
               </button>
               <button type="button" style={btnPrimario} onClick={confirmEmbed}>
+                Inserir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {tableDialog.open && (
+        <div style={dialogOverlayStyle} onClick={() => setTableDialog(s => ({ ...s, open: false }))}>
+          <div style={dialogBoxStyle} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 16px', fontSize: '18px', color: '#30252a' }}>Inserir Tabela</h3>
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+              <div style={{ flex: 1 }}>
+                <label style={dialogLabelStyle}>Colunas</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={tableDialog.cols}
+                  onChange={(e) => setTableDialog(s => ({ ...s, cols: parseInt(e.target.value) || 1 }))}
+                  style={dialogInputStyle}
+                  autoFocus
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={dialogLabelStyle}>Linhas</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={tableDialog.rows}
+                  onChange={(e) => setTableDialog(s => ({ ...s, rows: parseInt(e.target.value) || 1 }))}
+                  style={dialogInputStyle}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button type="button" style={btnNeutro} onClick={() => setTableDialog(s => ({ ...s, open: false }))}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                style={btnPrimario}
+                onClick={() => {
+                  if (editor) {
+                    editor.chain().focus().insertTable({ rows: tableDialog.rows, cols: tableDialog.cols, withHeaderRow: true }).run()
+                  }
+                  setTableDialog(s => ({ ...s, open: false }))
+                }}
+              >
                 Inserir
               </button>
             </div>

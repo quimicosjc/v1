@@ -221,9 +221,12 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
   })
   const [tagInput, setTagInput] = useState('')
   const [destaque, setDestaque] = useState(noticia?.destaque ?? false)
-  const [publicadoEm, setPublicadoEm] = useState(
-    noticia?.publicado_em ? noticia.publicado_em.slice(0, 16) : '',
-  )
+  const [publicadoEm, setPublicadoEm] = useState(() => {
+    if (noticia?.publicado_em) return noticia.publicado_em.slice(0, 16)
+    const d = new Date()
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
+    return d.toISOString().slice(0, 16)
+  })
   const [status, setStatus] = useState<'rascunho' | 'publicado' | 'lixeira' | 'programado'>(
     noticia?.status ?? 'rascunho',
   )
@@ -631,21 +634,12 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
       if (!noticiaIdRef.current) {
         const result = await criarNoticia({ ...data, status: 'rascunho' })
         if ('error' in result) { showToast(result.error, 'erro'); return }
-        setNoticiaId(result.id)
-        noticiaIdRef.current = result.id
-        setStatus('rascunho')
-        setAlterado(false)
-        setAutoSaveStatus('')
-        showToast('Rascunho criado com sucesso.')
-        router.replace(`/admin/noticias/${result.id}`)
       } else {
         const result = await atualizarNoticia(noticiaIdRef.current, { ...data, status: 'rascunho' })
         if ('error' in result) { showToast(result.error, 'erro'); return }
-        setStatus('rascunho')
-        setAlterado(false)
-        setAutoSaveStatus('')
-        showToast('Rascunho salvo com sucesso.')
       }
+      router.push('/admin/noticias')
+      router.refresh()
     })
   }
 
@@ -655,9 +649,8 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
       const data = buildFormData()
       const result = await atualizarNoticia(noticiaIdRef.current, { ...data, status: 'publicado' })
       if ('error' in result) { showToast(result.error, 'erro'); return }
-      setAlterado(false)
-      setAutoSaveStatus('')
-      showToast('Publicação atualizada com sucesso.')
+      router.push('/admin/noticias')
+      router.refresh()
     })
   }
 
@@ -687,20 +680,13 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
       if (!id) {
         const result = await criarNoticia({ ...data, status: 'publicado' })
         if ('error' in result) { showToast(result.error, 'erro'); return }
-        id = result.id
-        setNoticiaId(id)
-        noticiaIdRef.current = id
-        router.replace(`/admin/noticias/${id}`)
       } else {
         await atualizarNoticia(id, data)
         const result = await publicarNoticia(id)
         if ('error' in result) { showToast(result.error, 'erro'); return }
       }
-      setStatus('publicado')
-      setAlterado(false)
-      setAutoSaveStatus('')
-      setPublishedSlug(slug)
-      setShowPostPublish(true)
+      router.push('/admin/noticias')
+      router.refresh()
     })
   }
 
@@ -714,19 +700,12 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
       if (!id) {
         const result = await criarNoticia({ ...data, status: 'programado', publicado_em: isoData })
         if ('error' in result) { showToast(result.error, 'erro'); return }
-        id = result.id
-        setNoticiaId(id)
-        noticiaIdRef.current = id
-        router.replace(`/admin/noticias/${id}`)
       } else {
         const result = await atualizarNoticia(id, { ...data, status: 'programado', publicado_em: isoData })
         if ('error' in result) { showToast(result.error, 'erro'); return }
       }
-      setStatus('programado')
-      setPublicadoEm(agendarData)
-      setAlterado(false)
-      setAutoSaveStatus('')
-      showToast(`Publicação programada para ${new Date(agendarData).toLocaleString('pt-BR')}.`)
+      router.push('/admin/noticias')
+      router.refresh()
     })
   }
 
