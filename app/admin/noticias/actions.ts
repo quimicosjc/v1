@@ -92,7 +92,7 @@ export async function criarNoticia(
   data: NoticiaFormData
 ): Promise<{ id: string } | { error: string }> {
   try {
-    const usuario = await getUsuarioLogado()
+    await getUsuarioLogado()
     const supabase = await createClient()
 
     // Gera slug a partir do título; se vazio, usa timestamp para não violar constraint
@@ -111,7 +111,7 @@ export async function criarNoticia(
         status: data.status ?? 'rascunho',
         destaque: data.destaque ?? false,
         banner_url: data.banner_url ?? null,
-        criado_por: usuario.id,
+        // criado_por é preenchido automaticamente pelo trigger set_criado_por
         publicado_em: data.publicado_em ?? null,
         fotos_json: data.fotos_json ?? null,
         documentos_json: data.documentos_json ?? null,
@@ -126,7 +126,6 @@ export async function criarNoticia(
 
     if (error) {
       console.error('Erro ao criar notícia:', error)
-      // Retorna o código do erro para facilitar diagnóstico
       return { error: `Erro ao salvar (${error.code}): ${error.message}` }
     }
 
@@ -145,11 +144,28 @@ export async function atualizarNoticia(
     await getUsuarioLogado()
     const supabase = await createClient()
 
-    const updates: Record<string, unknown> = { ...data }
-
-    if (data.titulo) {
-      updates.slug = gerarSlug(data.titulo)
+    // Monta updates explicitamente (sem spread) para evitar passar campos problemáticos
+    const updates: Record<string, unknown> = {
+      atualizado_em: new Date().toISOString(),
     }
+    if (data.titulo !== undefined) {
+      updates.titulo = data.titulo || 'Notícia sem título'
+      const s = gerarSlug(data.titulo || 'noticia-sem-titulo')
+      updates.slug = s || `noticia-${Date.now()}`
+    }
+    if (data.resumo !== undefined) updates.resumo = data.resumo ?? null
+    if (data.corpo !== undefined) updates.corpo = data.corpo ?? null
+    if (data.status !== undefined) updates.status = data.status
+    if (data.destaque !== undefined) updates.destaque = data.destaque
+    if (data.banner_url !== undefined) updates.banner_url = data.banner_url ?? null
+    if (data.publicado_em !== undefined) updates.publicado_em = data.publicado_em ?? null
+    if (data.fotos_json !== undefined) updates.fotos_json = data.fotos_json ?? null
+    if (data.documentos_json !== undefined) updates.documentos_json = data.documentos_json ?? null
+    if (data.chapeu !== undefined) updates.chapeu = data.chapeu ?? null
+    if (data.subtitulo !== undefined) updates.subtitulo = data.subtitulo ?? null
+    if (data.tags_json !== undefined) updates.tags_json = data.tags_json ?? null
+    if (data.url_referencia !== undefined) updates.url_referencia = data.url_referencia ?? null
+    if (data.credito !== undefined) updates.credito = data.credito ?? null
 
     const { error } = await supabase
       .from('conteudos')
@@ -159,15 +175,16 @@ export async function atualizarNoticia(
 
     if (error) {
       console.error('Erro ao atualizar notícia:', error)
-      return { error: 'Não foi possível salvar as alterações. Tente novamente.' }
+      return { error: `Erro ao salvar (${error.code}): ${error.message}` }
     }
 
     return { ok: true }
   } catch (err) {
     console.error('Erro inesperado ao atualizar notícia:', err)
-    return { error: 'Erro inesperado. Tente novamente.' }
+    return { error: `Erro inesperado: ${err instanceof Error ? err.message : String(err)}` }
   }
 }
+
 
 export async function publicarNoticia(
   id: string
