@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Paleta oficial do Sindicato dos Químicos de SJC
+   Aprovada no Documento Mestre — não alterar sem aprovação
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  --cor-principal:    #65172A;  /* vermelho escuro — fundo do painel e home */
+  --cor-botao:        #861E32;  /* botões primários */
+  --cor-titulo:       #791C30;  /* títulos e links */
+  --cor-texto:        #1a1a1a;  /* texto corrido */
+  --cor-fundo:        #f8f8f8;  /* fundo das páginas públicas */
+  --cor-borda:        #e0e0e0;  /* bordas e divisores */
+  --cor-sucesso:      #166534;  /* mensagens de sucesso */
+  --cor-erro:         #991b1b;  /* mensagens de erro */
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Base
+   ────────────────────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Tipografia editorial
+   ────────────────────────────────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--cor-titulo);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+a {
+  color: var(--cor-titulo);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Rodapé — coluna única à esquerda, entrelinha 1.4, 4px entre parágrafos
+   ────────────────────────────────────────────────────────────────────────── */
+.rodape-texto {
+  line-height: 1.4;
+}
+
+.rodape-texto p + p {
+  margin-top: 4px;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Utilitários da marca
+   ────────────────────────────────────────────────────────────────────────── */
+.bg-sindicato    { background-color: var(--cor-principal); }
+.text-sindicato  { color: var(--cor-principal); }
+.btn-sindicato {
+  background-color: var(--cor-botao);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.btn-sindicato:hover { filter: brightness(1.1); }
+.btn-sindicato:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Banner 9:2 — somente imagem, sem texto sobreposto
+   ────────────────────────────────────────────────────────────────────────── */
+.banner-9-2 {
+  aspect-ratio: 9 / 2;
+  width: 100%;
+  overflow: hidden;
+}
+
+.banner-9-2 img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Fotos editoriais — proporção 3:2
+   ────────────────────────────────────────────────────────────────────────── */
+.foto-3-2 {
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+}
+
+.foto-3-2 img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Mensagens de formulário
+   ────────────────────────────────────────────────────────────────────────── */
+.msg-sucesso {
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  color: var(--cor-sucesso);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.msg-erro {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: var(--cor-erro);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Acessibilidade — foco visível em todos os elementos interativos
+   ────────────────────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 3px solid var(--cor-botao);
+  outline-offset: 2px;
+}

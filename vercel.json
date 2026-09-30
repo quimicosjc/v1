@@ -1,0 +1,20 @@
+{
+  "crons": [
+    {
+      "path": "/api/keepalive",
+      "schedule": "0 9 */5 * *"
+    },
+    {
+      "path": "/api/jobs/publicacao-agendada",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/jobs/lixeira-expurgo",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/jobs/backup",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}

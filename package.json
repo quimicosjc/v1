@@ -1,0 +1,39 @@
+{
+  "name": "quimicos-sjc",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Site institucional do Sindicato dos Químicos de São José dos Campos e Região",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "^16.3.7",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "@supabase/supabase-js": "^2.49.8",
+    "@supabase/ssr": "^0.6.1",
+    "resend": "^4.6.0",
+    "zod": "^3.24.4",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
+    "sharp": "^0.35.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "@types/node": "^22.15.29",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.5",
+    "tailwindcss": "^4.1.8",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.16",
+    "eslint": "^9.29.0",
+    "eslint-config-next": "^15.3.4"
+  },
+  "allowScripts": {
+    "unrs-resolver@1.12.2": true
+  }
+}
