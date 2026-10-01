@@ -163,24 +163,29 @@ export async function listarSolicitacoes(
 export async function atualizarSituacaoSolicitacao(
   id: string,
   novaSituacao: 'recebida' | 'em_atendimento' | 'concluida' | 'nova' | 'tratada',
-  notaInterna?: string
+  notaInterna?: string,
+  dadosAtuais?: Record<string, any>
 ): Promise<{ ok: boolean } | { error: string }> {
   try {
     await getUsuarioLogado()
     const supabaseAdmin = getSupabaseAdmin()
 
-    const { data: atual, error: buscaErr } = await supabaseAdmin
-      .from('recebimentos')
-      .select('dados, processado')
-      .eq('id', id)
-      .single()
+    let baseDados = dadosAtuais
+    if (!baseDados) {
+      const { data: atual, error: buscaErr } = await supabaseAdmin
+        .from('recebimentos')
+        .select('dados')
+        .eq('id', id)
+        .single()
 
-    if (buscaErr || !atual) {
-      return { error: 'Solicitação não encontrada.' }
+      if (buscaErr || !atual) {
+        return { error: 'Solicitação não encontrada.' }
+      }
+      baseDados = atual.dados || {}
     }
 
-    const novosDados = {
-      ...(atual.dados || {}),
+    const novosDados: Record<string, any> = {
+      ...baseDados,
       situacao: novaSituacao,
     }
 
@@ -213,22 +218,27 @@ export async function atualizarSituacaoSolicitacao(
  */
 export async function salvarNotaInterna(
   id: string,
-  nota: string
+  nota: string,
+  dadosAtuais?: Record<string, any>
 ): Promise<{ ok: boolean } | { error: string }> {
   try {
     await getUsuarioLogado()
     const supabaseAdmin = getSupabaseAdmin()
 
-    const { data: atual, error: buscaErr } = await supabaseAdmin
-      .from('recebimentos')
-      .select('dados')
-      .eq('id', id)
-      .single()
+    let baseDados = dadosAtuais
+    if (!baseDados) {
+      const { data: atual, error: buscaErr } = await supabaseAdmin
+        .from('recebimentos')
+        .select('dados')
+        .eq('id', id)
+        .single()
 
-    if (buscaErr || !atual) return { error: 'Solicitação não encontrada.' }
+      if (buscaErr || !atual) return { error: 'Solicitação não encontrada.' }
+      baseDados = atual.dados || {}
+    }
 
-    const novosDados = {
-      ...(atual.dados || {}),
+    const novosDados: Record<string, any> = {
+      ...baseDados,
       nota_interna: nota,
     }
 

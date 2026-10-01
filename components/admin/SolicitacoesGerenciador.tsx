@@ -113,19 +113,32 @@ export default function SolicitacoesGerenciador({
 
   function handleMudarSituacao(novaSituacao: 'recebida' | 'em_atendimento' | 'concluida' | 'nova' | 'tratada') {
     if (!detalheItem) return
+    const anterior = detalheItem
+
+    // 1. Atualização Otimista Instantânea (0ms de atraso percebido)
+    const atualizado: SolicitacaoItem = {
+      ...detalheItem,
+      situacao: novaSituacao,
+      processado: novaSituacao === 'concluida' || novaSituacao === 'tratada',
+      nota_interna: notaTexto,
+    }
+    setDetalheItem(atualizado)
+    setItens((prev) => prev.map((i) => (i.id === detalheItem.id ? atualizado : i)))
+
+    // 2. Sincronização em background com o servidor
     startTransition(async () => {
-      const res = await atualizarSituacaoSolicitacao(detalheItem.id, novaSituacao, notaTexto)
+      const res = await atualizarSituacaoSolicitacao(
+        detalheItem.id,
+        novaSituacao,
+        notaTexto,
+        { ...detalheItem.campos, situacao: novaSituacao, nota_interna: notaTexto }
+      )
       if ('error' in res) {
+        // Reverte em caso de falha de conexão
+        setDetalheItem(anterior)
+        setItens((prev) => prev.map((i) => (i.id === detalheItem.id ? anterior : i)))
         showFeedback(res.error, 'erro')
       } else {
-        const atualizado = {
-          ...detalheItem,
-          situacao: novaSituacao,
-          processado: novaSituacao === 'concluida' || novaSituacao === 'tratada',
-          nota_interna: notaTexto,
-        }
-        setDetalheItem(atualizado)
-        setItens((prev) => prev.map((i) => (i.id === detalheItem.id ? atualizado : i)))
         showFeedback(`Situação atualizada para "${novaSituacao.replace('_', ' ')}".`)
       }
     })
@@ -134,14 +147,24 @@ export default function SolicitacoesGerenciador({
   async function handleSalvarNota() {
     if (!detalheItem) return
     setSalvandoNota(true)
-    const res = await salvarNotaInterna(detalheItem.id, notaTexto)
+    const anterior = detalheItem
+    const atualizado = { ...detalheItem, nota_interna: notaTexto }
+
+    // Atualização otimista imediata
+    setDetalheItem(atualizado)
+    setItens((prev) => prev.map((i) => (i.id === detalheItem.id ? atualizado : i)))
+
+    const res = await salvarNotaInterna(
+      detalheItem.id,
+      notaTexto,
+      { ...detalheItem.campos, nota_interna: notaTexto }
+    )
     setSalvandoNota(false)
     if ('error' in res) {
+      setDetalheItem(anterior)
+      setItens((prev) => prev.map((i) => (i.id === detalheItem.id ? anterior : i)))
       showFeedback(res.error, 'erro')
     } else {
-      const atualizado = { ...detalheItem, nota_interna: notaTexto }
-      setDetalheItem(atualizado)
-      setItens((prev) => prev.map((i) => (i.id === detalheItem.id ? atualizado : i)))
       showFeedback('Anotação interna salva com sucesso.')
     }
   }

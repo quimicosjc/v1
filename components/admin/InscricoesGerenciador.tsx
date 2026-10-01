@@ -66,17 +66,26 @@ export default function InscricoesGerenciador({
     return filtrados.slice(inicio, inicio + ITENS_POR_PAGINA)
   }, [filtrados, pagina])
 
-  // Ação de alternar status
+  // Ação de alternar status com Atualização Otimista Instantânea (0ms)
   function handleAlternarStatus(item: InscricaoItem) {
+    const statusAnterior = item.ativo
     const novoStatus = !item.ativo
+
+    // 1. Atualização Otimista Instantânea
+    setItens((prev) =>
+      prev.map((i) => (i.id === item.id ? { ...i, ativo: novoStatus } : i))
+    )
+
+    // 2. Disparo assíncrono em background
     startTransition(async () => {
       const res = await alternarStatusInscricao(item.id, novoStatus)
       if ('error' in res) {
+        // Reverte se houver erro
+        setItens((prev) =>
+          prev.map((i) => (i.id === item.id ? { ...i, ativo: statusAnterior } : i))
+        )
         showFeedback(res.error, 'erro')
       } else {
-        setItens((prev) =>
-          prev.map((i) => (i.id === item.id ? { ...i, ativo: novoStatus } : i))
-        )
         showFeedback(
           novoStatus
             ? `Inscrição de ${item.email} reativada.`
