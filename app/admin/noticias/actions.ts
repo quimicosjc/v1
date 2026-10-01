@@ -393,3 +393,96 @@ export async function uploadDocumento(
     return { error: 'Erro inesperado. Tente novamente.' }
   }
 }
+
+/**
+ * Obtém a ordem dos destaques na homepage (até 4 posições).
+ */
+export async function obterOrdemDestaques(): Promise<string[]> {
+  try {
+    const supabaseAdmin = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    )
+
+    const { data: config } = await supabaseAdmin
+      .from('site_config')
+      .select('valor')
+      .eq('chave', 'destaques')
+      .maybeSingle()
+
+    if (config?.valor?.slots && Array.isArray(config.valor.slots)) {
+      return config.valor.slots as string[]
+    }
+
+    const { data: destaques } = await supabaseAdmin
+      .from('conteudos')
+      .select('id')
+      .eq('tipo', 'noticia')
+      .eq('destaque', true)
+      .neq('status', 'lixeira')
+      .order('publicado_em', { ascending: false })
+      .limit(4)
+
+    return (destaques || []).map((d) => d.id)
+  } catch (err) {
+    console.error('Erro em obterOrdemDestaques:', err)
+    return []
+  }
+}
+
+/**
+ * Salva a ordem exata dos destaques na homepage (até 4 posições)
+ * e sincroniza o campo destaque da tabela conteudos.
+ */
+export async function salvarOrdemDestaques(
+  ids: string[]
+): Promise<{ ok: boolean } | { error: string }> {
+  try {
+    await getUsuarioLogado()
+    const supabaseAdmin = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    )
+
+    const slots = ids.slice(0, 4)
+
+    await supabaseAdmin
+      .from('site_config')
+      .upsert({
+        chave: 'destaques',
+        valor: { slots },
+        atualizado: new Date().toISOString(),
+      })
+
+    if (slots.length > 0) {
+      await supabaseAdmin
+        .from('conteudos')
+        .update({ destaque: true })
+        .in('id', slots)
+    }
+
+    const { data: anteriores } = await supabaseAdmin
+      .from('conteudos')
+      .select('id')
+      .eq('tipo', 'noticia')
+      .eq('destaque', true)
+
+    if (anteriores) {
+      const paraRemover = anteriores
+        .filter((a) => !slots.includes(a.id))
+        .map((a) => a.id)
+
+      if (paraRemover.length > 0) {
+        await supabaseAdmin
+          .from('conteudos')
+          .update({ destaque: false })
+          .in('id', paraRemover)
+      }
+    }
+
+    return { ok: true }
+  } catch (err) {
+    return { error: `Erro ao salvar destaques: ${err instanceof Error ? err.message : String(err)}` }
+  }
+}
+

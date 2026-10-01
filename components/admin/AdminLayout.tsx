@@ -11,6 +11,7 @@ const menuItems = [
   { href: '/admin',                   label: 'Início' },
   { href: '/admin/noticias',          label: 'Notícias' },
   { href: '/admin/jornais',           label: 'Jornais' },
+  { href: '/admin/homepage',          label: 'Homepage' },
   { href: '/admin/paginas',           label: 'Páginas do site' },
   { href: '/admin/solicitacoes',      label: 'Solicitações' },
   { href: '/admin/inscricoes',        label: 'Cadastro para notícias' },

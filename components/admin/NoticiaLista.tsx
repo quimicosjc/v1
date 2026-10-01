@@ -1,9 +1,14 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Noticia } from '@/app/admin/noticias/actions'
-import { moverParaLixeira, atualizarNoticia } from '@/app/admin/noticias/actions'
+import {
+  moverParaLixeira,
+  atualizarNoticia,
+  obterOrdemDestaques,
+  salvarOrdemDestaques,
+} from '@/app/admin/noticias/actions'
 
 type Tab = 'todos' | 'rascunho' | 'publicado' | 'programado'
 
@@ -139,6 +144,95 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
   const [lista, setLista] = useState<Noticia[]>(noticiasProp)
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; titulo: string } | null>(null)
 
+  // Gerenciamento dos 4 slots de Destaque da Homepage
+  const [destaquesSlots, setDestaquesSlots] = useState<string[]>(() => {
+    return noticiasProp.filter((n) => n.destaque).map((n) => n.id).slice(0, 4)
+  })
+  const [showDestaquesModal, setShowDestaquesModal] = useState(false)
+  const [slotAdicionarId, setSlotAdicionarId] = useState('')
+  const [salvandoDestaques, setSalvandoDestaques] = useState(false)
+  const [toastFeedback, setToastFeedback] = useState<string | null>(null)
+
+  function showToast(msg: string) {
+    setToastFeedback(msg)
+    setTimeout(() => setToastFeedback(null), 3500)
+  }
+
+  // Carrega a ordem salva no Supabase ao montar
+  useEffect(() => {
+    obterOrdemDestaques().then((slots) => {
+      if (slots && slots.length > 0) {
+        setDestaquesSlots(slots)
+      }
+    })
+  }, [])
+
+  function handleMoverDestaque(idx: number, direcao: -1 | 1) {
+    const novoIdx = idx + direcao
+    if (novoIdx < 0 || novoIdx >= destaquesSlots.length) return
+    const novo = [...destaquesSlots]
+    const temp = novo[idx]
+    novo[idx] = novo[novoIdx]
+    novo[novoIdx] = temp
+    setDestaquesSlots(novo)
+  }
+
+  function handleRemoverDestaqueSlot(id: string) {
+    setDestaquesSlots((prev) => prev.filter((item) => item !== id))
+  }
+
+  function handleAdicionarDestaqueSlot() {
+    if (!slotAdicionarId) return
+    if (destaquesSlots.length >= 4) {
+      showToast('O limite máximo é de 4 notícias em destaque.')
+      return
+    }
+    if (!destaquesSlots.includes(slotAdicionarId)) {
+      setDestaquesSlots((prev) => [...prev, slotAdicionarId])
+      setSlotAdicionarId('')
+    }
+  }
+
+  async function handleSalvarOrdemDestaques() {
+    setSalvandoDestaques(true)
+    const res = await salvarOrdemDestaques(destaquesSlots)
+    setSalvandoDestaques(false)
+    if ('error' in res) {
+      showToast(res.error)
+    } else {
+      setLista((prev) =>
+        prev.map((n) => ({
+          ...n,
+          destaque: destaquesSlots.includes(n.id),
+        }))
+      )
+      showToast('Ordem dos destaques da Homepage salva com sucesso!')
+      setShowDestaquesModal(false)
+    }
+  }
+
+  async function handleToggleDestaqueRapido(noticiaId: string) {
+    const jaEhDestaque = destaquesSlots.includes(noticiaId)
+    if (jaEhDestaque) {
+      const novosSlots = destaquesSlots.filter((id) => id !== noticiaId)
+      setDestaquesSlots(novosSlots)
+      setLista((prev) => prev.map((n) => (n.id === noticiaId ? { ...n, destaque: false } : n)))
+      await salvarOrdemDestaques(novosSlots)
+      showToast('Notícia retirada dos destaques.')
+    } else {
+      if (destaquesSlots.length >= 4) {
+        setShowDestaquesModal(true)
+        showToast('Limite de 4 destaques atingido. Organize as posições no modal.')
+        return
+      }
+      const novosSlots = [...destaquesSlots, noticiaId]
+      setDestaquesSlots(novosSlots)
+      setLista((prev) => prev.map((n) => (n.id === noticiaId ? { ...n, destaque: true } : n)))
+      await salvarOrdemDestaques(novosSlots)
+      showToast(`Notícia adicionada como ${novosSlots.length}º destaque!`)
+    }
+  }
+
   const contagens = useMemo(() => ({
     todos:      lista.length,
     rascunho:   lista.filter((n) => n.status === 'rascunho').length,
@@ -211,15 +305,7 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
     }
   }
 
-  async function handleToggleDestaque(noticiaId: string, atualDestaque: boolean) {
-    const newValue = !atualDestaque;
-    setLista(prev => prev.map(n => n.id === noticiaId ? { ...n, destaque: newValue } : n));
-    try {
-      await atualizarNoticia(noticiaId, { destaque: newValue });
-    } catch {
-      // Falha silenciosa, recarregaria no próximo load
-    }
-  }
+
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'todos',      label: 'Todas' },
@@ -255,23 +341,45 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
             Gerenciar notícias
           </h1>
         </div>
-        <a
-          href="/admin/noticias/nova"
-          style={{
-            background: '#861e32',
-            color: 'white',
-            borderRadius: '5px',
-            padding: '10px 16px',
-            fontSize: '14px',
-            fontWeight: 600,
-            textDecoration: 'none',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-          }}
-        >
-          ＋ Criar notícia
-        </a>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <button
+            type="button"
+            onClick={() => setShowDestaquesModal(true)}
+            style={{
+              border: '1px solid #f6deb3',
+              background: '#fff2df',
+              color: '#825914',
+              borderRadius: '5px',
+              padding: '10px 16px',
+              fontSize: '14px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontFamily: 'inherit',
+            }}
+          >
+            ★ Organizar destaques
+          </button>
+          <a
+            href="/admin/noticias/nova"
+            style={{
+              background: '#861e32',
+              color: 'white',
+              borderRadius: '5px',
+              padding: '10px 16px',
+              fontSize: '14px',
+              fontWeight: 600,
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            ＋ Criar notícia
+          </a>
+        </div>
       </div>
 
       {/* Card principal */}
@@ -468,27 +576,38 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
                     )}
                   </td>
                   <td style={{ padding: '19px 24px', borderBottom: '1px solid #e8eef1' }}>
-                    <button
-                      onClick={() => handleToggleDestaque(noticia.id, noticia.destaque)}
-                      title={noticia.destaque ? 'Remover destaque' : 'Destacar na homepage'}
-                      style={{
-                        background: noticia.destaque ? '#fff2df' : 'transparent',
-                        color: noticia.destaque ? '#825914' : '#c0b8bc',
-                        border: noticia.destaque ? '1px solid #fff2df' : '1px solid #e4dce0',
-                        borderRadius: '4px',
-                        padding: '4px 10px',
-                        fontSize: '12px',
-                        fontWeight: noticia.destaque ? 600 : 400,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        whiteSpace: 'nowrap',
-                        fontFamily: 'inherit',
-                      }}
-                    >
-                      <span>★</span> {noticia.destaque ? 'Destaque' : 'Destacar'}
-                    </button>
+                    {(() => {
+                      const pos = destaquesSlots.indexOf(noticia.id)
+                      const isDestaque = pos >= 0
+                      return (
+                        <button
+                          onClick={() => handleToggleDestaqueRapido(noticia.id)}
+                          title={
+                            isDestaque
+                              ? `Posição ${pos + 1} nos destaques da Homepage. Clique para remover.`
+                              : 'Clique para destacar na Homepage (máximo 4)'
+                          }
+                          style={{
+                            background: isDestaque ? '#fff2df' : 'transparent',
+                            color: isDestaque ? '#825914' : '#c0b8bc',
+                            border: isDestaque ? '1px solid #f6deb3' : '1px solid #e4dce0',
+                            borderRadius: '4px',
+                            padding: '4px 10px',
+                            fontSize: '12px',
+                            fontWeight: isDestaque ? 700 : 400,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            whiteSpace: 'nowrap',
+                            fontFamily: 'inherit',
+                          }}
+                        >
+                          <span>{isDestaque ? '★' : '☆'}</span>{' '}
+                          {isDestaque ? `${pos + 1}º Destaque` : 'Destacar'}
+                        </button>
+                      )
+                    })()}
                   </td>
                   <td style={{ padding: '19px 24px', borderBottom: '1px solid #e8eef1' }}>
                     <BadgeStatus status={noticia.status} />
@@ -652,6 +771,293 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
           onConfirmar={confirmarApagar}
           onCancelar={() => setConfirmDelete(null)}
         />
+      )}
+
+      {/* ── Modal: Organizar Destaques da Homepage ──────────────────────── */}
+      {showDestaquesModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px',
+          }}
+          onClick={() => setShowDestaquesModal(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '8px',
+              padding: '28px',
+              maxWidth: '560px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+              <div>
+                <h2 style={{ fontSize: '19px', fontWeight: 800, color: '#30252a', margin: '0 0 4px 0' }}>
+                  ★ Organizar destaques da Homepage
+                </h2>
+                <p style={{ margin: 0, fontSize: '13px', color: '#71636a' }}>
+                  Defina as até 4 notícias em destaque e sua ordem exata de exibição. A 1ª matéria abre o bloco na capa.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDestaquesModal(false)}
+                style={{ border: 'none', background: 'transparent', fontSize: '20px', cursor: 'pointer', color: '#71636a' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Slots 1 a 4 */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '20px 0' }}>
+              {[0, 1, 2, 3].map((slotIdx) => {
+                const idNaVaga = destaquesSlots[slotIdx]
+                const noticia = idNaVaga ? lista.find((n) => n.id === idNaVaga) : null
+
+                return (
+                  <div
+                    key={slotIdx}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      background: noticia ? '#fcfbfa' : '#f9fafb',
+                      border: noticia ? '1px solid #e4dce0' : '1px dashed #ced9df',
+                      borderRadius: '6px',
+                      padding: '12px 14px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '50%',
+                        background: noticia ? '#861e32' : '#e4dce0',
+                        color: noticia ? 'white' : '#71636a',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {slotIdx + 1}
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {noticia ? (
+                        <div>
+                          <div
+                            style={{
+                              fontSize: '14px',
+                              fontWeight: 700,
+                              color: '#30252a',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {noticia.titulo}
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#71636a', marginTop: '2px' }}>
+                            {slotIdx === 0 ? '🏆 Destaque Principal' : `Destaque secundário (${slotIdx + 1}ª posição)`}
+                            {noticia.status !== 'publicado' && ' • (Não publicada)'}
+                          </div>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: '13px', color: '#9bb2bf', fontStyle: 'italic' }}>
+                          Posição {slotIdx + 1} disponível
+                        </span>
+                      )}
+                    </div>
+
+                    {noticia && (
+                      <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                        <button
+                          type="button"
+                          onClick={() => handleMoverDestaque(slotIdx, -1)}
+                          disabled={slotIdx === 0}
+                          title="Subir posição"
+                          style={{
+                            border: '1px solid #ced9df',
+                            background: 'white',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            cursor: slotIdx === 0 ? 'default' : 'pointer',
+                            opacity: slotIdx === 0 ? 0.4 : 1,
+                            fontSize: '12px',
+                          }}
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMoverDestaque(slotIdx, 1)}
+                          disabled={slotIdx === destaquesSlots.length - 1}
+                          title="Descer posição"
+                          style={{
+                            border: '1px solid #ced9df',
+                            background: 'white',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            cursor: slotIdx === destaquesSlots.length - 1 ? 'default' : 'pointer',
+                            opacity: slotIdx === destaquesSlots.length - 1 ? 0.4 : 1,
+                            fontSize: '12px',
+                          }}
+                        >
+                          ↓
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoverDestaqueSlot(noticia.id)}
+                          title="Retirar dos destaques"
+                          style={{
+                            border: '1px solid #e8c8ce',
+                            background: 'white',
+                            color: '#861e32',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Adicionar notícia na vaga */}
+            {destaquesSlots.length < 4 && (
+              <div
+                style={{
+                  background: '#f8fafb',
+                  border: '1px solid #e4dce0',
+                  borderRadius: '6px',
+                  padding: '14px',
+                  marginBottom: '20px',
+                }}
+              >
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#30252a', display: 'block', marginBottom: '8px' }}>
+                  Preencher vaga de destaque:
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <select
+                    value={slotAdicionarId}
+                    onChange={(e) => setSlotAdicionarId(e.target.value)}
+                    style={{
+                      flex: 1,
+                      border: '1px solid #cbd7de',
+                      borderRadius: '5px',
+                      padding: '8px 10px',
+                      fontSize: '13px',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="">Selecione uma notícia publicada…</option>
+                    {lista
+                      .filter((n) => !destaquesSlots.includes(n.id) && n.status === 'publicado')
+                      .map((n) => (
+                        <option key={n.id} value={n.id}>
+                          {n.titulo}
+                        </option>
+                      ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={handleAdicionarDestaqueSlot}
+                    disabled={!slotAdicionarId}
+                    style={{
+                      background: slotAdicionarId ? '#861e32' : '#e4dce0',
+                      color: slotAdicionarId ? 'white' : '#71636a',
+                      border: 'none',
+                      borderRadius: '5px',
+                      padding: '8px 14px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: slotAdicionarId ? 'pointer' : 'default',
+                    }}
+                  >
+                    ＋ Inserir
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #e4dce0', paddingTop: '16px' }}>
+              <button
+                type="button"
+                onClick={() => setShowDestaquesModal(false)}
+                style={{
+                  border: '1px solid #ced9df',
+                  background: 'white',
+                  color: '#30252a',
+                  borderRadius: '5px',
+                  padding: '9px 16px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSalvarOrdemDestaques}
+                disabled={salvandoDestaques}
+                style={{
+                  background: '#861e32',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '5px',
+                  padding: '9px 18px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  opacity: salvandoDestaques ? 0.6 : 1,
+                }}
+              >
+                {salvandoDestaques ? 'Salvando…' : 'Salvar destaques'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Feedback */}
+      {toastFeedback && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '25px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: '#183b4b',
+            color: 'white',
+            padding: '12px 22px',
+            borderRadius: '6px',
+            fontSize: '14px',
+            fontWeight: 500,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+            zIndex: 9999,
+          }}
+        >
+          {toastFeedback}
+        </div>
       )}
     </div>
   )
