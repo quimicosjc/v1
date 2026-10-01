@@ -15,6 +15,8 @@
 | 29/09/2026 | Controle de versões: pastas v1/, v2/ etc. | Segurança: nunca sobrescrever sem criar ponto de recuperação |
 | 29/09/2026 | Sem IA, sem captura automática de redes sociais | Decisão expressa do Sindicato; publicação e links são sempre manuais |
 | 29/09/2026 | Painel intuitivo igual ao protótipo v9 | Operado por pessoa do Sindicato sem conhecimento técnico |
+| 30/09/2026 | Migração: fotos verticais e proporções originais | Se houver foto em pé (vertical) no acervo atual, preservar orientação original sem corte horizontal forçado. Nunca esticar fotos pequenas. |
+
 
 ---
 
