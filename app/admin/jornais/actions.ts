@@ -75,8 +75,24 @@ export async function listarPublicacoes(): Promise<PublicacaoJornal[]> {
       .order('ordem', { ascending: true })
       .order('nome', { ascending: true })
 
+    if (!error && data && data.length === 0) {
+      // Se a tabela estiver vazia, insere automaticamente a publicação padrão "Boca no Trombone"
+      const { data: nova } = await supabaseAdmin
+        .from('publicacoes_jornal')
+        .insert({
+          nome: 'Boca no Trombone',
+          cor_hex: '#65172A',
+          ativo: true,
+          ordem: 1,
+        })
+        .select('*')
+        .maybeSingle()
+
+      if (nova) return [nova as PublicacaoJornal]
+      return [PUBLICACAO_PADRAO]
+    }
+
     if (error || !data || data.length === 0) {
-      // Se a tabela estiver vazia ou ocorrer erro transitório, assegura a publicação padrão
       return [PUBLICACAO_PADRAO]
     }
 
