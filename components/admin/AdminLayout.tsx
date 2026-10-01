@@ -144,19 +144,23 @@ export default function AdminLayout({ usuario, breadcrumb, activeHref, children 
             {iniciais}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div
+            <a
+              href="/admin/usuarios"
+              title="Gerenciar perfil e alterar senha"
               style={{
                 fontSize: '14px',
                 fontWeight: 600,
                 color: 'white',
+                textDecoration: 'none',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
+                display: 'block',
               }}
             >
               {usuario.nome}
-            </div>
-            <small style={{ fontSize: '11px', color: '#9bb2bf' }}>
+            </a>
+            <small style={{ fontSize: '11px', color: '#eed2dc' }}>
               {papelLabel[usuario.papel] ?? usuario.papel}
             </small>
           </div>

@@ -97,6 +97,10 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
   }
 
   function togglePermissao(area: string, acao: string) {
+    if (acao === 'excluir') {
+      showFeedback('A permissão de exclusão é restrita exclusivamente ao Administrador.', 'erro')
+      return
+    }
     setPermissoesLocais((prev) => {
       const atuais = prev[area] || []
       const existe = atuais.includes(acao)
@@ -109,11 +113,17 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
   function handleSalvarAlteracoes() {
     if (!usuarioSelecionado) return
     startTransition(async () => {
+      // Garante que a permissão de exclusão jamais seja delegada
+      const permissoesSeguras: Record<string, string[]> = {}
+      for (const [area, acoes] of Object.entries(permissoesLocais)) {
+        permissoesSeguras[area] = acoes.filter((a) => a !== 'excluir')
+      }
+
       const res = await atualizarUsuario(usuarioSelecionado.id, {
         ativo: ativoLocal,
         papel: papelLocal,
         pode_denuncias: podeDenunciasLocal,
-        permissoes_json: JSON.stringify(permissoesLocais),
+        permissoes_json: JSON.stringify(permissoesSeguras),
       })
 
       if ('error' in res) {
@@ -127,7 +137,7 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
                   ativo: ativoLocal,
                   papel: papelLocal,
                   pode_denuncias: podeDenunciasLocal,
-                  permissoes_json: JSON.stringify(permissoesLocais),
+                  permissoes_json: JSON.stringify(permissoesSeguras),
                 }
               : u
           )
@@ -193,7 +203,8 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
       if ('error' in res) {
         showFeedback(res.error, 'erro')
       } else {
-        showFeedback('Senha alterada com sucesso!')
+        const isSelf = usuarioSelecionado.e_principal || usuarioSelecionado.id === usuarioLogado.id
+        showFeedback(isSelf ? 'Sua senha foi alterada com sucesso!' : 'Senha alterada com sucesso!')
         setShowSenhaModal(false)
         setSenhaRedefinir('')
       }
@@ -411,7 +422,15 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
                   </div>
                 </div>
 
-                {!usuarioSelecionado.e_principal && (
+                {usuarioSelecionado.e_principal ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowSenhaModal(true)}
+                    style={btnPrimario}
+                  >
+                    🔑 Alterar minha senha
+                  </button>
+                ) : (
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button
                       type="button"
@@ -431,24 +450,22 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
                 )}
               </div>
 
-              {/* Aviso da Conta Principal */}
               {usuarioSelecionado.e_principal ? (
                 <div
                   style={{
                     marginTop: '20px',
-                    padding: '16px 20px',
-                    background: '#fdf8f9',
-                    border: '1px solid #e8c8ce',
-                    borderRadius: '6px',
+                    display: 'flex',
+                    gap: '24px',
+                    flexWrap: 'wrap',
+                    borderTop: '1px solid #e4dce0',
+                    paddingTop: '16px',
                     fontSize: '13px',
-                    color: '#65172a',
-                    lineHeight: '1.5',
+                    color: '#71636a',
                   }}
                 >
-                  <strong>Conta Principal Protegida (§14.5 do Documento Mestre):</strong>
-                  <p style={{ margin: '4px 0 0' }}>
-                    A conta de administrador principal possui acesso total e permanente a todas as áreas. Nenhum outro usuário pode bloquear, excluir, reduzir permissões ou alterar as credenciais desta conta.
-                  </p>
+                  <div><strong>Nível:</strong> Administrador Geral</div>
+                  <div><strong>Situação:</strong> Ativo</div>
+                  <div><strong>Denúncias:</strong> Acesso total liberado</div>
                 </div>
               ) : (
                 /* Configurações da Conta Normal */
@@ -518,8 +535,29 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
                           ÁREA DO PAINEL
                         </th>
                         {ACOES.map((acao) => (
-                          <th key={acao.id} style={{ padding: '12px 12px', fontWeight: 600, color: '#71636a' }}>
-                            {acao.label}
+                          <th
+                            key={acao.id}
+                            style={{
+                              padding: '12px 12px',
+                              fontWeight: 600,
+                              color: acao.id === 'excluir' ? '#861e32' : '#71636a',
+                            }}
+                          >
+                            <div>{acao.label}</div>
+                            {acao.id === 'excluir' && (
+                              <div
+                                style={{
+                                  fontSize: '10px',
+                                  fontWeight: 700,
+                                  color: '#861e32',
+                                  marginTop: '2px',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.4px',
+                                }}
+                              >
+                                🔒 Exclusivo Admin
+                              </div>
+                            )}
                           </th>
                         ))}
                       </tr>
@@ -537,6 +575,30 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
                             {area.label}
                           </td>
                           {ACOES.map((acao) => {
+                            if (acao.id === 'excluir') {
+                              return (
+                                <td key={acao.id} style={{ padding: '14px 12px' }}>
+                                  <span
+                                    title="Exclusão de conteúdos é prerrogativa restrita exclusivamente ao Administrador"
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      fontSize: '11px',
+                                      fontWeight: 600,
+                                      color: '#71636a',
+                                      background: '#f4eff1',
+                                      border: '1px solid #e5d9dc',
+                                      padding: '3px 8px',
+                                      borderRadius: '4px',
+                                      userSelect: 'none',
+                                    }}
+                                  >
+                                    🔒 Restrito
+                                  </span>
+                                </td>
+                              )
+                            }
                             const isChecked = (permissoesLocais[area.id] || []).includes(acao.id)
                             return (
                               <td key={acao.id} style={{ padding: '14px 12px' }}>
@@ -699,7 +761,7 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
         </div>
       )}
 
-      {/* ── Modal: Redefinir Senha ───────────────────────────────────────── */}
+      {/* ── Modal: Redefinir / Alterar Senha ─────────────────────────────── */}
       {showSenhaModal && usuarioSelecionado && (
         <div
           style={{
@@ -718,20 +780,25 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
             style={{
               background: 'white',
               borderRadius: '8px',
-              padding: '24px',
-              maxWidth: '420px',
+              padding: '26px',
+              maxWidth: '440px',
               width: '100%',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#30252a', margin: '0 0 6px 0' }}>
-              Redefinir senha de {usuarioSelecionado.nome}
+            <h2 style={{ fontSize: '19px', fontWeight: 800, color: '#30252a', margin: '0 0 6px 0' }}>
+              {usuarioSelecionado.e_principal || usuarioSelecionado.id === usuarioLogado.id
+                ? 'Alterar minha senha de acesso'
+                : `Redefinir senha de ${usuarioSelecionado.nome}`}
             </h2>
-            <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: '#71636a' }}>
-              Digite uma nova senha para este usuário. Ele utilizará essa senha no próximo login.
+            <p style={{ margin: '0 0 18px 0', fontSize: '13px', color: '#71636a', lineHeight: 1.5 }}>
+              {usuarioSelecionado.e_principal || usuarioSelecionado.id === usuarioLogado.id
+                ? 'Digite sua nova senha de acesso ao painel. Ela terá validade imediata para os seus próximos acessos.'
+                : 'Digite uma nova senha para este usuário. Ele utilizará essa senha no próximo login.'}
             </p>
 
-            <div style={{ marginBottom: '16px' }}>
+            <div style={{ marginBottom: '18px' }}>
               <label style={labelStyle}>Nova senha (mínimo 6 caracteres)</label>
               <input
                 type="password"
@@ -754,7 +821,11 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
                 disabled={isPending || senhaRedefinir.length < 6}
                 style={{ ...btnPrimario, opacity: isPending || senhaRedefinir.length < 6 ? 0.6 : 1 }}
               >
-                {isPending ? 'Salvando…' : 'Salvar nova senha'}
+                {isPending
+                  ? 'Salvando…'
+                  : usuarioSelecionado.e_principal || usuarioSelecionado.id === usuarioLogado.id
+                  ? 'Salvar minha nova senha'
+                  : 'Salvar nova senha'}
               </button>
             </div>
           </div>
