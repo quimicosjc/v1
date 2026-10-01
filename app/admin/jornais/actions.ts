@@ -261,13 +261,14 @@ export async function criarEdicao(
       .insert({
         publicacao_id: data.publicacao_id,
         numero,
-        complemento: complemento || null,
+        complemento: complemento || '',
         data_edicao: data.data_edicao || null,
         titulo: data.titulo?.trim() || `Edição ${numero}`,
         subtitulo: data.subtitulo?.trim() || null,
         pdf_url: data.pdf_url || null,
         capa_url: data.capa_url || null,
         status: data.status,
+        estado: data.status,
       })
       .select('id')
       .single()
@@ -310,13 +311,16 @@ export async function atualizarEdicao(
 
     if (data.publicacao_id !== undefined) updatePayload.publicacao_id = data.publicacao_id
     if (data.numero !== undefined) updatePayload.numero = Number(data.numero)
-    if (data.complemento !== undefined) updatePayload.complemento = data.complemento?.trim() || null
+    if (data.complemento !== undefined) updatePayload.complemento = data.complemento?.trim() || ''
     if (data.data_edicao !== undefined) updatePayload.data_edicao = data.data_edicao || null
     if (data.titulo !== undefined) updatePayload.titulo = data.titulo?.trim() || null
     if (data.subtitulo !== undefined) updatePayload.subtitulo = data.subtitulo?.trim() || null
     if (data.pdf_url !== undefined) updatePayload.pdf_url = data.pdf_url || null
     if (data.capa_url !== undefined) updatePayload.capa_url = data.capa_url || null
-    if (data.status !== undefined) updatePayload.status = data.status
+    if (data.status !== undefined) {
+      updatePayload.status = data.status
+      updatePayload.estado = data.status
+    }
 
     const { error } = await supabaseAdmin
       .from('edicoes_jornal')
