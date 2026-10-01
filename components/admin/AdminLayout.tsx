@@ -22,10 +22,11 @@ interface AdminLayoutProps {
   usuario: { nome: string; papel: string }
   breadcrumb: string
   activeHref?: string
+  pendentesCount?: number
   children: React.ReactNode
 }
 
-export default function AdminLayout({ usuario, breadcrumb, activeHref, children }: AdminLayoutProps) {
+export default function AdminLayout({ usuario, breadcrumb, activeHref, pendentesCount, children }: AdminLayoutProps) {
   const iniciais = usuario.nome
     .split(' ')
     .map((n: string) => n[0])
@@ -103,7 +104,8 @@ export default function AdminLayout({ usuario, breadcrumb, activeHref, children 
                 href={item.href}
                 style={{
                   display: 'flex',
-                  gap: '15px',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                   padding: '10px 13px',
                   color: '#f6e7ec',
                   borderRadius: '6px',
@@ -114,7 +116,21 @@ export default function AdminLayout({ usuario, breadcrumb, activeHref, children 
                   boxShadow: isActive ? 'inset 3px 0 #ffc4cc' : 'none',
                 }}
               >
-                {item.label}
+                <span>{item.label}</span>
+                {item.href === '/admin/solicitacoes' && pendentesCount && pendentesCount > 0 ? (
+                  <span
+                    style={{
+                      background: '#ffc4cc',
+                      color: '#65172a',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      padding: '2px 7px',
+                      borderRadius: '10px',
+                    }}
+                  >
+                    {pendentesCount}
+                  </span>
+                ) : null}
               </a>
             )
           })}

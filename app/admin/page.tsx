@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import { getUsuarioLogado } from '@/lib/supabase/auth'
 import AdminLayout from '@/components/admin/AdminLayout'
+import { obterContagemPendentes } from '@/app/admin/solicitacoes/actions'
 
 export const metadata: Metadata = {
   title: 'Painel de Controle — Sindicato dos Químicos SJC',
@@ -8,13 +9,17 @@ export const metadata: Metadata = {
 }
 
 export default async function AdminPage() {
-  const usuario = await getUsuarioLogado()
+  const [usuario, pendentesCount] = await Promise.all([
+    getUsuarioLogado(),
+    obterContagemPendentes(),
+  ])
 
   return (
     <AdminLayout
       usuario={usuario}
       breadcrumb="Início"
       activeHref="/admin"
+      pendentesCount={pendentesCount}
     >
       <p style={{ fontSize: '12px', letterSpacing: '1.7px', color: '#861e32', fontWeight: 700, margin: '6px 0 8px' }}>
         INÍCIO
