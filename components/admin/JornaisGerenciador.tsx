@@ -233,7 +233,7 @@ export default function JornaisGerenciador({
             status: statusDestino,
             criado_em: new Date().toISOString(),
           }
-          setEdicoes((prev) => [nova, ...prev].sort((a, b) => b.numero - a.numero))
+          setEdicoes((prev) => [nova, ...prev].sort((a, b) => Number(b.numero) - Number(a.numero)))
           showFeedback(
             statusDestino === 'publicado'
               ? 'Edição publicada com sucesso!'

@@ -89,11 +89,14 @@ export async function salvarConfigHomepage(
 
     const { error } = await supabaseAdmin
       .from('site_config')
-      .upsert({
-        chave: 'homepage',
-        valor: config,
-        atualizado: new Date().toISOString(),
-      })
+      .upsert(
+        {
+          chave: 'homepage',
+          valor: config,
+          atualizado_em: new Date().toISOString(),
+        },
+        { onConflict: 'chave' }
+      )
 
     if (error) {
       console.error('Erro ao salvar configuração da homepage:', error)

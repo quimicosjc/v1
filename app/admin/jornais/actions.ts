@@ -1,6 +1,5 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { getUsuarioLogado } from '@/lib/supabase/auth'
 
@@ -18,7 +17,7 @@ export interface EdicaoJornal {
   publicacao_id: string
   publicacao_nome?: string
   publicacao_cor?: string
-  numero: number
+  numero: string | number
   complemento?: string | null
   data_edicao: string | null
   titulo: string | null
@@ -32,7 +31,7 @@ export interface EdicaoJornal {
 
 export interface EdicaoFormData {
   publicacao_id: string
-  numero: number
+  numero: string | number
   complemento?: string | null
   data_edicao: string | null
   titulo?: string | null
@@ -50,7 +49,7 @@ function getSupabaseAdmin() {
 }
 
 /**
- * Publicação padrão de fallback caso a tabela ainda não tenha registros
+ * Publicação padrão de fallback
  */
 const PUBLICACAO_PADRAO: PublicacaoJornal = {
   id: '00000000-0000-0000-0000-000000000001',
@@ -71,32 +70,21 @@ export async function listarPublicacoes(): Promise<PublicacaoJornal[]> {
 
     const { data, error } = await supabaseAdmin
       .from('publicacoes_jornal')
-      .select('*')
-      .order('ordem', { ascending: true })
+      .select('id, nome, descricao, criado_em')
       .order('nome', { ascending: true })
-
-    if (!error && data && data.length === 0) {
-      // Se a tabela estiver vazia, insere automaticamente a publicação padrão "Boca no Trombone"
-      const { data: nova } = await supabaseAdmin
-        .from('publicacoes_jornal')
-        .insert({
-          nome: 'Boca no Trombone',
-          cor_hex: '#65172A',
-          ativo: true,
-          ordem: 1,
-        })
-        .select('*')
-        .maybeSingle()
-
-      if (nova) return [nova as PublicacaoJornal]
-      return [PUBLICACAO_PADRAO]
-    }
 
     if (error || !data || data.length === 0) {
       return [PUBLICACAO_PADRAO]
     }
 
-    return data as PublicacaoJornal[]
+    return data.map((item: any, idx: number) => ({
+      id: item.id,
+      nome: item.nome,
+      cor_hex: '#65172A',
+      ativo: true,
+      ordem: idx + 1,
+      criado_em: item.criado_em,
+    }))
   } catch (err) {
     console.error('Erro ao listar publicações:', err)
     return [PUBLICACAO_PADRAO]
@@ -121,15 +109,12 @@ export async function criarPublicacao(data: {
     }
 
     const supabaseAdmin = getSupabaseAdmin()
-    const cor = data.cor_hex?.trim() || '#65172A'
 
     const { data: pub, error } = await supabaseAdmin
       .from('publicacoes_jornal')
       .insert({
         nome: data.nome.trim(),
-        cor_hex: cor,
-        ativo: true,
-        ordem: 0,
+        descricao: data.cor_hex?.trim() || null,
       })
       .select('id')
       .single()
@@ -146,7 +131,7 @@ export async function criarPublicacao(data: {
 }
 
 /**
- * Lista as edições cadastradas (com paginação e filtros)
+ * Lista edições de jornal com filtros e ordenação
  */
 export async function listarEdicoes(filtro: {
   publicacao_id?: string
@@ -163,21 +148,18 @@ export async function listarEdicoes(filtro: {
         id,
         publicacao_id,
         numero,
-        complemento,
-        data_edicao,
-        titulo,
-        subtitulo,
-        pdf_url,
+        mes_ano,
         capa_url,
+        pdf_url,
         status,
+        data_publicacao,
         criado_em,
         atualizado_em,
         publicacoes_jornal (
-          nome,
-          cor_hex
+          nome
         )
       `)
-      .order('numero', { ascending: false })
+      .order('criado_em', { ascending: false })
 
     if (filtro.publicacao_id && filtro.publicacao_id !== 'todas') {
       query = query.eq('publicacao_id', filtro.publicacao_id)
@@ -189,12 +171,7 @@ export async function listarEdicoes(filtro: {
 
     if (filtro.busca) {
       const termo = filtro.busca.trim()
-      const num = parseInt(termo, 10)
-      if (!isNaN(num)) {
-        query = query.eq('numero', num)
-      } else {
-        query = query.ilike('titulo', `%${termo}%`)
-      }
+      query = query.or(`numero.ilike.%${termo}%,mes_ano.ilike.%${termo}%`)
     }
 
     const { data, error } = await query
@@ -204,22 +181,25 @@ export async function listarEdicoes(filtro: {
       return []
     }
 
-    return (data || []).map((item: any) => ({
-      id: item.id,
-      publicacao_id: item.publicacao_id,
-      publicacao_nome: item.publicacoes_jornal?.nome || 'Boca no Trombone',
-      publicacao_cor: item.publicacoes_jornal?.cor_hex || '#65172A',
-      numero: item.numero,
-      complemento: item.complemento,
-      data_edicao: item.data_edicao,
-      titulo: item.titulo,
-      subtitulo: item.subtitulo,
-      pdf_url: item.pdf_url,
-      capa_url: item.capa_url,
-      status: item.status || 'rascunho',
-      criado_em: item.criado_em,
-      atualizado_em: item.atualizado_em,
-    }))
+    return (data || []).map((item: any) => {
+      const pubNome = item.publicacoes_jornal?.nome || 'Boca no Trombone'
+      return {
+        id: item.id,
+        publicacao_id: item.publicacao_id,
+        publicacao_nome: pubNome,
+        publicacao_cor: '#65172A',
+        numero: item.numero,
+        complemento: item.mes_ano || '',
+        data_edicao: item.data_publicacao || item.criado_em?.split('T')[0] || null,
+        titulo: `${pubNome} — Edição nº ${item.numero}`,
+        subtitulo: item.mes_ano || null,
+        pdf_url: item.pdf_url,
+        capa_url: item.capa_url,
+        status: (item.status === 'publicado' ? 'publicado' : 'rascunho') as 'publicado' | 'rascunho',
+        criado_em: item.criado_em,
+        atualizado_em: item.atualizado_em,
+      }
+    })
   } catch (err) {
     console.error('Erro inesperado em listarEdicoes:', err)
     return []
@@ -240,51 +220,38 @@ export async function criarEdicao(
       return { error: 'Selecione a publicação (jornal).' }
     }
 
-    if (!data.numero || isNaN(Number(data.numero)) || Number(data.numero) <= 0) {
-      return { error: 'Informe um número de edição válido.' }
+    const numStr = String(data.numero ?? '').trim()
+    if (!numStr) {
+      return { error: 'Informe o número da edição.' }
     }
 
-    // Se estiver publicando, data e PDF são obrigatórios
     if (data.status === 'publicado') {
-      if (!data.data_edicao) {
-        return { error: 'A data da edição é obrigatória para publicar.' }
-      }
       if (!data.pdf_url) {
         return { error: 'O arquivo PDF da edição é obrigatório para publicar.' }
       }
     }
 
-    const numero = Number(data.numero)
-    const complemento = data.complemento?.trim() || ''
-
-    // Verifica duplicidade (mesma publicação + mesmo número + mesmo complemento)
-    const { data: existente } = await supabaseAdmin
-      .from('edicoes_jornal')
-      .select('id')
-      .eq('publicacao_id', data.publicacao_id)
-      .eq('numero', numero)
-      .eq('complemento', complemento)
-      .maybeSingle()
-
-    if (existente) {
-      return {
-        error: `A edição nº ${numero}${complemento ? ` (${complemento})` : ''} já está cadastrada para esta publicação.`,
-      }
+    // Calcula mes_ano
+    let mesAno = data.complemento?.trim()
+    if (!mesAno && data.data_edicao) {
+      const d = new Date(data.data_edicao + 'T00:00:00')
+      const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+      mesAno = `${meses[d.getMonth()]}/${d.getFullYear()}`
     }
+    if (!mesAno) mesAno = 'Edição Regular'
+
+    const dataPub = data.data_edicao || new Date().toISOString().split('T')[0]
 
     const { data: novaEdicao, error } = await supabaseAdmin
       .from('edicoes_jornal')
       .insert({
         publicacao_id: data.publicacao_id,
-        numero,
-        complemento: complemento || '',
-        data_edicao: data.data_edicao || null,
-        titulo: data.titulo?.trim() || `Edição ${numero}`,
-        subtitulo: data.subtitulo?.trim() || null,
-        pdf_url: data.pdf_url || null,
+        numero: numStr,
+        mes_ano: mesAno,
+        data_publicacao: dataPub,
+        pdf_url: data.pdf_url || '',
         capa_url: data.capa_url || null,
         status: data.status,
-        estado: data.status,
       })
       .select('id')
       .single()
@@ -313,9 +280,6 @@ export async function atualizarEdicao(
     const supabaseAdmin = getSupabaseAdmin()
 
     if (data.status === 'publicado') {
-      if (data.data_edicao === null || data.data_edicao === '') {
-        return { error: 'A data da edição é obrigatória para publicar.' }
-      }
       if (data.pdf_url === null || data.pdf_url === '') {
         return { error: 'O arquivo PDF da edição é obrigatório para publicar.' }
       }
@@ -326,17 +290,12 @@ export async function atualizarEdicao(
     }
 
     if (data.publicacao_id !== undefined) updatePayload.publicacao_id = data.publicacao_id
-    if (data.numero !== undefined) updatePayload.numero = Number(data.numero)
-    if (data.complemento !== undefined) updatePayload.complemento = data.complemento?.trim() || ''
-    if (data.data_edicao !== undefined) updatePayload.data_edicao = data.data_edicao || null
-    if (data.titulo !== undefined) updatePayload.titulo = data.titulo?.trim() || null
-    if (data.subtitulo !== undefined) updatePayload.subtitulo = data.subtitulo?.trim() || null
-    if (data.pdf_url !== undefined) updatePayload.pdf_url = data.pdf_url || null
+    if (data.numero !== undefined) updatePayload.numero = String(data.numero).trim()
+    if (data.complemento !== undefined) updatePayload.mes_ano = data.complemento?.trim() || 'Edição Regular'
+    if (data.data_edicao !== undefined) updatePayload.data_publicacao = data.data_edicao || new Date().toISOString().split('T')[0]
+    if (data.pdf_url !== undefined) updatePayload.pdf_url = data.pdf_url || ''
     if (data.capa_url !== undefined) updatePayload.capa_url = data.capa_url || null
-    if (data.status !== undefined) {
-      updatePayload.status = data.status
-      updatePayload.estado = data.status
-    }
+    if (data.status !== undefined) updatePayload.status = data.status
 
     const { error } = await supabaseAdmin
       .from('edicoes_jornal')

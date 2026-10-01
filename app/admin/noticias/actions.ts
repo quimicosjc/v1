@@ -448,11 +448,14 @@ export async function salvarOrdemDestaques(
 
     await supabaseAdmin
       .from('site_config')
-      .upsert({
-        chave: 'destaques',
-        valor: { slots },
-        atualizado: new Date().toISOString(),
-      })
+      .upsert(
+        {
+          chave: 'destaques',
+          valor: { slots },
+          atualizado_em: new Date().toISOString(),
+        },
+        { onConflict: 'chave' }
+      )
 
     if (slots.length > 0) {
       await supabaseAdmin
