@@ -311,9 +311,10 @@ export default function InscricoesGerenciador({
         </div>
       </div>
 
-      {/* Tabela de Inscrições */}
+      {/* Tabela de Inscrições com suporte a rolagem horizontal em telas menores */}
       <div style={{ background: 'white', border: '1px solid #e4dce0', borderRadius: '8px', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px', minWidth: '700px' }}>
           <thead>
             <tr style={{ background: '#f8fafb', borderBottom: '1px solid #e4dce0', color: '#71636a', fontSize: '12px' }}>
               <th style={{ padding: '12px 18px', fontWeight: 600 }}>NOME</th>
@@ -411,6 +412,7 @@ export default function InscricoesGerenciador({
             )}
           </tbody>
         </table>
+        </div>
 
         {/* Paginação */}
         {totalPaginas > 1 && (

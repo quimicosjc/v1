@@ -500,8 +500,9 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
           )}
         </div>
 
-        {/* Tabela */}
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        {/* Tabela com suporte a rolagem horizontal em telas menores */}
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
           <thead>
             <tr>
               {['NOTÍCIA', 'DESTAQUE', 'SITUAÇÃO', 'DATA', 'AÇÃO'].map((col) => (
@@ -687,6 +688,7 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
             )}
           </tbody>
         </table>
+        </div>
 
         {/* Paginação */}
         {totalPaginas > 1 && (
