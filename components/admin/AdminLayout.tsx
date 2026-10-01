@@ -59,7 +59,9 @@ export default function AdminLayout({ usuario, breadcrumb, activeHref, pendentes
         }}
       >
         {/* Logo */}
-        <div
+        <a
+          href="/admin"
+          title="Ir para o Início do Painel"
           style={{
             background: '#65172a',
             padding: '20px 16px',
@@ -67,6 +69,8 @@ export default function AdminLayout({ usuario, breadcrumb, activeHref, pendentes
             alignItems: 'center',
             justifyContent: 'center',
             minHeight: '110px',
+            textDecoration: 'none',
+            cursor: 'pointer',
           }}
         >
           <Image
@@ -77,7 +81,7 @@ export default function AdminLayout({ usuario, breadcrumb, activeHref, pendentes
             style={{ objectFit: 'contain', width: '100%', maxHeight: '90px' }}
             priority
           />
-        </div>
+        </a>
 
         {/* Rótulo */}
         <div
