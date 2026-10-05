@@ -32,9 +32,10 @@ export default async function AdminPage() {
       </p>
 
       {/* Cards de acesso rápido */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '18px', marginBottom: '40px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '18px', marginBottom: '40px' }}>
         {[
           { label: 'Publicar notícia',  desc: 'Escreva e publique uma nova notícia no portal',  href: '/admin/noticias/nova' },
+          { label: 'Páginas avulsas',   desc: 'Crie comunicados e páginas com endereço próprio', href: '/admin/avulsas' },
           { label: 'Ver solicitações',  desc: 'Mensagens, denúncias e contatos recebidos',      href: '/admin/solicitacoes' },
           { label: 'Upload de jornal',  desc: 'Adicione uma nova edição do jornal O Químico',   href: '/admin/jornais' },
         ].map((item) => (
@@ -71,7 +72,7 @@ export default async function AdminPage() {
           borderRadius: '0 4px 4px 0',
         }}
       >
-        <strong>Módulo de Notícias disponível.</strong> Acesse o menu lateral para criar e gerenciar notícias. Os demais módulos (Jornais, Formulários, Usuários) serão ativados progressivamente.
+        <strong>Módulos de Notícias e Páginas Avulsas disponíveis.</strong> Acesse o menu lateral para criar e gerenciar notícias e páginas independentes. Os demais módulos serão ativados progressivamente.
       </div>
     </AdminLayout>
   )
