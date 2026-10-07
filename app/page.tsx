@@ -27,11 +27,6 @@ interface EdicaoRecente {
   publicacoes_jornal?: { nome: string } | null
 }
 
-interface HomepageConfig {
-  model?: 'A' | 'B'
-  [key: string]: any
-}
-
 export default async function HomePage() {
   const supabase = await createClient()
 
@@ -73,53 +68,56 @@ export default async function HomePage() {
   const ultimaEdicao: EdicaoRecente | null = (edicaoData as any) || null
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f7f5f6', color: '#30252a', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: '#ffffff', color: '#1a1417', display: 'flex', flexDirection: 'column' }}>
       
       {/* Topo institucional unificado */}
       <HeaderPublico slugAtivo="/" />
 
-      {/* ── FAIXA DE ATALHOS RÁPIDOS (SERVIÇOS AO TRABALHADOR) ── */}
-      <section style={{ background: '#ffffff', borderBottom: '1px solid #e4dce0', padding: '16px 20px' }}>
+      {/* ── RÉGUA HORIZONTAL DE ATALHOS DE SERVIÇO (DESIGN LIMPO, SEM CARTÕES PESADOS) ── */}
+      <section style={{ background: '#faf8f9', borderBottom: '1px solid #ebdbe0', padding: '10px 20px' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
-            
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: '8px',
+            }}
+          >
             {/* 1. Fique Sócio */}
             <Link
               href="/paginas/fique-socio"
               style={{
-                background: '#861e32',
-                color: '#ffffff',
-                padding: '16px 18px',
-                borderRadius: '8px',
-                textDecoration: 'none',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '14px',
-                boxShadow: '0 4px 12px rgba(134,30,50,0.18)',
-                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                gap: '12px',
+                padding: '10px 14px',
+                borderRadius: '6px',
+                textDecoration: 'none',
+                color: '#1a1417',
+                transition: 'background 0.15s ease',
               }}
-              className="service-card"
+              className="quick-service-item"
             >
               <div
                 style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '8px',
-                  background: 'rgba(255,255,255,0.15)',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '6px',
+                  background: '#fbe9eb',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 20h9"/>
                   <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
                 </svg>
               </div>
               <div>
-                <strong style={{ fontSize: '15px', display: 'block', lineHeight: 1.2 }}>Fique Sócio</strong>
-                <small style={{ fontSize: '12px', opacity: 0.9 }}>Filie-se online ao sindicato</small>
+                <strong style={{ fontSize: '14px', display: 'block', lineHeight: 1.2, color: '#861e32' }}>Fique Sócio</strong>
+                <small style={{ fontSize: '11.5px', color: '#71636a' }}>Filie-se online</small>
               </div>
             </Link>
 
@@ -127,38 +125,36 @@ export default async function HomePage() {
             <Link
               href="/paginas/denuncia"
               style={{
-                background: '#30252a',
-                color: '#ffffff',
-                padding: '16px 18px',
-                borderRadius: '8px',
-                textDecoration: 'none',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '14px',
-                boxShadow: '0 4px 12px rgba(48,37,42,0.14)',
-                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                gap: '12px',
+                padding: '10px 14px',
+                borderRadius: '6px',
+                textDecoration: 'none',
+                color: '#1a1417',
+                transition: 'background 0.15s ease',
               }}
-              className="service-card"
+              className="quick-service-item"
             >
               <div
                 style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '8px',
-                  background: 'rgba(255,255,255,0.12)',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '6px',
+                  background: '#f5f0f2',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#30252a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                 </svg>
               </div>
               <div>
-                <strong style={{ fontSize: '15px', display: 'block', lineHeight: 1.2 }}>Canal de Denúncias</strong>
-                <small style={{ fontSize: '12px', opacity: 0.85 }}>Sigiloso e anônimo</small>
+                <strong style={{ fontSize: '14px', display: 'block', lineHeight: 1.2, color: '#30252a' }}>Canal de Denúncias</strong>
+                <small style={{ fontSize: '11.5px', color: '#71636a' }}>Sigiloso e anônimo</small>
               </div>
             </Link>
 
@@ -166,33 +162,30 @@ export default async function HomePage() {
             <Link
               href="/paginas/colonia"
               style={{
-                background: '#ffffff',
-                color: '#30252a',
-                border: '1px solid #cbd7de',
-                padding: '16px 18px',
-                borderRadius: '8px',
-                textDecoration: 'none',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '14px',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
-                transition: 'transform 0.15s ease, border-color 0.15s ease',
+                gap: '12px',
+                padding: '10px 14px',
+                borderRadius: '6px',
+                textDecoration: 'none',
+                color: '#1a1417',
+                transition: 'background 0.15s ease',
               }}
-              className="service-card-light"
+              className="quick-service-item"
             >
               <div
                 style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '8px',
-                  background: '#f8f2f4',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '6px',
+                  background: '#fbe9eb',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="5"/>
                   <line x1="12" y1="1" x2="12" y2="3"/>
                   <line x1="12" y1="21" x2="12" y2="23"/>
@@ -203,8 +196,8 @@ export default async function HomePage() {
                 </svg>
               </div>
               <div>
-                <strong style={{ fontSize: '15px', display: 'block', lineHeight: 1.2 }}>Colônia de Férias</strong>
-                <small style={{ fontSize: '12px', color: '#71636a' }}>Caraguá e São Sebastião</small>
+                <strong style={{ fontSize: '14px', display: 'block', lineHeight: 1.2, color: '#1a1417' }}>Colônia de Férias</strong>
+                <small style={{ fontSize: '11.5px', color: '#71636a' }}>Caraguá e S. Sebastião</small>
               </div>
             </Link>
 
@@ -212,33 +205,30 @@ export default async function HomePage() {
             <Link
               href="/paginas/juridico"
               style={{
-                background: '#ffffff',
-                color: '#30252a',
-                border: '1px solid #cbd7de',
-                padding: '16px 18px',
-                borderRadius: '8px',
-                textDecoration: 'none',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '14px',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
-                transition: 'transform 0.15s ease, border-color 0.15s ease',
+                gap: '12px',
+                padding: '10px 14px',
+                borderRadius: '6px',
+                textDecoration: 'none',
+                color: '#1a1417',
+                transition: 'background 0.15s ease',
               }}
-              className="service-card-light"
+              className="quick-service-item"
             >
               <div
                 style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '8px',
-                  background: '#f8f2f4',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '6px',
+                  background: '#fbe9eb',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M16 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/>
                   <path d="M2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/>
                   <path d="M7 21h10"/>
@@ -246,27 +236,26 @@ export default async function HomePage() {
                 </svg>
               </div>
               <div>
-                <strong style={{ fontSize: '15px', display: 'block', lineHeight: 1.2 }}>Plantão Jurídico</strong>
-                <small style={{ fontSize: '12px', color: '#71636a' }}>Defesa e assessoria trabalhista</small>
+                <strong style={{ fontSize: '14px', display: 'block', lineHeight: 1.2, color: '#1a1417' }}>Plantão Jurídico</strong>
+                <small style={{ fontSize: '11.5px', color: '#71636a' }}>Defesa trabalhista</small>
               </div>
             </Link>
-
           </div>
         </div>
       </section>
 
-      {/* ── CONTEÚDO PRINCIPAL (NOTÍCIAS E JORNAIS) ── */}
-      <main style={{ maxWidth: '1200px', width: '100%', margin: '0 auto', padding: '36px 20px 48px 20px', flex: 1, boxSizing: 'border-box' }}>
+      {/* ── CONTEÚDO PRINCIPAL (DIAGRAMAÇÃO EDITORIAL FLUIDA - ZERO CARTÕES ENGESSADOS) ── */}
+      <main style={{ maxWidth: '1200px', width: '100%', margin: '0 auto', padding: '36px 20px 56px 20px', flex: 1, boxSizing: 'border-box' }}>
         
-        {/* BLOCO DE NOTÍCIAS EM DESTAQUE (ENTRADA DIRETA DAS MANCHETES - DOC MESTRE § 13.5) */}
+        {/* BLOCO DE NOTÍCIAS EM DESTAQUE (DIAGRAMAÇÃO DE JORNAL, SEM MOLDURAS DE CAIXA) */}
         {noticias.length === 0 ? (
-          <div style={{ background: '#ffffff', border: '1px solid #e4dce0', borderRadius: '10px', padding: '48px', textAlign: 'center', color: '#71636a', marginBottom: '40px' }}>
+          <div style={{ padding: '48px 20px', textAlign: 'center', color: '#71636a', marginBottom: '40px' }}>
             Nenhuma notícia publicada no momento.
           </div>
         ) : modeloNoticias === 'B' ? (
           /* ── MODELO B: 1 MANCHETE PRINCIPAL MAIOR + 3 MENORES ABAIXO ── */
-          <div style={{ marginBottom: '44px' }}>
-            {/* Notícia 1 em destaque principal */}
+          <div style={{ marginBottom: '48px' }}>
+            {/* Notícia 1 em destaque principal amplo */}
             {(() => {
               const principal = noticias[0]
               let fotoUrl = principal.banner_url
@@ -285,22 +274,18 @@ export default async function HomePage() {
                 <Link
                   href={`/noticias/${principal.slug}`}
                   style={{
-                    background: '#ffffff',
-                    border: '1px solid #e4dce0',
-                    borderRadius: '10px',
-                    overflow: 'hidden',
                     textDecoration: 'none',
                     color: 'inherit',
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                    gap: '0',
-                    marginBottom: '24px',
-                    transition: 'all 0.18s ease',
-                    boxShadow: '0 3px 12px rgba(48,37,42,0.04)',
+                    gap: '28px',
+                    paddingBottom: '32px',
+                    borderBottom: '1px solid #ebdbe0',
+                    marginBottom: '32px',
                   }}
-                  className="news-card"
+                  className="editorial-article-main"
                 >
-                  <div style={{ width: '100%', aspectRatio: '3 / 2', background: '#f5f0f2', overflow: 'hidden', position: 'relative' }}>
+                  <div style={{ width: '100%', aspectRatio: '3 / 2', background: '#f5f0f2', borderRadius: '6px', overflow: 'hidden', position: 'relative' }}>
                     {fotoUrl ? (
                       <img
                         src={fotoUrl}
@@ -313,7 +298,7 @@ export default async function HomePage() {
                           display: 'block',
                           transition: 'transform 0.25s ease',
                         }}
-                        className="news-card-img"
+                        className="editorial-img"
                       />
                     ) : (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f2f4', padding: '20px' }}>
@@ -334,8 +319,8 @@ export default async function HomePage() {
                           color: '#ffffff',
                           fontSize: '11px',
                           fontWeight: 700,
-                          padding: '4px 9px',
-                          borderRadius: '4px',
+                          padding: '3px 8px',
+                          borderRadius: '3px',
                           textTransform: 'uppercase',
                           letterSpacing: '0.4px',
                         }}
@@ -345,34 +330,42 @@ export default async function HomePage() {
                     )}
                   </div>
 
-                  <div style={{ padding: '32px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div>
-                      {principal.publicado_em && (
-                        <div style={{ fontSize: '13px', color: '#71636a', marginBottom: '10px' }}>
-                          {formatarDataExtenso(principal.publicado_em)}
-                        </div>
-                      )}
-                      <h2 style={{ fontSize: '24px', fontWeight: 800, lineHeight: 1.3, color: '#30252a', margin: '0 0 12px 0', letterSpacing: '-0.3px' }}>
-                        {principal.titulo}
-                      </h2>
-                      {principal.resumo && (
-                        <p style={{ fontSize: '15px', lineHeight: 1.6, color: '#65575e', margin: 0 }}>
-                          {principal.resumo}
-                        </p>
-                      )}
-                    </div>
-                    <div style={{ marginTop: '20px', fontSize: '13.5px', fontWeight: 700, color: '#861e32', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                      <span>Ler matéria completa</span>
-                      <span>→</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    {principal.publicado_em && (
+                      <div style={{ fontSize: '13px', color: '#71636a', marginBottom: '8px' }}>
+                        {formatarDataExtenso(principal.publicado_em)}
+                      </div>
+                    )}
+                    <h2
+                      style={{
+                        fontSize: '26px',
+                        fontWeight: 800,
+                        lineHeight: 1.25,
+                        color: '#1a1417',
+                        margin: '0 0 12px 0',
+                        letterSpacing: '-0.3px',
+                        transition: 'color 0.15s ease',
+                      }}
+                      className="editorial-title"
+                    >
+                      {principal.titulo}
+                    </h2>
+                    {principal.resumo && (
+                      <p style={{ fontSize: '15.5px', lineHeight: 1.6, color: '#554950', margin: '0 0 14px 0' }}>
+                        {principal.resumo}
+                      </p>
+                    )}
+                    <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#861e32' }}>
+                      Ler matéria completa →
                     </div>
                   </div>
                 </Link>
               )
             })()}
 
-            {/* Notícias 2, 3 e 4 em 3 colunas */}
+            {/* Notícias 2, 3 e 4 em colunas fluidas */}
             {noticias.length > 1 && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '28px' }}>
                 {noticias.slice(1).map((item) => {
                   let fotoUrl = item.banner_url
                   let focoY = item.imagem_y ?? 50
@@ -391,26 +384,20 @@ export default async function HomePage() {
                       key={item.id}
                       href={`/noticias/${item.slug}`}
                       style={{
-                        background: '#ffffff',
-                        border: '1px solid #e4dce0',
-                        borderRadius: '10px',
-                        overflow: 'hidden',
                         textDecoration: 'none',
                         color: 'inherit',
                         display: 'flex',
                         flexDirection: 'column',
-                        transition: 'all 0.18s ease',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
                       }}
-                      className="news-card"
+                      className="editorial-article-sub"
                     >
-                      <div style={{ width: '100%', aspectRatio: '3 / 2', background: '#f5f0f2', overflow: 'hidden', position: 'relative' }}>
+                      <div style={{ width: '100%', aspectRatio: '3 / 2', background: '#f5f0f2', borderRadius: '4px', overflow: 'hidden', position: 'relative', marginBottom: '14px' }}>
                         {fotoUrl ? (
                           <img
                             src={fotoUrl}
                             alt={item.titulo}
                             style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `50% ${focoY}%`, display: 'block', transition: 'transform 0.25s ease' }}
-                            className="news-card-img"
+                            className="editorial-img"
                           />
                         ) : (
                           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f2f4' }}>
@@ -418,24 +405,37 @@ export default async function HomePage() {
                           </div>
                         )}
                         {item.chapeu && (
-                          <span style={{ position: 'absolute', top: '10px', left: '10px', background: '#861e32', color: '#ffffff', fontSize: '10.5px', fontWeight: 700, padding: '3px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                          <span style={{ position: 'absolute', top: '8px', left: '8px', background: '#861e32', color: '#ffffff', fontSize: '10px', fontWeight: 700, padding: '2px 7px', borderRadius: '3px', textTransform: 'uppercase' }}>
                             {item.chapeu}
                           </span>
                         )}
                       </div>
 
-                      <div style={{ padding: '18px 20px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                        <div>
-                          {item.publicado_em && (
-                            <div style={{ fontSize: '12px', color: '#71636a', marginBottom: '8px' }}>
-                              {formatarDataExtenso(item.publicado_em)}
-                            </div>
-                          )}
-                          <h3 style={{ fontSize: '16px', fontWeight: 800, lineHeight: 1.35, color: '#30252a', margin: '0 0 6px 0' }}>
-                            {item.titulo}
-                          </h3>
-                        </div>
-                        <div style={{ marginTop: '14px', fontSize: '12.5px', fontWeight: 700, color: '#861e32' }}>
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        {item.publicado_em && (
+                          <div style={{ fontSize: '12px', color: '#71636a', marginBottom: '6px' }}>
+                            {formatarDataExtenso(item.publicado_em)}
+                          </div>
+                        )}
+                        <h3
+                          style={{
+                            fontSize: '17px',
+                            fontWeight: 800,
+                            lineHeight: 1.35,
+                            color: '#1a1417',
+                            margin: '0 0 8px 0',
+                            transition: 'color 0.15s ease',
+                          }}
+                          className="editorial-title"
+                        >
+                          {item.titulo}
+                        </h3>
+                        {item.resumo && (
+                          <p style={{ fontSize: '13px', lineHeight: 1.5, color: '#554950', margin: '0 0 10px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            {item.resumo}
+                          </p>
+                        )}
+                        <div style={{ marginTop: 'auto', fontSize: '12.5px', fontWeight: 700, color: '#861e32' }}>
                           Ler matéria →
                         </div>
                       </div>
@@ -446,16 +446,16 @@ export default async function HomePage() {
             )}
 
             {/* Link oficial Outras Notícias (Documento Mestre § 13.5) */}
-            <div style={{ marginTop: '24px', textAlign: 'right' }}>
+            <div style={{ marginTop: '28px', textAlign: 'right' }}>
               <Link href="/noticias" style={{ fontSize: '14px', fontWeight: 700, color: '#861e32', textDecoration: 'none' }} className="ver-todas-link">
                 Outras notícias →
               </Link>
             </div>
           </div>
         ) : (
-          /* ── MODELO A (PADRÃO / LEGADO): 4 MATÉRIAS EM GRADE EQUILIBRADA ── */
-          <div style={{ marginBottom: '44px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))', gap: '22px' }}>
+          /* ── MODELO A (PADRÃO / LEGADO): 4 MATÉRIAS EM GRADE FLUIDA EDITORIAL ── */
+          <div style={{ marginBottom: '48px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '32px' }}>
               {noticias.map((item) => {
                 let fotoUrl = item.banner_url
                 let focoY = item.imagem_y ?? 50
@@ -474,21 +474,15 @@ export default async function HomePage() {
                     key={item.id}
                     href={`/noticias/${item.slug}`}
                     style={{
-                      background: '#ffffff',
-                      border: '1px solid #e4dce0',
-                      borderRadius: '10px',
-                      overflow: 'hidden',
                       textDecoration: 'none',
                       color: 'inherit',
                       display: 'flex',
                       flexDirection: 'column',
-                      transition: 'all 0.18s ease',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
                     }}
-                    className="news-card"
+                    className="editorial-article-sub"
                   >
                     {/* Imagem Proporção 3:2 Preservada */}
-                    <div style={{ width: '100%', aspectRatio: '3 / 2', background: '#f5f0f2', overflow: 'hidden', position: 'relative' }}>
+                    <div style={{ width: '100%', aspectRatio: '3 / 2', background: '#f5f0f2', borderRadius: '4px', overflow: 'hidden', position: 'relative', marginBottom: '14px' }}>
                       {fotoUrl ? (
                         <img
                           src={fotoUrl}
@@ -501,7 +495,7 @@ export default async function HomePage() {
                             display: 'block',
                             transition: 'transform 0.25s ease',
                           }}
-                          className="news-card-img"
+                          className="editorial-img"
                         />
                       ) : (
                         <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8f2f4', padding: '20px' }}>
@@ -516,17 +510,16 @@ export default async function HomePage() {
                         <span
                           style={{
                             position: 'absolute',
-                            top: '12px',
-                            left: '12px',
+                            top: '8px',
+                            left: '8px',
                             background: '#861e32',
                             color: '#ffffff',
-                            fontSize: '11px',
+                            fontSize: '10.5px',
                             fontWeight: 700,
-                            padding: '4px 9px',
-                            borderRadius: '4px',
+                            padding: '3px 8px',
+                            borderRadius: '3px',
                             textTransform: 'uppercase',
                             letterSpacing: '0.4px',
-                            boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
                           }}
                         >
                           {item.chapeu}
@@ -534,27 +527,34 @@ export default async function HomePage() {
                       )}
                     </div>
 
-                    {/* Conteúdo */}
-                    <div style={{ padding: '20px 22px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                      <div>
-                        {item.publicado_em && (
-                          <div style={{ fontSize: '12.5px', color: '#71636a', marginBottom: '8px' }}>
-                            {formatarDataExtenso(item.publicado_em)}
-                          </div>
-                        )}
-                        <h3 style={{ fontSize: '17px', fontWeight: 800, lineHeight: 1.35, color: '#30252a', margin: '0 0 8px 0' }}>
-                          {item.titulo}
-                        </h3>
-                        {item.resumo && (
-                          <p style={{ fontSize: '13px', lineHeight: 1.55, color: '#65575e', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                            {item.resumo}
-                          </p>
-                        )}
-                      </div>
-
-                      <div style={{ marginTop: '16px', fontSize: '13px', fontWeight: 700, color: '#861e32', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <span>Ler matéria completa</span>
-                        <span>→</span>
+                    {/* Conteúdo Textual da Matéria */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                      {item.publicado_em && (
+                        <div style={{ fontSize: '12.5px', color: '#71636a', marginBottom: '6px' }}>
+                          {formatarDataExtenso(item.publicado_em)}
+                        </div>
+                      )}
+                      <h3
+                        style={{
+                          fontSize: '17.5px',
+                          fontWeight: 800,
+                          lineHeight: 1.35,
+                          color: '#1a1417',
+                          margin: '0 0 8px 0',
+                          letterSpacing: '-0.2px',
+                          transition: 'color 0.15s ease',
+                        }}
+                        className="editorial-title"
+                      >
+                        {item.titulo}
+                      </h3>
+                      {item.resumo && (
+                        <p style={{ fontSize: '13.5px', lineHeight: 1.55, color: '#554950', margin: '0 0 10px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {item.resumo}
+                        </p>
+                      )}
+                      <div style={{ marginTop: 'auto', fontSize: '12.5px', fontWeight: 700, color: '#861e32' }}>
+                        Ler matéria →
                       </div>
                     </div>
                   </Link>
@@ -563,7 +563,7 @@ export default async function HomePage() {
             </div>
 
             {/* Link oficial Outras Notícias (Documento Mestre § 13.5) */}
-            <div style={{ marginTop: '22px', textAlign: 'right' }}>
+            <div style={{ marginTop: '28px', textAlign: 'right' }}>
               <Link href="/noticias" style={{ fontSize: '14px', fontWeight: 700, color: '#861e32', textDecoration: 'none' }} className="ver-todas-link">
                 Outras notícias →
               </Link>
@@ -571,117 +571,32 @@ export default async function HomePage() {
           </div>
         )}
 
-        {/* ── FAIXA INSTITUCIONAL / AFILIAÇÕES (CSP-CONLUTAS E UNIDOS PRA LUTAR) ── */}
+        {/* ── SEÇÃO INFERIOR: JORNAL IMPRESSO & CONVÊNIOS (ESTRUTURA EDITORIAL ABERTA) ── */}
         <section
           style={{
-            background: '#ffffff',
-            border: '1px solid #e4dce0',
-            borderRadius: '10px',
-            padding: '20px 26px',
-            marginBottom: '36px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '20px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+            borderTop: '2px solid #ebdbe0',
+            paddingTop: '36px',
+            marginBottom: '40px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: '36px',
           }}
         >
-          <div>
-            <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#861e32', marginBottom: '3px' }}>
-              Central & Corrente Sindical
-            </div>
-            <div style={{ fontSize: '15px', fontWeight: 700, color: '#30252a' }}>
-              Entidades e Lutas Parceiras
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            {/* CSP-Conlutas */}
-            <a
-              href="https://www.cspconlutas.org.br"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="CSP-Conlutas — Central Sindical e Popular"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                border: '1px solid #cbd7de',
-                background: '#ffffff',
-                textDecoration: 'none',
-                transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-              }}
-              className="partner-badge"
-            >
-              <img
-                src="/logo-csp-conlutas.png"
-                alt="Logo CSP-Conlutas"
-                style={{ height: '34px', width: 'auto', display: 'block' }}
-              />
-            </a>
-
-            {/* Unidos pra Lutar */}
-            <a
-              href="https://www.instagram.com/unidospralutar/"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Unidos pra Lutar"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                border: '1px solid #cbd7de',
-                background: '#ffffff',
-                textDecoration: 'none',
-                transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-              }}
-              className="partner-badge"
-            >
-              <img
-                src="/logo-unidos-pra-lutar.jpg"
-                alt="Logo Unidos pra Lutar"
-                style={{ height: '34px', width: 'auto', borderRadius: '4px', display: 'block', objectFit: 'contain' }}
-              />
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#30252a' }}>
-                Unidos pra Lutar
-              </span>
-            </a>
-          </div>
-        </section>
-
-        {/* ── SEÇÃO INFERIOR: JORNAL IMPRESSO & CONVÊNIOS ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
-          
-          {/* Card Boca no Trombone */}
-          <div
-            style={{
-              background: '#ffffff',
-              border: '1px solid #e4dce0',
-              borderRadius: '10px',
-              padding: '24px 26px',
-              display: 'flex',
-              gap: '20px',
-              alignItems: 'center',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-            }}
-          >
+          {/* Coluna Boca no Trombone */}
+          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
             <div
               style={{
-                width: '84px',
-                height: '116px',
+                width: '92px',
+                height: '128px',
                 background: '#65172A',
-                borderRadius: '6px',
+                borderRadius: '4px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#fff',
                 flexShrink: 0,
                 overflow: 'hidden',
-                boxShadow: '0 4px 10px rgba(0,0,0,0.12)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
               }}
             >
               {ultimaEdicao?.capa_url ? (
@@ -697,10 +612,10 @@ export default async function HomePage() {
               <span style={{ fontSize: '11px', fontWeight: 800, color: '#861e32', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
                 Jornal Oficial
               </span>
-              <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '2px 0 4px 0', color: '#30252a' }}>
+              <h3 style={{ fontSize: '19px', fontWeight: 800, margin: '2px 0 6px 0', color: '#1a1417' }}>
                 Boca no Trombone
               </h3>
-              <p style={{ fontSize: '13px', color: '#71636a', margin: '0 0 12px 0', lineHeight: 1.4 }}>
+              <p style={{ fontSize: '13.5px', color: '#554950', margin: '0 0 14px 0', lineHeight: 1.5 }}>
                 {ultimaEdicao ? `Edição nº ${ultimaEdicao.numero} (${ultimaEdicao.mes_ano})` : 'Acompanhe a voz e as lutas dos trabalhadores químicos.'}
               </p>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -713,7 +628,7 @@ export default async function HomePage() {
                       background: '#861e32',
                       color: '#fff',
                       padding: '7px 14px',
-                      borderRadius: '5px',
+                      borderRadius: '4px',
                       fontSize: '12px',
                       fontWeight: 700,
                       textDecoration: 'none',
@@ -726,10 +641,10 @@ export default async function HomePage() {
                   href="/jornais"
                   style={{
                     border: '1px solid #cbd7de',
-                    background: '#f8fafb',
+                    background: '#ffffff',
                     color: '#30252a',
                     padding: '7px 14px',
-                    borderRadius: '5px',
+                    borderRadius: '4px',
                     fontSize: '12px',
                     fontWeight: 600,
                     textDecoration: 'none',
@@ -741,33 +656,22 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* Card Convênios e Benefícios */}
-          <div
-            style={{
-              background: '#ffffff',
-              border: '1px solid #e4dce0',
-              borderRadius: '10px',
-              padding: '24px 26px',
-              display: 'flex',
-              gap: '20px',
-              alignItems: 'center',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-            }}
-          >
+          {/* Coluna Convênios e Benefícios */}
+          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
             <div
               style={{
-                width: '84px',
-                height: '116px',
-                background: '#f8f2f4',
-                borderRadius: '6px',
+                width: '92px',
+                height: '128px',
+                background: '#faf4f6',
+                borderRadius: '4px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
-                border: '1px solid #e4dce0',
+                border: '1px solid #ebdbe0',
               }}
             >
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
                 <line x1="7" y1="7" x2="7.01" y2="7"/>
               </svg>
@@ -776,10 +680,10 @@ export default async function HomePage() {
               <span style={{ fontSize: '11px', fontWeight: 800, color: '#861e32', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
                 Vantagens do Associado
               </span>
-              <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '2px 0 4px 0', color: '#30252a' }}>
+              <h3 style={{ fontSize: '19px', fontWeight: 800, margin: '2px 0 6px 0', color: '#1a1417' }}>
                 Guia de Convênios
               </h3>
-              <p style={{ fontSize: '13px', color: '#71636a', margin: '0 0 12px 0', lineHeight: 1.4 }}>
+              <p style={{ fontSize: '13.5px', color: '#554950', margin: '0 0 14px 0', lineHeight: 1.5 }}>
                 Mais de 30 parceiros em saúde, faculdades, academias e lazer com descontos exclusivos para sócios e dependentes.
               </p>
               <Link
@@ -788,7 +692,7 @@ export default async function HomePage() {
                   background: '#861e32',
                   color: '#fff',
                   padding: '7px 16px',
-                  borderRadius: '5px',
+                  borderRadius: '4px',
                   fontSize: '12px',
                   fontWeight: 700,
                   textDecoration: 'none',
@@ -799,8 +703,85 @@ export default async function HomePage() {
               </Link>
             </div>
           </div>
+        </section>
 
-        </div>
+        {/* ── FAIXA INSTITUCIONAL / AFILIAÇÕES (CSP-CONLUTAS E UNIDOS PRA LUTAR) ── */}
+        <section
+          style={{
+            borderTop: '1px solid #ebdbe0',
+            paddingTop: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '20px',
+          }}
+        >
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#861e32', marginBottom: '2px' }}>
+              Central & Corrente Sindical
+            </div>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: '#1a1417' }}>
+              Filiado à CSP-Conlutas • Em luta com Unidos pra Lutar
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            {/* CSP-Conlutas */}
+            <a
+              href="https://www.cspconlutas.org.br"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="CSP-Conlutas — Central Sindical e Popular"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                border: '1px solid #e4dce0',
+                background: '#ffffff',
+                textDecoration: 'none',
+                transition: 'border-color 0.15s ease',
+              }}
+              className="partner-link"
+            >
+              <img
+                src="/logo-csp-conlutas.png"
+                alt="Logo CSP-Conlutas"
+                style={{ height: '30px', width: 'auto', display: 'block' }}
+              />
+            </a>
+
+            {/* Unidos pra Lutar */}
+            <a
+              href="https://www.instagram.com/unidospralutar/"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Unidos pra Lutar"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                border: '1px solid #e4dce0',
+                background: '#ffffff',
+                textDecoration: 'none',
+                transition: 'border-color 0.15s ease',
+              }}
+              className="partner-link"
+            >
+              <img
+                src="/logo-unidos-pra-lutar.jpg"
+                alt="Logo Unidos pra Lutar"
+                style={{ height: '30px', width: 'auto', borderRadius: '3px', display: 'block', objectFit: 'contain' }}
+              />
+              <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#1a1417' }}>
+                Unidos pra Lutar
+              </span>
+            </a>
+          </div>
+        </section>
 
       </main>
 
@@ -808,25 +789,19 @@ export default async function HomePage() {
       <FooterPublico />
 
       <style>{`
-        .service-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 18px rgba(0,0,0,0.18) !important;
+        .quick-service-item:hover {
+          background: #f4ecf0 !important;
         }
-        .service-card-light:hover {
-          transform: translateY(-2px);
+        .editorial-article-main:hover .editorial-img,
+        .editorial-article-sub:hover .editorial-img {
+          transform: scale(1.025);
+        }
+        .editorial-article-main:hover .editorial-title,
+        .editorial-article-sub:hover .editorial-title {
+          color: #861e32 !important;
+        }
+        .partner-link:hover {
           border-color: #861e32 !important;
-        }
-        .news-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 8px 24px rgba(48,37,42,0.08) !important;
-          border-color: #cbd7de !important;
-        }
-        .news-card:hover .news-card-img {
-          transform: scale(1.03);
-        }
-        .partner-badge:hover {
-          border-color: #861e32 !important;
-          box-shadow: 0 4px 12px rgba(134,30,50,0.08) !important;
         }
         .ver-todas-link:hover {
           text-decoration: underline !important;

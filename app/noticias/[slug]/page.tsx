@@ -190,12 +190,12 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
             </p>
           )}
 
-          {/* Linha de Metadados (Estilo G1: Por Redação • Data sem zero • Atualização) */}
+          {/* Linha de Metadados (Estilo G1: Data com vírgula e sem zero na hora) */}
           <div
             style={{
               fontSize: '13px',
               color: '#71636a',
-              padding: '12px 0 20px 0',
+              padding: '10px 0 20px 0',
               borderBottom: '1px solid #e4dce0',
               marginBottom: '28px',
               display: 'flex',
@@ -204,17 +204,15 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
               alignItems: 'center',
             }}
           >
-            <span>Por <strong>Redação Químicos SJC</strong></span>
+            <time dateTime={noticia.publicado_em || noticia.criado_em}>
+              {dataExibicao}
+            </time>
             {noticia.credito && (
               <>
                 <span style={{ opacity: 0.4 }}>•</span>
                 <span>Fonte: <strong>{noticia.credito}</strong></span>
               </>
             )}
-            <span style={{ opacity: 0.4 }}>•</span>
-            <time dateTime={noticia.publicado_em || noticia.criado_em}>
-              {dataExibicao}
-            </time>
           </div>
 
           {/* Carrossel Editorial de Fotos (Documento Mestre § 3.4 com proporção 3:2 e botão de foto completa) */}

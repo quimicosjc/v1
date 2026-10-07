@@ -166,17 +166,16 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f7f5f6', display: 'flex', flexDirection: 'column', color: '#30252a' }}>
+    <div style={{ minHeight: '100vh', background: '#ffffff', display: 'flex', flexDirection: 'column', color: '#1a1417' }}>
       {/* Topo institucional unificado */}
       <HeaderPublico slugAtivo={slug} />
 
       {/* ── FAIXA HERO INSTITUCIONAL COM BREADCRUMB ── */}
       <section
         style={{
-          background: '#ffffff',
-          borderBottom: '1px solid #e4dce0',
-          padding: '28px 20px 32px 20px',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+          background: '#faf8f9',
+          borderBottom: '1px solid #ebdbe0',
+          padding: '24px 20px 28px 20px',
         }}
       >
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -251,17 +250,12 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
         </div>
       </section>
 
-      {/* Conteúdo principal */}
-      <main style={{ flex: 1, padding: '36px 16px' }}>
+      {/* Conteúdo principal fluido */}
+      <main style={{ flex: 1, padding: '36px 20px 64px 20px' }}>
         <article
           style={{
             maxWidth: '1200px',
             margin: '0 auto',
-            background: '#ffffff',
-            borderRadius: '10px',
-            border: '1px solid #e4dce0',
-            boxShadow: '0 4px 16px rgba(48,37,42,0.04)',
-            padding: '38px 44px',
           }}
         >
           {/* Navegação por Abas das Subpáginas da Colônia de Férias */}

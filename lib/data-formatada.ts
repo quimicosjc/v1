@@ -1,6 +1,8 @@
 /**
  * Utilitário central de formatação de datas para a área pública
- * Garante que nunca haverá zero à esquerda nos dias (ex: "6 de outubro" ao invés de "06 de outubro").
+ * Garante:
+ * - Sem zero à esquerda nos dias (ex: "6 de outubro" ao invés de "06 de outubro")
+ * - Vírgula após o ano e sem zero à esquerda na hora (ex: "6 de outubro de 2026, às 5h08")
  */
 
 function parseData(dataIso?: string | null): Date | null {
@@ -63,7 +65,7 @@ export function formatarDataCurta(dataIso?: string | null): string {
 
 /**
  * Retorna no formato completo para notícias (estilo G1):
- * "6 de outubro de 2026 às 14h30"
+ * "6 de outubro de 2026, às 5h08" (vírgula após ano, hora sem zero à esquerda)
  */
 export function formatarDataHoraNoticia(dataIso?: string | null): string {
   const d = parseData(dataIso)
@@ -74,7 +76,7 @@ export function formatarDataHoraNoticia(dataIso?: string | null): string {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-    hour: '2-digit',
+    hour: 'numeric',
     minute: '2-digit',
     hour12: false,
   }).formatToParts(d)
@@ -87,8 +89,8 @@ export function formatarDataHoraNoticia(dataIso?: string | null): string {
   const dia = mapa.day ? String(parseInt(mapa.day, 10)) : ''
   const mes = mapa.month || ''
   const ano = mapa.year || ''
-  const hora = mapa.hour || '00'
+  const hora = mapa.hour ? String(parseInt(mapa.hour, 10)) : '0'
   const minuto = mapa.minute || '00'
 
-  return `${dia} de ${mes} de ${ano} às ${hora}h${minuto}`
+  return `${dia} de ${mes} de ${ano}, às ${hora}h${minuto}`
 }
