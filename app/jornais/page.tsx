@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import HeaderPublico from '@/components/publico/HeaderPublico'
 import FooterPublico from '@/components/publico/FooterPublico'
 
@@ -23,9 +23,12 @@ interface EdicaoItem {
 }
 
 export default async function JornaisPublicosPage() {
-  const supabase = await createClient()
+  const supabaseAdmin = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
 
-  const { data: edicoesData } = await supabase
+  const { data: edicoesData } = await supabaseAdmin
     .from('edicoes_jornal')
     .select(`
       id,
@@ -40,7 +43,8 @@ export default async function JornaisPublicosPage() {
       )
     `)
     .eq('status', 'publicado')
-    .order('criado_em', { ascending: false })
+    .order('data_publicacao', { ascending: false })
+    .order('numero', { ascending: false })
 
   const edicoes: EdicaoItem[] = (edicoesData as any[]) || []
 
@@ -81,12 +85,14 @@ export default async function JornaisPublicosPage() {
           {/* Título Principal */}
           <h1
             style={{
-              fontSize: '34px',
+              fontFamily: 'var(--font-condensed), sans-serif',
+              fontSize: '38px',
               fontWeight: 800,
-              lineHeight: 1.2,
+              lineHeight: 1.05,
+              textTransform: 'uppercase',
               color: '#30252a',
               margin: '0 0 12px 0',
-              letterSpacing: '-0.5px',
+              letterSpacing: '0.4px',
             }}
           >
             Jornal Boca no Trombone & Informativos
@@ -125,10 +131,10 @@ export default async function JornaisPublicosPage() {
                     }}
                     className="news-card-hover"
                   >
-                    {/* Capa */}
-                    <div style={{ height: '220px', background: '#65172A', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
+                    {/* Capa preservada em proporção vertical sem corte destrutivo */}
+                    <div style={{ aspectRatio: '3 / 4', background: '#24141A', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
                       {ed.capa_url ? (
-                        <img src={ed.capa_url} alt={`Capa ${pubNome} nº ${ed.numero}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={ed.capa_url} alt={`Capa ${pubNome} nº ${ed.numero}`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                       ) : (
                         <div style={{ textAlign: 'center', color: '#ffffff', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                           <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '8px' }}>

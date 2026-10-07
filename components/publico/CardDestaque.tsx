@@ -1,0 +1,163 @@
+import React from 'react'
+import Link from 'next/link'
+import { CORES } from '@/lib/design'
+import { formatarDataExtenso } from '@/lib/data-formatada'
+
+interface CardDestaqueProps {
+  id: string
+  titulo: string
+  slug: string
+  chapeu?: string | null
+  fotoUrl?: string | null
+  fotoFoco?: number
+  dataIso?: string | null
+  layout?: 'coluna' | 'grande'
+}
+
+export default function CardDestaque({
+  titulo,
+  slug,
+  chapeu,
+  fotoUrl,
+  fotoFoco = 50,
+  dataIso,
+  layout = 'coluna',
+}: CardDestaqueProps) {
+  const dataFormatada = formatarDataExtenso(dataIso)
+
+  return (
+    <article className="card-destaque-article">
+      <Link
+        href={`/noticias/${slug}`}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          textDecoration: 'none',
+          color: CORES.ink,
+          height: '100%',
+          background: '#FFFFFF',
+          borderRadius: '4px',
+          overflow: 'hidden',
+          border: `1px solid ${CORES.line}`,
+          transition: 'all 0.18s ease',
+        }}
+        className="card-destaque-link"
+      >
+        {/* Foto 3:2 */}
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            aspectRatio: '3 / 2',
+            background: '#F0E8EA',
+            overflow: 'hidden',
+          }}
+        >
+          {fotoUrl ? (
+            <img
+              src={fotoUrl}
+              alt={titulo}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: `50% ${fotoFoco}%`,
+                display: 'block',
+                transition: 'transform 0.3s ease',
+              }}
+              className="card-destaque-img"
+            />
+          ) : (
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, #F0E8EA 0%, #E4DCE0 100%)',
+              }}
+            >
+              <img
+                src="/logo-sindicato-escuro.svg"
+                alt="Sindicato dos Químicos"
+                style={{ height: '40px', opacity: 0.25 }}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Conteúdo editorial */}
+        <div
+          style={{
+            padding: layout === 'grande' ? '18px 20px' : '14px 16px',
+            display: 'flex',
+            flexDirection: 'column',
+            flex: 1,
+          }}
+        >
+          {/* Chapéu / Kicker */}
+          {chapeu && (
+            <div
+              style={{
+                color: CORES.action,
+                fontSize: layout === 'grande' ? '12.5px' : '11.5px',
+                fontWeight: 700,
+                letterSpacing: '0.8px',
+                textTransform: 'uppercase',
+                marginBottom: '6px',
+                fontFamily: 'var(--font-condensed), sans-serif',
+              }}
+            >
+              {chapeu}
+            </div>
+          )}
+
+          {/* Título */}
+          <h3
+            style={{
+              margin: '0 0 10px 0',
+              fontFamily: 'var(--font-condensed), sans-serif',
+              fontSize: layout === 'grande' ? '24px' : '19px',
+              fontWeight: 700,
+              lineHeight: 1.15,
+              color: CORES.ink,
+              transition: 'color 0.15s ease',
+            }}
+            className="card-destaque-title"
+          >
+            {titulo}
+          </h3>
+
+          {/* Data */}
+          {dataFormatada && (
+            <div
+              style={{
+                fontSize: '11.5px',
+                color: CORES.muted,
+                marginTop: 'auto',
+                paddingTop: '6px',
+              }}
+            >
+              {dataFormatada}
+            </div>
+          )}
+        </div>
+      </Link>
+
+      <style>{`
+        .card-destaque-link:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 18px rgba(0,0,0,0.08) !important;
+          border-color: ${CORES.action} !important;
+        }
+        .card-destaque-link:hover .card-destaque-img {
+          transform: scale(1.03);
+        }
+        .card-destaque-link:hover .card-destaque-title {
+          color: ${CORES.action} !important;
+        }
+      `}</style>
+    </article>
+  )
+}

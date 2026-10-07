@@ -164,12 +164,13 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
           {/* Título Principal (H1 forte, peso 800, entrelinha precisa) */}
           <h1
             style={{
-              fontSize: '34px',
+              fontFamily: 'var(--font-condensed), sans-serif',
+              fontSize: '38px',
               fontWeight: 800,
-              lineHeight: 1.25,
+              lineHeight: 1.12,
               color: '#1a1417',
               margin: '0 0 16px 0',
-              letterSpacing: '-0.5px',
+              letterSpacing: '-0.2px',
             }}
             className="noticia-titulo-h1"
           >

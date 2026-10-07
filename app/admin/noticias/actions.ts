@@ -421,7 +421,7 @@ export async function obterOrdemDestaques(): Promise<string[]> {
       .eq('destaque', true)
       .neq('status', 'lixeira')
       .order('publicado_em', { ascending: false })
-      .limit(4)
+      .limit(5)
 
     return (destaques || []).map((d) => d.id)
   } catch (err) {
@@ -431,7 +431,7 @@ export async function obterOrdemDestaques(): Promise<string[]> {
 }
 
 /**
- * Salva a ordem exata dos destaques na homepage (até 4 posições)
+ * Salva a ordem exata dos destaques na homepage (até 5 posições)
  * e sincroniza o campo destaque da tabela conteudos.
  */
 export async function salvarOrdemDestaques(
@@ -444,7 +444,7 @@ export async function salvarOrdemDestaques(
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
     )
 
-    const slots = ids.slice(0, 4)
+    const slots = ids.slice(0, 5)
 
     await supabaseAdmin
       .from('site_config')

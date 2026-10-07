@@ -61,12 +61,14 @@ export default async function NoticiasIndexPage() {
           {/* Título Principal Direto */}
           <h1
             style={{
-              fontSize: '32px',
+              fontFamily: 'var(--font-condensed), sans-serif',
+              fontSize: '38px',
               fontWeight: 800,
-              lineHeight: 1.2,
+              lineHeight: 1.05,
+              textTransform: 'uppercase',
               color: '#30252a',
               margin: '0 0 10px 0',
-              letterSpacing: '-0.4px',
+              letterSpacing: '0.4px',
             }}
           >
             Notícias da Categoria

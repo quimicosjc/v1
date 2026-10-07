@@ -144,9 +144,9 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
   const [lista, setLista] = useState<Noticia[]>(noticiasProp)
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; titulo: string } | null>(null)
 
-  // Gerenciamento dos 4 slots de Destaque da Homepage
+  // Gerenciamento dos slots de Destaque da Homepage (até 5 posições)
   const [destaquesSlots, setDestaquesSlots] = useState<string[]>(() => {
-    return noticiasProp.filter((n) => n.destaque).map((n) => n.id).slice(0, 4)
+    return noticiasProp.filter((n) => n.destaque).map((n) => n.id).slice(0, 5)
   })
   const [showDestaquesModal, setShowDestaquesModal] = useState(false)
   const [slotAdicionarId, setSlotAdicionarId] = useState('')
@@ -183,8 +183,8 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
 
   function handleAdicionarDestaqueSlot() {
     if (!slotAdicionarId) return
-    if (destaquesSlots.length >= 4) {
-      showToast('O limite máximo é de 4 notícias em destaque.')
+    if (destaquesSlots.length >= 5) {
+      showToast('O limite máximo é de 5 notícias em destaque.')
       return
     }
     if (!destaquesSlots.includes(slotAdicionarId)) {
@@ -809,7 +809,7 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
                   ★ Organizar destaques da Homepage
                 </h2>
                 <p style={{ margin: 0, fontSize: '13px', color: '#71636a' }}>
-                  Defina as até 4 notícias em destaque e sua ordem exata de exibição. A 1ª matéria abre o bloco na capa.
+                  Defina as até 5 notícias em destaque e sua ordem exata de exibição (1 manchete principal + até 4 secundárias no Modelo B, ou 4 em grade no Modelo A).
                 </p>
               </div>
               <button
@@ -821,9 +821,9 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
               </button>
             </div>
 
-            {/* Slots 1 a 4 */}
+            {/* Slots 1 a 5 */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '20px 0' }}>
-              {[0, 1, 2, 3].map((slotIdx) => {
+              {[0, 1, 2, 3, 4].map((slotIdx) => {
                 const idNaVaga = destaquesSlots[slotIdx]
                 const noticia = idNaVaga ? lista.find((n) => n.id === idNaVaga) : null
 

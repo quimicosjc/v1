@@ -1,11 +1,19 @@
 import type { Metadata } from 'next'
-import { Plus_Jakarta_Sans } from 'next/font/google'
+import { Barlow, Barlow_Condensed } from 'next/font/google'
 import './globals.css'
 
-const fontSans = Plus_Jakarta_Sans({
+const fontBarlow = Barlow({
   subsets: ['latin'],
   display: 'swap',
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-barlow',
+})
+
+const fontCondensed = Barlow_Condensed({
+  subsets: ['latin'],
+  display: 'swap',
+  weight: ['600', '700', '800'],
+  variable: '--font-condensed',
 })
 
 // ─── Metadados padrão do site ────────────────────────────────────────────────
@@ -37,8 +45,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR" className={fontSans.className}>
-      <body style={{ margin: 0, padding: 0, background: '#f7f5f6', color: '#30252a', fontFamily: 'inherit' }}>
+    <html lang="pt-BR" className={`${fontBarlow.variable} ${fontCondensed.variable}`}>
+      <body style={{ margin: 0, padding: 0, background: '#f7f5f6', color: '#30252a', fontFamily: 'var(--font-barlow), sans-serif' }}>
         {children}
       </body>
     </html>

@@ -318,28 +318,39 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.8px', opacity: 0.65, fontWeight: 600 }}>Filiado à:</span>
             <a
               href="https://www.cspconlutas.org.br"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: '#f6e7ec', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', opacity: 0.9 }}
+              style={{ color: '#f6e7ec', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', opacity: 0.95 }}
               title="CSP-Conlutas — Central Sindical e Popular"
+              className="header-affiliation-link"
             >
-              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80' }} />
-              CSP-Conlutas
+              <img
+                src="/logo-csp-conlutas.png"
+                alt="CSP-Conlutas"
+                style={{ height: '18px', width: 'auto', display: 'block', filter: 'brightness(1.1)' }}
+              />
             </a>
-            <span style={{ opacity: 0.4 }}>•</span>
+            <span style={{ opacity: 0.3 }}>•</span>
             <a
               href="https://www.instagram.com/unidospralutar/"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: '#f6e7ec', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', opacity: 0.9 }}
+              style={{ color: '#f6e7ec', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', opacity: 0.95 }}
               title="Unidos pra Lutar"
+              className="header-affiliation-link"
             >
-              Unidos pra Lutar
+              <img
+                src="/logo-unidos-pra-lutar.png"
+                alt="Unidos pra Lutar"
+                style={{ height: '20px', width: 'auto', display: 'block' }}
+              />
+              <span style={{ fontSize: '11.5px', fontWeight: 600, letterSpacing: '0.3px' }}>Unidos pra Lutar</span>
             </a>
-            <span style={{ opacity: 0.4 }} className="header-cities-text">•</span>
-            <span style={{ opacity: 0.85 }} className="header-cities-text">SJC • Taubaté • Jacareí • Caçapava</span>
+            <span style={{ opacity: 0.3 }} className="header-cities-text">•</span>
+            <span style={{ opacity: 0.85, fontSize: '11.5px' }} className="header-cities-text">SJC • Taubaté • Jacareí • Caçapava</span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -415,7 +426,7 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
+              gap: '12px',
               textDecoration: 'none',
               color: 'inherit',
               flex: 1,
@@ -423,7 +434,7 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
             }}
           >
             <img
-              src="/logo-sindicato.png"
+              src="/logo-sindicato.svg"
               alt="Logo Sindicato dos Químicos SJC"
               style={{ height: '48px', width: 'auto', display: 'block' }}
               className="header-logo-img"
@@ -431,10 +442,12 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
             <div style={{ minWidth: 0 }}>
               <div
                 style={{
-                  fontSize: '17px',
+                  fontFamily: 'var(--font-condensed), sans-serif',
+                  fontSize: '22px',
                   fontWeight: 800,
-                  letterSpacing: '0.3px',
-                  lineHeight: 1.15,
+                  letterSpacing: '0.5px',
+                  lineHeight: 1.05,
+                  textTransform: 'uppercase',
                   color: '#ffffff',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
