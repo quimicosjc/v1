@@ -37,10 +37,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params
   const supabase = await createClient()
 
+  const slugNormalizado = slug === 'homologacao' ? 'homologacoes' : slug
+
   const { data: pagina } = await supabase
     .from('conteudos')
     .select('titulo, subtitulo, corpo, banner_url, noindex')
-    .eq('slug', slug)
+    .eq('slug', slugNormalizado)
     .in('tipo', ['avulsa', 'institucional'])
     .eq('status', 'publicado')
     .maybeSingle()
@@ -70,10 +72,12 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
   const { slug } = await params
   const supabase = await createClient()
 
+  const slugNormalizado = slug === 'homologacao' ? 'homologacoes' : slug
+
   const { data: pagina } = await supabase
     .from('conteudos')
     .select('*')
-    .eq('slug', slug)
+    .eq('slug', slugNormalizado)
     .in('tipo', ['avulsa', 'institucional'])
     .eq('status', 'publicado')
     .maybeSingle()
@@ -153,7 +157,7 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
   if (slug.startsWith('colonia') || slug === 'convenios' || slug === 'carteirinha' || slug === 'atualizar-cadastro') {
     grupoOrganograma = 'Serviços'
     grupoHref = '/paginas/colonia'
-  } else if (slug === 'cct' || slug === 'juridico' || slug === 'processos' || slug === 'homologacao' || slug === 'denuncia') {
+  } else if (slug === 'cct' || slug === 'juridico' || slug === 'processos' || slug === 'homologacao' || slug === 'homologacoes' || slug === 'denuncia') {
     grupoOrganograma = 'Jurídico'
     grupoHref = '/paginas/cct'
   } else if (slug === 'lista-noticias' || slug === 'cadastro-noticias' || slug === 'noticias' || slug === 'jornais') {

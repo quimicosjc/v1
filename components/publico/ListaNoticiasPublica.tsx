@@ -205,8 +205,12 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
                       }}
                     />
                   ) : (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#861e32', fontWeight: 800, fontSize: '18px', background: '#f5ebed' }}>
-                      Sindicato dos Químicos
+                    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8f2f4', padding: '20px' }}>
+                      <img
+                        src="/logo-sindicato.png"
+                        alt="Sindicato dos Químicos"
+                        style={{ maxHeight: '72px', maxWidth: '80%', objectFit: 'contain', opacity: 0.85 }}
+                      />
                     </div>
                   )}
                   {item.chapeu && (

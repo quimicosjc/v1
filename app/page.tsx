@@ -318,8 +318,12 @@ export default async function HomePage() {
                         className="news-card-img"
                       />
                     ) : (
-                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#861e32', fontWeight: 800, fontSize: '18px', background: '#f8f2f4' }}>
-                        Sindicato dos Químicos
+                      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8f2f4', padding: '20px' }}>
+                        <img
+                          src="/logo-sindicato.png"
+                          alt="Sindicato dos Químicos"
+                          style={{ maxHeight: '72px', maxWidth: '80%', objectFit: 'contain', opacity: 0.85 }}
+                        />
                       </div>
                     )}
                     {item.chapeu && (

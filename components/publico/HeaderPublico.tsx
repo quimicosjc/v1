@@ -223,7 +223,7 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
         {
           titulo: 'Homologações',
           subtitulo: 'Regras, documentos e suporte de rescisão',
-          href: '/paginas/homologacao',
+          href: '/paginas/homologacoes',
           icone: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 11 12 14 22 4"/>

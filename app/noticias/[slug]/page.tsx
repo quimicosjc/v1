@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import HeaderPublico from '@/components/publico/HeaderPublico'
 import FooterPublico from '@/components/publico/FooterPublico'
+import CarrosselNoticia from '@/components/publico/CarrosselNoticia'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -287,121 +288,14 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
             )}
           </div>
 
-          {/* Foto Principal com Preservação de Orientação Original (Regra de Ouro) */}
-          {fotoPrincipal && (
-            <figure style={{ margin: '0 0 36px 0' }}>
-              <div
-                style={{
-                  width: '100%',
-                  maxHeight: '540px',
-                  borderRadius: '8px',
-                  overflow: 'hidden',
-                  background: '#f8fafb',
-                  border: '1px solid #e4dce0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <img
-                  src={fotoPrincipal.url}
-                  alt={fotoPrincipal.legenda || noticia.titulo}
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '540px',
-                    width: 'auto',
-                    height: 'auto',
-                    objectFit: 'contain',
-                    display: 'block',
-                  }}
-                />
-              </div>
-              {(fotoPrincipal.legenda || fotoPrincipal.credito) && (
-                <figcaption
-                  style={{
-                    fontSize: '12.5px',
-                    color: '#71636a',
-                    marginTop: '8px',
-                    lineHeight: 1.4,
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '6px',
-                    fontStyle: 'italic',
-                    paddingLeft: '4px',
-                  }}
-                >
-                  <span>{fotoPrincipal.legenda}</span>
-                  {fotoPrincipal.credito && (
-                    <span>Foto: {fotoPrincipal.credito}</span>
-                  )}
-                </figcaption>
-              )}
-            </figure>
-          )}
+          {/* Carrossel Editorial de Fotos (Documento Mestre § 3.4) */}
+          <CarrosselNoticia fotos={fotos} titulo={noticia.titulo} />
 
           {/* Corpo da Notícia com Estilização HTML Scoped */}
           <div
             className="noticia-corpo"
             dangerouslySetInnerHTML={{ __html: corpoFormatado }}
           />
-
-          {/* Fotos adicionais da matéria com Preservação de Orientação Original (Regra de Ouro) */}
-          {fotosGaleria.length > 0 && (
-            <div style={{ marginTop: '36px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
-              {fotosGaleria.map((foto, idx) => (
-                <figure key={idx} style={{ margin: 0 }}>
-                  <div
-                    style={{
-                      width: '100%',
-                      maxHeight: '540px',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      background: '#f8fafb',
-                      border: '1px solid #e4dce0',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <img
-                      src={foto.url}
-                      alt={foto.legenda || `Foto ${idx + 2}`}
-                      style={{
-                        maxWidth: '100%',
-                        maxHeight: '540px',
-                        width: 'auto',
-                        height: 'auto',
-                        objectFit: 'contain',
-                        display: 'block',
-                      }}
-                    />
-                  </div>
-                  {(foto.legenda || foto.credito) && (
-                    <figcaption
-                      style={{
-                        fontSize: '12.5px',
-                        color: '#71636a',
-                        marginTop: '8px',
-                        lineHeight: 1.4,
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        flexWrap: 'wrap',
-                        gap: '6px',
-                        fontStyle: 'italic',
-                        paddingLeft: '4px',
-                      }}
-                    >
-                      <span>{foto.legenda}</span>
-                      {foto.credito && (
-                        <span>Foto: {foto.credito}</span>
-                      )}
-                    </figcaption>
-                  )}
-                </figure>
-              ))}
-            </div>
-          )}
 
           {/* URL de Referência */}
           {noticia.url_referencia && (
