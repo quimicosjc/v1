@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import HeaderPublico from '@/components/publico/HeaderPublico'
 import FooterPublico from '@/components/publico/FooterPublico'
 import CarrosselNoticia from '@/components/publico/CarrosselNoticia'
+import { formatarDataHoraNoticia } from '@/lib/data-formatada'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -52,22 +53,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-function formatarDataCompleta(dataIso: string | null): string {
-  if (!dataIso) return ''
-  try {
-    const d = new Date(dataIso)
-    return d.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  } catch {
-    return dataIso
-  }
-}
-
 export default async function NoticiaPublicaPage({ params }: PageProps) {
   const { slug } = await params
   const supabase = await createClient()
@@ -96,9 +81,6 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
     fotos = [{ url: noticia.banner_url, foco: noticia.imagem_y ?? 50 }]
   }
 
-  const fotoPrincipal = fotos[0] ?? null
-  const fotosGaleria = fotos.slice(1)
-
   // Parse documentos
   let documentos: DocumentoItem[] = []
   if (noticia.documentos_json) {
@@ -124,22 +106,16 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
     .replace(/&lt;iframe([\s\S]*?)&gt;&lt;\/iframe&gt;/gi, '<iframe$1></iframe>')
     .replace(/&lt;iframe([\s\S]*?)\/&gt;/gi, '<iframe$1></iframe>')
 
+  const dataExibicao = formatarDataHoraNoticia(noticia.publicado_em || noticia.criado_em)
+
   return (
-    <div style={{ minHeight: '100vh', background: '#f7f5f6', display: 'flex', flexDirection: 'column', color: '#30252a' }}>
+    <div style={{ minHeight: '100vh', background: '#ffffff', display: 'flex', flexDirection: 'column', color: '#1a1417' }}>
       {/* Topo institucional unificado */}
       <HeaderPublico slugAtivo="noticias" />
 
-      {/* ── FAIXA HERO INSTITUCIONAL COM BREADCRUMB ── */}
-      <section
-        style={{
-          background: '#ffffff',
-          borderBottom: '1px solid #e4dce0',
-          padding: '24px 20px 28px 20px',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
-        }}
-      >
-        <div style={{ maxWidth: '860px', margin: '0 auto' }}>
-          {/* Breadcrumb navegável */}
+      {/* ── BREADCRUMB LIMPO ALINHADO ÀS MARGENS DE 1200PX ── */}
+      <div style={{ borderBottom: '1px solid #f0e8eb', background: '#faf8f9' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '12px 20px' }}>
           <nav
             style={{
               display: 'flex',
@@ -155,34 +131,21 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
             </Link>
             <span style={{ opacity: 0.4 }}>›</span>
             <Link href="/noticias" style={{ color: '#861e32', textDecoration: 'none', fontWeight: 600 }} className="breadcrumb-link">
-              Imprensa
-            </Link>
-            <span style={{ opacity: 0.4 }}>›</span>
-            <Link href="/noticias" style={{ color: '#71636a', textDecoration: 'none' }} className="breadcrumb-link">
               Notícias
             </Link>
             <span style={{ opacity: 0.4 }}>›</span>
-            <span style={{ color: '#30252a', fontWeight: 600, maxWidth: '340px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ color: '#30252a', fontWeight: 500, maxWidth: '420px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {noticia.titulo}
             </span>
           </nav>
         </div>
-      </section>
+      </div>
 
-      {/* Conteúdo principal da Notícia */}
-      <main style={{ flex: 1, padding: '36px 16px' }}>
-        <article
-          style={{
-            maxWidth: '860px',
-            margin: '0 auto',
-            background: '#ffffff',
-            borderRadius: '10px',
-            border: '1px solid #e4dce0',
-            boxShadow: '0 4px 16px rgba(48,37,42,0.04)',
-            padding: '40px 44px',
-          }}
-        >
-          {/* Chapéu / Assunto */}
+      {/* ── ARTIGO COM DIAGRAMAÇÃO EDITORIAL FLUIDA (INSPIRAÇÃO G1) ── */}
+      <main style={{ flex: 1, padding: '40px 20px 64px 20px' }}>
+        <article style={{ maxWidth: '780px', margin: '0 auto' }}>
+          
+          {/* Chapéu / Assunto (Estilo G1: minimalista, vermelho bordô, uppercase) */}
           {noticia.chapeu && (
             <div
               style={{
@@ -191,109 +154,81 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
                 fontWeight: 800,
                 textTransform: 'uppercase',
                 letterSpacing: '1px',
-                marginBottom: '10px',
+                marginBottom: '12px',
               }}
             >
               {noticia.chapeu}
             </div>
           )}
 
-          {/* Título Principal */}
+          {/* Título Principal (H1 forte, peso 800, entrelinha precisa) */}
           <h1
             style={{
-              fontSize: '32px',
+              fontSize: '34px',
               fontWeight: 800,
               lineHeight: 1.25,
-              color: '#30252a',
+              color: '#1a1417',
               margin: '0 0 16px 0',
-              letterSpacing: '-0.3px',
+              letterSpacing: '-0.5px',
             }}
+            className="noticia-titulo-h1"
           >
             {noticia.titulo}
           </h1>
 
-          {/* Subtítulo / Lead */}
+          {/* Subtítulo / Lead (Fluido, cinza equilibrado, sem caixa) */}
           {noticia.subtitulo && (
-            <div
+            <p
               style={{
-                fontSize: '17px',
-                lineHeight: 1.6,
-                color: '#65575e',
-                borderLeft: '3px solid #861e32',
-                paddingLeft: '14px',
-                margin: '0 0 24px 0',
+                fontSize: '18px',
+                lineHeight: 1.55,
+                color: '#554950',
+                margin: '0 0 20px 0',
               }}
             >
               {noticia.subtitulo}
-            </div>
+            </p>
           )}
 
-          {/* Linha de Metadados: Data, Crédito, Destaque */}
+          {/* Linha de Metadados (Estilo G1: Por Redação • Data sem zero • Atualização) */}
           <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '12px',
-              padding: '14px 0',
-              borderTop: '1px solid #e4dce0',
-              borderBottom: '1px solid #e4dce0',
-              marginBottom: '32px',
               fontSize: '13px',
               color: '#71636a',
+              padding: '12px 0 20px 0',
+              borderBottom: '1px solid #e4dce0',
+              marginBottom: '28px',
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '8px',
+              alignItems: 'center',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#71636a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-                <span>Publicado em <strong>{formatarDataCompleta(noticia.publicado_em || noticia.criado_em)}</strong></span>
-              </div>
-
-              {noticia.credito && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#71636a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                  <span>Por <strong>{noticia.credito}</strong></span>
-                </div>
-              )}
-            </div>
-
-            {noticia.destaque && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  background: '#fff2df',
-                  color: '#825914',
-                  borderRadius: '4px',
-                  padding: '3px 8px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                }}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="#825914" stroke="#825914" strokeWidth="1">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
-                Notícia em Destaque
-              </span>
+            <span>Por <strong>Redação Químicos SJC</strong></span>
+            {noticia.credito && (
+              <>
+                <span style={{ opacity: 0.4 }}>•</span>
+                <span>Fonte: <strong>{noticia.credito}</strong></span>
+              </>
             )}
+            <span style={{ opacity: 0.4 }}>•</span>
+            <time dateTime={noticia.publicado_em || noticia.criado_em}>
+              {dataExibicao}
+            </time>
           </div>
 
-          {/* Carrossel Editorial de Fotos (Documento Mestre § 3.4) */}
+          {/* Carrossel Editorial de Fotos (Documento Mestre § 3.4 com proporção 3:2 e botão de foto completa) */}
           <CarrosselNoticia fotos={fotos} titulo={noticia.titulo} />
 
-          {/* Corpo da Notícia com Estilização HTML Scoped */}
+          {/* Corpo da Notícia com Leitura Confortável (Estilo G1: 18px, entrelinha 1.8, respiro) */}
           <div
             className="noticia-corpo"
+            style={{
+              fontSize: '18px',
+              lineHeight: 1.8,
+              color: '#2b2327',
+              wordBreak: 'break-word',
+            }}
             dangerouslySetInnerHTML={{ __html: corpoFormatado }}
           />
 
@@ -304,18 +239,18 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
                 marginTop: '32px',
                 padding: '14px 18px',
                 background: '#f8fafb',
-                border: '1px solid #e4dce0',
-                borderRadius: '6px',
-                fontSize: '14px',
-                color: '#30252a',
+                borderLeft: '4px solid #861e32',
+                borderRadius: '0 6px 6px 0',
+                fontSize: '13.5px',
+                color: '#554950',
               }}
             >
-              <strong>Fonte / Matéria original: </strong>{' '}
+              <strong>Mais informações / Fonte:</strong>{' '}
               <a
                 href={noticia.url_referencia}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#791c30', textDecoration: 'underline', wordBreak: 'break-all' }}
+                style={{ color: '#861e32', textDecoration: 'underline', wordBreak: 'break-all' }}
               >
                 {noticia.url_referencia}
               </a>
@@ -324,212 +259,258 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
 
           {/* Documentos Anexos */}
           {documentos.length > 0 && (
-            <section style={{ marginTop: '40px', borderTop: '1px solid #e4dce0', paddingTop: '28px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#30252a', margin: '0 0 16px 0' }}>
-                Documentos para download ({documentos.length})
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {documentos.map((doc, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '12px 18px',
-                      background: '#f8fafb',
-                      border: '1px solid #e4dce0',
-                      borderRadius: '6px',
-                      gap: '12px',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                        <polyline points="14 2 14 8 20 8" />
-                        <line x1="16" y1="13" x2="8" y2="13" />
-                        <line x1="16" y1="17" x2="8" y2="17" />
-                        <polyline points="10 9 9 9 8 9" />
-                      </svg>
-                      <div>
-                        <div style={{ fontSize: '14px', fontWeight: 600, color: '#30252a' }}>
-                          {doc.nome}
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#71636a' }}>
-                          Tipo: {doc.tipo.toUpperCase()}
-                        </div>
-                      </div>
-                    </div>
-
-                    <a
-                      href={doc.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download
-                      style={{
-                        background: '#861e32',
-                        color: '#ffffff',
-                        padding: '8px 16px',
-                        borderRadius: '5px',
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        textDecoration: 'none',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      Baixar arquivo ↗
-                    </a>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Tags */}
-          {tags.length > 0 && (
             <div
               style={{
                 marginTop: '36px',
-                borderTop: '1px solid #e4dce0',
-                paddingTop: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '8px',
+                background: '#f8fafb',
+                border: '1px solid #e4dce0',
+                borderRadius: '8px',
+                padding: '20px 24px',
               }}
             >
-              <span style={{ fontSize: '13px', fontWeight: 600, color: '#71636a' }}>Tags:</span>
-              {tags.map((tag, idx) => (
+              <h3
+                style={{
+                  fontSize: '14px',
+                  fontWeight: 800,
+                  color: '#30252a',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.6px',
+                  margin: '0 0 14px 0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                Documentos e Anexos ({documentos.length})
+              </h3>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {documentos.map((doc, idx) => {
+                  const isPdf = doc.tipo?.includes('pdf') || doc.nome?.toLowerCase().endsWith('.pdf')
+                  return (
+                    <li
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '10px 14px',
+                        background: '#ffffff',
+                        border: '1px solid #e4dce0',
+                        borderRadius: '6px',
+                        gap: '12px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+                        <span
+                          style={{
+                            background: isPdf ? '#fbe9eb' : '#eaf1fc',
+                            color: isPdf ? '#861e32' : '#365786',
+                            fontSize: '10.5px',
+                            fontWeight: 800,
+                            padding: '3px 6px',
+                            borderRadius: '4px',
+                            textTransform: 'uppercase',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {isPdf ? 'PDF' : 'DOC'}
+                        </span>
+                        <span style={{ fontSize: '13.5px', fontWeight: 600, color: '#30252a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {doc.nome}
+                        </span>
+                      </div>
+                      <a
+                        href={doc.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download={!isPdf}
+                        style={{
+                          background: '#861e32',
+                          color: '#ffffff',
+                          padding: '6px 14px',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          textDecoration: 'none',
+                          flexShrink: 0,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                        }}
+                      >
+                        <span>{isPdf ? 'Visualizar' : 'Baixar'}</span>
+                        <span>↗</span>
+                      </a>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          )}
+
+          {/* Tags da Notícia */}
+          {tags.length > 0 && (
+            <div style={{ marginTop: '36px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#71636a', textTransform: 'uppercase' }}>
+                Tópicos:
+              </span>
+              {tags.map((t, idx) => (
                 <span
                   key={idx}
                   style={{
-                    background: '#f0e8ea',
-                    color: '#65172a',
-                    borderRadius: '16px',
-                    padding: '4px 12px',
+                    background: '#f8fafb',
+                    border: '1px solid #e4dce0',
+                    color: '#554950',
                     fontSize: '12px',
-                    fontWeight: 500,
+                    padding: '4px 10px',
+                    borderRadius: '20px',
                   }}
                 >
-                  #{tag}
+                  #{t}
                 </span>
               ))}
             </div>
           )}
 
-          {/* Navegação Inferior: Retornar às Notícias */}
-          <div style={{ marginTop: '40px', borderTop: '1px solid #e4dce0', paddingTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {/* Rodapé da Matéria com Navegação Limpa */}
+          <div
+            style={{
+              marginTop: '48px',
+              borderTop: '1px solid #e4dce0',
+              paddingTop: '28px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '16px',
+            }}
+          >
             <Link
               href="/noticias"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px',
+                gap: '8px',
                 color: '#861e32',
-                fontSize: '14px',
+                fontSize: '14.5px',
                 fontWeight: 700,
                 textDecoration: 'none',
               }}
               className="breadcrumb-link"
             >
-              ← Voltar para todas as notícias
+              <span>←</span>
+              <span>Voltar para todas as notícias</span>
+            </Link>
+
+            <Link
+              href="/"
+              style={{
+                fontSize: '13px',
+                color: '#71636a',
+                textDecoration: 'none',
+              }}
+              className="breadcrumb-link"
+            >
+              Página inicial
             </Link>
           </div>
+
         </article>
       </main>
 
       {/* Rodapé institucional oficial */}
       <FooterPublico />
 
-      {/* Estilos Scoped para a renderização do corpo da notícia */}
+      {/* Estilos Tipográficos Scoped para o HTML da Notícia */}
       <style>{`
-        .noticia-corpo {
-          font-size: 17px;
-          line-height: 1.8;
-          color: #30252a;
+        .breadcrumb-link:hover {
+          text-decoration: underline !important;
+        }
+        @media (max-width: 640px) {
+          .noticia-titulo-h1 {
+            font-size: 26px !important;
+            line-height: 1.3 !important;
+          }
         }
         .noticia-corpo p {
-          margin: 0 0 20px 0;
+          margin: 0 0 24px 0 !important;
+          line-height: 1.8 !important;
         }
         .noticia-corpo h2 {
-          font-size: 24px;
-          font-weight: 700;
-          color: #30252a;
-          margin: 36px 0 16px 0;
-          border-bottom: 1px solid #f0e8ea;
-          padding-bottom: 8px;
+          font-size: 24px !important;
+          font-weight: 800 !important;
+          color: #1a1417 !important;
+          margin: 36px 0 16px 0 !important;
+          line-height: 1.3 !important;
+          letter-spacing: -0.3px !important;
         }
         .noticia-corpo h3 {
-          font-size: 20px;
-          font-weight: 600;
-          color: #30252a;
-          margin: 28px 0 12px 0;
-        }
-        .noticia-corpo blockquote {
-          border-left: 4px solid #861e32;
-          margin: 24px 0;
-          padding: 12px 20px;
-          background: #faf6f7;
-          color: #65172a;
-          font-style: italic;
-          border-radius: 0 4px 4px 0;
+          font-size: 20px !important;
+          font-weight: 700 !important;
+          color: #1a1417 !important;
+          margin: 28px 0 12px 0 !important;
+          line-height: 1.35 !important;
         }
         .noticia-corpo a {
-          color: #791c30;
-          text-decoration: underline;
-          font-weight: 500;
+          color: #861e32 !important;
+          text-decoration: underline !important;
+          font-weight: 600 !important;
+        }
+        .noticia-corpo ul, .noticia-corpo ol {
+          margin: 0 0 24px 0 !important;
+          padding-left: 28px !important;
+          line-height: 1.75 !important;
+        }
+        .noticia-corpo li {
+          margin-bottom: 8px !important;
+        }
+        .noticia-corpo blockquote {
+          border-left: 4px solid #861e32 !important;
+          margin: 28px 0 !important;
+          padding: 12px 20px !important;
+          background: #faf7f8 !important;
+          color: #554950 !important;
+          font-style: italic !important;
+          border-radius: 0 6px 6px 0 !important;
         }
         .noticia-corpo img {
-          width: 100% !important;
+          max-width: 100% !important;
           height: auto !important;
-          display: block;
-          border-radius: 6px;
-          margin: 24px 0;
+          border-radius: 8px !important;
+          margin: 24px 0 !important;
+          display: block !important;
         }
         .noticia-corpo table {
           width: 100% !important;
-          table-layout: fixed !important;
-          border-collapse: collapse;
-          margin: 24px 0;
-          font-size: 15px;
+          border-collapse: collapse !important;
+          margin: 28px 0 !important;
+          font-size: 14.5px !important;
         }
-        .noticia-corpo th,
-        .noticia-corpo td {
-          border: 1px solid #e4dce0;
-          padding: 10px 14px;
-          text-align: left;
-          word-break: break-word;
+        .noticia-corpo th, .noticia-corpo td {
+          border: 1px solid #e4dce0 !important;
+          padding: 10px 14px !important;
+          text-align: left !important;
         }
         .noticia-corpo th {
-          background: #f8fafb;
-          font-weight: 600;
-          color: #30252a;
+          background: #f8fafb !important;
+          font-weight: 700 !important;
+          color: #30252a !important;
         }
-        .noticia-corpo ul,
-        .noticia-corpo ol {
-          padding-left: 24px;
-          margin: 0 0 20px 0;
-        }
-        .noticia-corpo li {
-          margin-bottom: 8px;
-        }
-        .noticia-corpo iframe,
-        .noticia-corpo .iframe-wrapper iframe {
+        .noticia-corpo iframe {
+          max-width: 100% !important;
           width: 100% !important;
           aspect-ratio: 16 / 9 !important;
           border: none !important;
           border-radius: 6px !important;
           margin: 24px 0 !important;
           display: block !important;
-        }
-        .noticia-corpo .iframe-wrapper {
-          position: relative !important;
-          width: 100% !important;
-          aspect-ratio: 16 / 9 !important;
-          margin: 24px 0 !important;
-          border-radius: 6px !important;
-          overflow: hidden !important;
-          background: #000 !important;
         }
       `}</style>
     </div>

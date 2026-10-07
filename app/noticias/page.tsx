@@ -8,7 +8,7 @@ import ListaNoticiasPublica, { type NoticiaItemPublico } from '@/components/publ
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Notícias e Coberturas · Sindicato dos Químicos SJC',
+  title: 'Notícias da Categoria · Sindicato dos Químicos SJC',
   description: 'Arquivo completo de notícias, comunicados e coberturas das lutas dos trabalhadores químicos de São José dos Campos e Região.',
 }
 
@@ -27,10 +27,10 @@ export default async function NoticiasIndexPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#f7f5f6', color: '#30252a', display: 'flex', flexDirection: 'column' }}>
       
-      {/* Topo institucional padrão */}
+      {/* Topo institucional unificado */}
       <HeaderPublico slugAtivo="noticias" />
 
-      {/* ── FAIXA HERO INSTITUCIONAL COM BREADCRUMB ── */}
+      {/* ── FAIXA HERO INSTITUCIONAL COM BREADCRUMB ALINHADO A 1200PX ── */}
       <section
         style={{
           background: '#ffffff',
@@ -39,7 +39,7 @@ export default async function NoticiasIndexPage() {
           boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
         }}
       >
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           {/* Breadcrumb navegável */}
           <nav
             style={{
@@ -56,50 +56,32 @@ export default async function NoticiasIndexPage() {
               Início
             </Link>
             <span style={{ opacity: 0.4 }}>›</span>
-            <span style={{ color: '#861e32', fontWeight: 600 }}>
-              Imprensa
-            </span>
-            <span style={{ opacity: 0.4 }}>›</span>
-            <span style={{ color: '#30252a', fontWeight: 600 }}>Notícias</span>
+            <span style={{ color: '#861e32', fontWeight: 600 }}>Notícias</span>
           </nav>
 
-          {/* Chapéu / Pilar */}
-          <div
-            style={{
-              color: '#861e32',
-              fontSize: '12px',
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '8px',
-            }}
-          >
-            Imprensa & Comunicação
-          </div>
-
-          {/* Título Principal */}
+          {/* Título Principal Direto */}
           <h1
             style={{
-              fontSize: '34px',
+              fontSize: '32px',
               fontWeight: 800,
               lineHeight: 1.2,
               color: '#30252a',
-              margin: '0 0 12px 0',
-              letterSpacing: '-0.5px',
+              margin: '0 0 10px 0',
+              letterSpacing: '-0.4px',
             }}
           >
-            Notícias da Categoria Química
+            Notícias da Categoria
           </h1>
 
-          <p style={{ fontSize: '16px', color: '#65575e', lineHeight: 1.6, margin: 0, maxWidth: '780px' }}>
-            Acompanhe as assembleias, negociações da Convenção Coletiva, acordos salariais e ações do Sindicato em defesa dos trabalhadores de São José dos Campos, Jacareí, Caçapava e Taubaté.
+          <p style={{ fontSize: '15.5px', color: '#65575e', lineHeight: 1.6, margin: 0, maxWidth: '820px' }}>
+            Acompanhe as assembleias, negociações da Convenção Coletiva, acordos salariais e ações do Sindicato em defesa dos trabalhadores químicos de São José dos Campos, Jacareí, Caçapava e Taubaté.
           </p>
         </div>
       </section>
 
-      {/* Conteúdo principal */}
-      <main style={{ flex: 1, padding: '36px 16px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+      {/* Conteúdo principal alinhado a 1200px */}
+      <main style={{ flex: 1, padding: '36px 20px 60px 20px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           {/* Componente interativo de busca e listagem */}
           <ListaNoticiasPublica noticiasIniciais={noticias} />
         </div>

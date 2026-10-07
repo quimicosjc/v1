@@ -179,7 +179,7 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
           boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
         }}
       >
-        <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           {/* Breadcrumb navegável */}
           <nav
             style={{
@@ -255,7 +255,7 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
       <main style={{ flex: 1, padding: '36px 16px' }}>
         <article
           style={{
-            maxWidth: '960px',
+            maxWidth: '1200px',
             margin: '0 auto',
             background: '#ffffff',
             borderRadius: '10px',

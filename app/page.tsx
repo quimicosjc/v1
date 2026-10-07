@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import HeaderPublico from '@/components/publico/HeaderPublico'
 import FooterPublico from '@/components/publico/FooterPublico'
+import { formatarDataExtenso } from '@/lib/data-formatada'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,20 +27,29 @@ interface EdicaoRecente {
   publicacoes_jornal?: { nome: string } | null
 }
 
-function formatarData(dataIso?: string | null): string {
-  if (!dataIso) return ''
-  try {
-    const d = new Date(dataIso)
-    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
-  } catch {
-    return ''
-  }
+interface HomepageConfig {
+  model?: 'A' | 'B'
+  [key: string]: any
 }
 
 export default async function HomePage() {
   const supabase = await createClient()
 
-  // 1. Busca até 4 notícias em destaque publicadas
+  // 1. Busca configurações da homepage (Modelo A ou Modelo B)
+  let modeloNoticias: 'A' | 'B' = 'A'
+  try {
+    const { data: configData } = await supabase
+      .from('site_config')
+      .select('valor')
+      .eq('chave', 'homepage')
+      .maybeSingle()
+
+    if (configData?.valor?.model === 'B') {
+      modeloNoticias = 'B'
+    }
+  } catch {}
+
+  // 2. Busca até 4 notícias em destaque publicadas (Documento Mestre § 13.4 e § 13.5)
   const { data: noticiasData } = await supabase
     .from('conteudos')
     .select('id, titulo, slug, resumo, chapeu, banner_url, imagem_y, publicado_em, fotos_json')
@@ -51,7 +61,7 @@ export default async function HomePage() {
 
   const noticias: NoticiaDestaque[] = (noticiasData as any[]) || []
 
-  // 2. Busca a edição mais recente publicada do jornal
+  // 3. Busca a edição mais recente publicada do jornal
   const { data: edicaoData } = await supabase
     .from('edicoes_jornal')
     .select('id, numero, mes_ano, capa_url, pdf_url, publicacoes_jornal (nome)')
@@ -69,11 +79,11 @@ export default async function HomePage() {
       <HeaderPublico slugAtivo="/" />
 
       {/* ── FAIXA DE ATALHOS RÁPIDOS (SERVIÇOS AO TRABALHADOR) ── */}
-      <section style={{ background: '#ffffff', borderBottom: '1px solid #e4dce0', padding: '18px 20px' }}>
+      <section style={{ background: '#ffffff', borderBottom: '1px solid #e4dce0', padding: '16px 20px' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
             
-            {/* 1. Filie-se */}
+            {/* 1. Fique Sócio */}
             <Link
               href="/paginas/fique-socio"
               style={{
@@ -85,7 +95,7 @@ export default async function HomePage() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '14px',
-                boxShadow: '0 4px 12px rgba(134,30,50,0.22)',
+                boxShadow: '0 4px 12px rgba(134,30,50,0.18)',
                 transition: 'transform 0.15s ease, box-shadow 0.15s ease',
               }}
               className="service-card"
@@ -125,7 +135,7 @@ export default async function HomePage() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '14px',
-                boxShadow: '0 4px 12px rgba(48,37,42,0.18)',
+                boxShadow: '0 4px 12px rgba(48,37,42,0.14)',
                 transition: 'transform 0.15s ease, box-shadow 0.15s ease',
               }}
               className="service-card"
@@ -246,36 +256,24 @@ export default async function HomePage() {
       </section>
 
       {/* ── CONTEÚDO PRINCIPAL (NOTÍCIAS E JORNAIS) ── */}
-      <main style={{ maxWidth: '1200px', width: '100%', margin: '0 auto', padding: '40px 20px', flex: 1, boxSizing: 'border-box' }}>
+      <main style={{ maxWidth: '1200px', width: '100%', margin: '0 auto', padding: '36px 20px 48px 20px', flex: 1, boxSizing: 'border-box' }}>
         
-        {/* Título da Seção */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '26px', borderBottom: '2px solid #861e32', paddingBottom: '10px' }}>
-          <div>
-            <span style={{ color: '#861e32', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-              Imprensa & Comunicação
-            </span>
-            <h2 style={{ fontSize: '26px', fontWeight: 800, color: '#30252a', margin: '4px 0 0 0', letterSpacing: '-0.3px' }}>
-              Notícias da Categoria
-            </h2>
-          </div>
-          <Link href="/noticias" style={{ fontSize: '13.5px', fontWeight: 700, color: '#861e32', textDecoration: 'none' }} className="ver-todas-link">
-            Ver arquivo completo de notícias →
-          </Link>
-        </div>
-
-        {/* GRADE DE NOTÍCIAS */}
+        {/* BLOCO DE NOTÍCIAS EM DESTAQUE (ENTRADA DIRETA DAS MANCHETES - DOC MESTRE § 13.5) */}
         {noticias.length === 0 ? (
-          <div style={{ background: '#ffffff', border: '1px solid #e4dce0', borderRadius: '10px', padding: '48px', textAlign: 'center', color: '#71636a' }}>
+          <div style={{ background: '#ffffff', border: '1px solid #e4dce0', borderRadius: '10px', padding: '48px', textAlign: 'center', color: '#71636a', marginBottom: '40px' }}>
             Nenhuma notícia publicada no momento.
           </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', marginBottom: '44px' }}>
-            {noticias.map((item) => {
-              let fotoUrl = item.banner_url
-              let focoY = item.imagem_y ?? 50
-              if (item.fotos_json) {
+        ) : modeloNoticias === 'B' ? (
+          /* ── MODELO B: 1 MANCHETE PRINCIPAL MAIOR + 3 MENORES ABAIXO ── */
+          <div style={{ marginBottom: '44px' }}>
+            {/* Notícia 1 em destaque principal */}
+            {(() => {
+              const principal = noticias[0]
+              let fotoUrl = principal.banner_url
+              let focoY = principal.imagem_y ?? 50
+              if (principal.fotos_json) {
                 try {
-                  const arr = JSON.parse(item.fotos_json)
+                  const arr = JSON.parse(principal.fotos_json)
                   if (arr[0]?.url) {
                     fotoUrl = arr[0].url
                     focoY = arr[0].foco ?? focoY
@@ -285,8 +283,7 @@ export default async function HomePage() {
 
               return (
                 <Link
-                  key={item.id}
-                  href={`/noticias/${item.slug}`}
+                  href={`/noticias/${principal.slug}`}
                   style={{
                     background: '#ffffff',
                     border: '1px solid #e4dce0',
@@ -294,19 +291,20 @@ export default async function HomePage() {
                     overflow: 'hidden',
                     textDecoration: 'none',
                     color: 'inherit',
-                    display: 'flex',
-                    flexDirection: 'column',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                    gap: '0',
+                    marginBottom: '24px',
                     transition: 'all 0.18s ease',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                    boxShadow: '0 3px 12px rgba(48,37,42,0.04)',
                   }}
                   className="news-card"
                 >
-                  {/* Imagem Proporção 3:2 Preservada */}
                   <div style={{ width: '100%', aspectRatio: '3 / 2', background: '#f5f0f2', overflow: 'hidden', position: 'relative' }}>
                     {fotoUrl ? (
                       <img
                         src={fotoUrl}
-                        alt={item.titulo}
+                        alt={principal.titulo}
                         style={{
                           width: '100%',
                           height: '100%',
@@ -318,15 +316,15 @@ export default async function HomePage() {
                         className="news-card-img"
                       />
                     ) : (
-                      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8f2f4', padding: '20px' }}>
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f2f4', padding: '20px' }}>
                         <img
                           src="/logo-sindicato.png"
                           alt="Sindicato dos Químicos"
-                          style={{ maxHeight: '72px', maxWidth: '80%', objectFit: 'contain', opacity: 0.85 }}
+                          style={{ maxHeight: '80px', maxWidth: '80%', objectFit: 'contain', opacity: 0.85 }}
                         />
                       </div>
                     )}
-                    {item.chapeu && (
+                    {principal.chapeu && (
                       <span
                         style={{
                           position: 'absolute',
@@ -340,48 +338,320 @@ export default async function HomePage() {
                           borderRadius: '4px',
                           textTransform: 'uppercase',
                           letterSpacing: '0.4px',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
                         }}
                       >
-                        {item.chapeu}
+                        {principal.chapeu}
                       </span>
                     )}
                   </div>
 
-                  {/* Conteúdo */}
-                  <div style={{ padding: '20px 22px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div style={{ padding: '32px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
-                      {item.publicado_em && (
-                        <div style={{ fontSize: '12px', color: '#71636a', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                            <line x1="16" y1="2" x2="16" y2="6"/>
-                            <line x1="8" y1="2" x2="8" y2="6"/>
-                            <line x1="3" y1="10" x2="21" y2="10"/>
-                          </svg>
-                          <span>{formatarData(item.publicado_em)}</span>
+                      {principal.publicado_em && (
+                        <div style={{ fontSize: '13px', color: '#71636a', marginBottom: '10px' }}>
+                          {formatarDataExtenso(principal.publicado_em)}
                         </div>
                       )}
-                      <h3 style={{ fontSize: '17px', fontWeight: 800, lineHeight: 1.35, color: '#30252a', margin: '0 0 8px 0' }}>
-                        {item.titulo}
-                      </h3>
-                      {item.resumo && (
-                        <p style={{ fontSize: '13px', lineHeight: 1.55, color: '#65575e', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                          {item.resumo}
+                      <h2 style={{ fontSize: '24px', fontWeight: 800, lineHeight: 1.3, color: '#30252a', margin: '0 0 12px 0', letterSpacing: '-0.3px' }}>
+                        {principal.titulo}
+                      </h2>
+                      {principal.resumo && (
+                        <p style={{ fontSize: '15px', lineHeight: 1.6, color: '#65575e', margin: 0 }}>
+                          {principal.resumo}
                         </p>
                       )}
                     </div>
-
-                    <div style={{ marginTop: '16px', fontSize: '13px', fontWeight: 700, color: '#861e32', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <div style={{ marginTop: '20px', fontSize: '13.5px', fontWeight: 700, color: '#861e32', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                       <span>Ler matéria completa</span>
                       <span>→</span>
                     </div>
                   </div>
                 </Link>
               )
-            })}
+            })()}
+
+            {/* Notícias 2, 3 e 4 em 3 colunas */}
+            {noticias.length > 1 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+                {noticias.slice(1).map((item) => {
+                  let fotoUrl = item.banner_url
+                  let focoY = item.imagem_y ?? 50
+                  if (item.fotos_json) {
+                    try {
+                      const arr = JSON.parse(item.fotos_json)
+                      if (arr[0]?.url) {
+                        fotoUrl = arr[0].url
+                        focoY = arr[0].foco ?? focoY
+                      }
+                    } catch {}
+                  }
+
+                  return (
+                    <Link
+                      key={item.id}
+                      href={`/noticias/${item.slug}`}
+                      style={{
+                        background: '#ffffff',
+                        border: '1px solid #e4dce0',
+                        borderRadius: '10px',
+                        overflow: 'hidden',
+                        textDecoration: 'none',
+                        color: 'inherit',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        transition: 'all 0.18s ease',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                      }}
+                      className="news-card"
+                    >
+                      <div style={{ width: '100%', aspectRatio: '3 / 2', background: '#f5f0f2', overflow: 'hidden', position: 'relative' }}>
+                        {fotoUrl ? (
+                          <img
+                            src={fotoUrl}
+                            alt={item.titulo}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `50% ${focoY}%`, display: 'block', transition: 'transform 0.25s ease' }}
+                            className="news-card-img"
+                          />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f2f4' }}>
+                            <img src="/logo-sindicato.png" alt="Sindicato dos Químicos" style={{ maxHeight: '60px', maxWidth: '75%', objectFit: 'contain', opacity: 0.85 }} />
+                          </div>
+                        )}
+                        {item.chapeu && (
+                          <span style={{ position: 'absolute', top: '10px', left: '10px', background: '#861e32', color: '#ffffff', fontSize: '10.5px', fontWeight: 700, padding: '3px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                            {item.chapeu}
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ padding: '18px 20px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                        <div>
+                          {item.publicado_em && (
+                            <div style={{ fontSize: '12px', color: '#71636a', marginBottom: '8px' }}>
+                              {formatarDataExtenso(item.publicado_em)}
+                            </div>
+                          )}
+                          <h3 style={{ fontSize: '16px', fontWeight: 800, lineHeight: 1.35, color: '#30252a', margin: '0 0 6px 0' }}>
+                            {item.titulo}
+                          </h3>
+                        </div>
+                        <div style={{ marginTop: '14px', fontSize: '12.5px', fontWeight: 700, color: '#861e32' }}>
+                          Ler matéria →
+                        </div>
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Link oficial Outras Notícias (Documento Mestre § 13.5) */}
+            <div style={{ marginTop: '24px', textAlign: 'right' }}>
+              <Link href="/noticias" style={{ fontSize: '14px', fontWeight: 700, color: '#861e32', textDecoration: 'none' }} className="ver-todas-link">
+                Outras notícias →
+              </Link>
+            </div>
+          </div>
+        ) : (
+          /* ── MODELO A (PADRÃO / LEGADO): 4 MATÉRIAS EM GRADE EQUILIBRADA ── */
+          <div style={{ marginBottom: '44px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))', gap: '22px' }}>
+              {noticias.map((item) => {
+                let fotoUrl = item.banner_url
+                let focoY = item.imagem_y ?? 50
+                if (item.fotos_json) {
+                  try {
+                    const arr = JSON.parse(item.fotos_json)
+                    if (arr[0]?.url) {
+                      fotoUrl = arr[0].url
+                      focoY = arr[0].foco ?? focoY
+                    }
+                  } catch {}
+                }
+
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/noticias/${item.slug}`}
+                    style={{
+                      background: '#ffffff',
+                      border: '1px solid #e4dce0',
+                      borderRadius: '10px',
+                      overflow: 'hidden',
+                      textDecoration: 'none',
+                      color: 'inherit',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      transition: 'all 0.18s ease',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                    }}
+                    className="news-card"
+                  >
+                    {/* Imagem Proporção 3:2 Preservada */}
+                    <div style={{ width: '100%', aspectRatio: '3 / 2', background: '#f5f0f2', overflow: 'hidden', position: 'relative' }}>
+                      {fotoUrl ? (
+                        <img
+                          src={fotoUrl}
+                          alt={item.titulo}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            objectPosition: `50% ${focoY}%`,
+                            display: 'block',
+                            transition: 'transform 0.25s ease',
+                          }}
+                          className="news-card-img"
+                        />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8f2f4', padding: '20px' }}>
+                          <img
+                            src="/logo-sindicato.png"
+                            alt="Sindicato dos Químicos"
+                            style={{ maxHeight: '72px', maxWidth: '80%', objectFit: 'contain', opacity: 0.85 }}
+                          />
+                        </div>
+                      )}
+                      {item.chapeu && (
+                        <span
+                          style={{
+                            position: 'absolute',
+                            top: '12px',
+                            left: '12px',
+                            background: '#861e32',
+                            color: '#ffffff',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            padding: '4px 9px',
+                            borderRadius: '4px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.4px',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                          }}
+                        >
+                          {item.chapeu}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Conteúdo */}
+                    <div style={{ padding: '20px 22px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div>
+                        {item.publicado_em && (
+                          <div style={{ fontSize: '12.5px', color: '#71636a', marginBottom: '8px' }}>
+                            {formatarDataExtenso(item.publicado_em)}
+                          </div>
+                        )}
+                        <h3 style={{ fontSize: '17px', fontWeight: 800, lineHeight: 1.35, color: '#30252a', margin: '0 0 8px 0' }}>
+                          {item.titulo}
+                        </h3>
+                        {item.resumo && (
+                          <p style={{ fontSize: '13px', lineHeight: 1.55, color: '#65575e', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            {item.resumo}
+                          </p>
+                        )}
+                      </div>
+
+                      <div style={{ marginTop: '16px', fontSize: '13px', fontWeight: 700, color: '#861e32', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <span>Ler matéria completa</span>
+                        <span>→</span>
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+
+            {/* Link oficial Outras Notícias (Documento Mestre § 13.5) */}
+            <div style={{ marginTop: '22px', textAlign: 'right' }}>
+              <Link href="/noticias" style={{ fontSize: '14px', fontWeight: 700, color: '#861e32', textDecoration: 'none' }} className="ver-todas-link">
+                Outras notícias →
+              </Link>
+            </div>
           </div>
         )}
+
+        {/* ── FAIXA INSTITUCIONAL / AFILIAÇÕES (CSP-CONLUTAS E UNIDOS PRA LUTAR) ── */}
+        <section
+          style={{
+            background: '#ffffff',
+            border: '1px solid #e4dce0',
+            borderRadius: '10px',
+            padding: '20px 26px',
+            marginBottom: '36px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '20px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+          }}
+        >
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#861e32', marginBottom: '3px' }}>
+              Central & Corrente Sindical
+            </div>
+            <div style={{ fontSize: '15px', fontWeight: 700, color: '#30252a' }}>
+              Entidades e Lutas Parceiras
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            {/* CSP-Conlutas */}
+            <a
+              href="https://www.cspconlutas.org.br"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="CSP-Conlutas — Central Sindical e Popular"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: '1px solid #cbd7de',
+                background: '#ffffff',
+                textDecoration: 'none',
+                transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+              }}
+              className="partner-badge"
+            >
+              <img
+                src="/logo-csp-conlutas.png"
+                alt="Logo CSP-Conlutas"
+                style={{ height: '34px', width: 'auto', display: 'block' }}
+              />
+            </a>
+
+            {/* Unidos pra Lutar */}
+            <a
+              href="https://www.instagram.com/unidospralutar/"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Unidos pra Lutar"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: '1px solid #cbd7de',
+                background: '#ffffff',
+                textDecoration: 'none',
+                transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+              }}
+              className="partner-badge"
+            >
+              <img
+                src="/logo-unidos-pra-lutar.jpg"
+                alt="Logo Unidos pra Lutar"
+                style={{ height: '34px', width: 'auto', borderRadius: '4px', display: 'block', objectFit: 'contain' }}
+              />
+              <span style={{ fontSize: '13px', fontWeight: 700, color: '#30252a' }}>
+                Unidos pra Lutar
+              </span>
+            </a>
+          </div>
+        </section>
 
         {/* ── SEÇÃO INFERIOR: JORNAL IMPRESSO & CONVÊNIOS ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
@@ -553,6 +823,10 @@ export default async function HomePage() {
         }
         .news-card:hover .news-card-img {
           transform: scale(1.03);
+        }
+        .partner-badge:hover {
+          border-color: #861e32 !important;
+          box-shadow: 0 4px 12px rgba(134,30,50,0.08) !important;
         }
         .ver-todas-link:hover {
           text-decoration: underline !important;

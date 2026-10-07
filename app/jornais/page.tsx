@@ -59,7 +59,7 @@ export default async function JornaisPublicosPage() {
           boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
         }}
       >
-        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           {/* Breadcrumb navegável */}
           <nav
             style={{
@@ -76,26 +76,8 @@ export default async function JornaisPublicosPage() {
               Início
             </Link>
             <span style={{ opacity: 0.4 }}>›</span>
-            <span style={{ color: '#861e32', fontWeight: 600 }}>
-              Imprensa
-            </span>
-            <span style={{ opacity: 0.4 }}>›</span>
-            <span style={{ color: '#30252a', fontWeight: 600 }}>Jornais & Informativos</span>
+            <span style={{ color: '#861e32', fontWeight: 600 }}>Jornais & Informativos</span>
           </nav>
-
-          {/* Chapéu */}
-          <div
-            style={{
-              color: '#861e32',
-              fontSize: '12px',
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '8px',
-            }}
-          >
-            Publicações Oficiais
-          </div>
 
           {/* Título Principal */}
           <h1
@@ -118,8 +100,8 @@ export default async function JornaisPublicosPage() {
       </section>
 
       {/* Conteúdo principal */}
-      <main style={{ flex: 1, padding: '36px 16px' }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+      <main style={{ flex: 1, padding: '36px 20px 60px 20px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           
           {/* Grid de Edições */}
           {edicoes.length === 0 ? (

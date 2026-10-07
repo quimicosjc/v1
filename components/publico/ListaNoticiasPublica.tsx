@@ -3,6 +3,8 @@
 import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
 
+import { formatarDataExtenso } from '@/lib/data-formatada'
+
 export interface NoticiaItemPublico {
   id: string
   titulo: string
@@ -20,16 +22,6 @@ interface ListaNoticiasPublicaProps {
 }
 
 const ITENS_POR_PAGINA = 20
-
-function formatarData(dataIso?: string | null): string {
-  if (!dataIso) return ''
-  try {
-    const d = new Date(dataIso)
-    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
-  } catch {
-    return ''
-  }
-}
 
 export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticiasPublicaProps) {
   const [busca, setBusca] = useState('')
@@ -243,7 +235,7 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
                           <line x1="8" y1="2" x2="8" y2="6" />
                           <line x1="3" y1="10" x2="21" y2="10" />
                         </svg>
-                        <span>{formatarData(item.publicado_em)}</span>
+                        <span>{formatarDataExtenso(item.publicado_em)}</span>
                       </div>
                     )}
                     <h3 style={{ fontSize: '17px', fontWeight: 700, lineHeight: 1.35, color: '#30252a', margin: '0 0 8px 0' }}>

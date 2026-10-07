@@ -317,13 +317,29 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
             flexWrap: 'wrap',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', opacity: 0.9 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+            <a
+              href="https://www.cspconlutas.org.br"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#f6e7ec', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', opacity: 0.9 }}
+              title="CSP-Conlutas — Central Sindical e Popular"
+            >
               <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80' }} />
-              Filiado à CSP-Conlutas
-            </span>
+              CSP-Conlutas
+            </a>
             <span style={{ opacity: 0.4 }}>•</span>
-            <span style={{ opacity: 0.85 }}>São José dos Campos • Taubaté • Jacareí • Caçapava</span>
+            <a
+              href="https://www.instagram.com/unidospralutar/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#f6e7ec', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', opacity: 0.9 }}
+              title="Unidos pra Lutar"
+            >
+              Unidos pra Lutar
+            </a>
+            <span style={{ opacity: 0.4 }}>•</span>
+            <span style={{ opacity: 0.85 }}>SJC • Taubaté • Jacareí • Caçapava</span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
