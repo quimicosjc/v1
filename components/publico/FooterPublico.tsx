@@ -7,8 +7,7 @@ interface FooterPublicoProps {
 }
 
 const TEXTO_PADRAO = `Sindicato dos Trabalhadores nas Indústrias Químicas, Plásticas e Farmacêuticas de São José dos Campos e Região
-São José dos Campos: Praça Carlos Maldonado Campoy, 23 — Centro — (12) 3921-8177
-Taubaté: Rua Dr. Pedro Costa, 155 — Centro — (12) 3632-0932 | Jacareí: (12) 3953-3277 | Caçapava: (12) 3655-6044
+São José dos Campos: (12) 3921-8177 | Taubaté: (12) 3632-0932 | Jacareí: (12) 3953-3277 | Caçapava: (12) 3655-6044
 E-mail: contato@quimicosjc.org.br | Horário: Segunda a sexta, das 8h às 17h`
 
 export default function FooterPublico({ textoRodape }: FooterPublicoProps) {

@@ -54,7 +54,7 @@ export default function BlocoJornal({ edicoes }: BlocoJornalProps) {
             }}
             className="bloco-jornal-col1"
           >
-            {/* Capa em formato vertical natural (PRESERVADA, sem recorte) */}
+            {/* Capa em formato vertical natural proporcional à capa física do Boca no Trombone */}
             <a
               href={edicaoMaisRecente.pdf_url || '#'}
               target="_blank"
@@ -62,11 +62,13 @@ export default function BlocoJornal({ edicoes }: BlocoJornalProps) {
               style={{
                 display: 'block',
                 flexShrink: 0,
-                width: '140px',
+                width: '150px',
+                aspectRatio: '1 / 1.42',
                 borderRadius: '4px',
                 overflow: 'hidden',
                 boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
                 border: '1px solid rgba(0,0,0,0.1)',
+                background: '#F8F4F5',
                 transition: 'transform 0.2s ease',
               }}
               className="jornal-capa-link"
@@ -77,7 +79,8 @@ export default function BlocoJornal({ edicoes }: BlocoJornalProps) {
                 alt={`Capa Boca no Trombone nº ${edicaoMaisRecente.numero}`}
                 style={{
                   width: '100%',
-                  height: 'auto',
+                  height: '100%',
+                  objectFit: 'cover',
                   display: 'block',
                 }}
               />
@@ -259,7 +262,7 @@ export default function BlocoJornal({ edicoes }: BlocoJornalProps) {
                   <div
                     style={{
                       width: '100%',
-                      aspectRatio: '3 / 4',
+                      aspectRatio: '1 / 1.42',
                       borderRadius: '3px',
                       overflow: 'hidden',
                       border: `1px solid ${CORES.line}`,
@@ -338,7 +341,7 @@ export default function BlocoJornal({ edicoes }: BlocoJornalProps) {
             text-align: center !important;
           }
           .jornal-capa-link {
-            width: 140px !important;
+            width: 150px !important;
             margin: 0 auto !important;
           }
           .bloco-jornal-col2 {
