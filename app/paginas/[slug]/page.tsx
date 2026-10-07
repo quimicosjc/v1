@@ -2,6 +2,11 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import FormularioSindicalizacao from '@/components/publico/FormularioSindicalizacao'
+import FormularioCarteirinha from '@/components/publico/FormularioCarteirinha'
+import FormularioAtualizacao from '@/components/publico/FormularioAtualizacao'
+import FormularioDenuncia from '@/components/publico/FormularioDenuncia'
+import FormularioCadastroNoticias from '@/components/publico/FormularioCadastroNoticias'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -448,6 +453,13 @@ export default async function PaginaPublicaPage({ params }: PageProps) {
               </div>
             </div>
           )}
+
+          {/* 7. FORMULÁRIOS INTERATIVOS PÚBLICOS */}
+          {slug === 'fique-socio' && <FormularioSindicalizacao />}
+          {slug === 'carteirinha' && <FormularioCarteirinha />}
+          {slug === 'atualizar-cadastro' && <FormularioAtualizacao />}
+          {slug === 'denuncia' && <FormularioDenuncia />}
+          {slug === 'cadastro-noticias' && <FormularioCadastroNoticias />}
 
           {/* Galeria de Fotos Adicionais (se houver) */}
           {fotosGaleria.length > 0 && (

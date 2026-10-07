@@ -29,7 +29,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     .select('titulo, resumo, banner_url')
     .eq('slug', slug)
     .eq('tipo', 'noticia')
-    .single()
+    .eq('status', 'publicado')
+    .maybeSingle()
 
   if (!noticia) {
     return {
@@ -73,7 +74,8 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
     .select('*')
     .eq('slug', slug)
     .eq('tipo', 'noticia')
-    .single()
+    .eq('status', 'publicado')
+    .maybeSingle()
 
   if (error || !noticia) {
     notFound()
