@@ -5,12 +5,8 @@
       "schedule": "0 9 */5 * *"
     },
     {
-      "path": "/api/cron/publicar",
-      "schedule": "*/10 * * * *"
-    },
-    {
-      "path": "/api/cron/lixeira",
-      "schedule": "0 3 * * *"
+      "path": "/api/cron/manutencao",
+      "schedule": "0 11 * * *"
     }
   ]
 }
