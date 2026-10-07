@@ -132,35 +132,62 @@ export default function BlocoJornal({ edicoes }: BlocoJornalProps) {
                 Informativo oficial com as principais denúncias das fábricas, assembleias e mobilizações da categoria química e farmacêutica.
               </p>
 
-              {/* Botão Baixar PDF */}
-              {edicaoMaisRecente.pdf_url && (
-                <a
-                  href={edicaoMaisRecente.pdf_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              {/* Ações da Edição Principal */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  flexWrap: 'wrap',
+                }}
+                className="botoes-jornal-mobile"
+              >
+                {edicaoMaisRecente.pdf_url && (
+                  <a
+                    href={edicaoMaisRecente.pdf_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: CORES.action,
+                      color: '#FFFFFF',
+                      padding: '8px 16px',
+                      borderRadius: '4px',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      transition: 'all 0.15s ease',
+                    }}
+                    className="btn-baixar-pdf"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    <span>Baixar PDF</span>
+                  </a>
+                )}
+
+                <Link
+                  href="/jornais"
                   style={{
-                    display: 'inline-flex',
+                    display: 'none',
                     alignItems: 'center',
-                    gap: '8px',
-                    background: CORES.action,
-                    color: '#FFFFFF',
-                    padding: '8px 16px',
-                    borderRadius: '4px',
+                    gap: '4px',
                     fontSize: '13px',
                     fontWeight: 700,
+                    color: CORES.action,
                     textDecoration: 'none',
-                    transition: 'all 0.15s ease',
                   }}
-                  className="btn-baixar-pdf"
+                  className="link-jornal-mobile-acervo"
                 >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                  <span>Baixar PDF</span>
-                </a>
-              )}
+                  <span>Ver todas as edições</span>
+                  <span>→</span>
+                </Link>
+              </div>
             </div>
           </div>
 
@@ -302,19 +329,26 @@ export default function BlocoJornal({ edicoes }: BlocoJornalProps) {
         }
         @media (max-width: 600px) {
           .bloco-jornal-box {
-            padding: 20px 16px !important;
+            padding: 24px 16px !important;
           }
           .bloco-jornal-col1 {
+            border-bottom: none !important;
+            padding-bottom: 0 !important;
             flex-direction: column !important;
             text-align: center !important;
           }
           .jornal-capa-link {
-            width: 130px !important;
+            width: 140px !important;
             margin: 0 auto !important;
           }
-          .grid-edicoes-anteriores {
-            grid-template-columns: repeat(2, 1fr) !important;
-            gap: 12px !important;
+          .bloco-jornal-col2 {
+            display: none !important;
+          }
+          .link-jornal-mobile-acervo {
+            display: inline-flex !important;
+          }
+          .botoes-jornal-mobile {
+            justify-content: center !important;
           }
         }
       `}</style>

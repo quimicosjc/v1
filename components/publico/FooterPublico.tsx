@@ -42,7 +42,7 @@ export default function FooterPublico({ textoRodape }: FooterPublicoProps) {
             <img
               src="/logo-sindicato.svg"
               alt="Sindicato dos Químicos de São José dos Campos e Região"
-              style={{ height: '44px', width: 'auto', display: 'block' }}
+              style={{ height: '88px', width: 'auto', display: 'block' }}
             />
           </Link>
         </div>

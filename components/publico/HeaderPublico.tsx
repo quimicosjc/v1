@@ -340,7 +340,7 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
               <img
                 src="/logo-sindicato.svg"
                 alt="Sindicato dos Químicos de São José dos Campos e Região"
-                style={{ height: '52px', width: 'auto', display: 'block' }}
+                style={{ height: '104px', width: 'auto', display: 'block' }}
                 className="header-logo-img"
               />
             </Link>
@@ -800,11 +800,11 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
         }
         @media (max-width: 600px) {
           .header-main-bar {
-            padding-top: 10px !important;
-            padding-bottom: 10px !important;
+            padding-top: 8px !important;
+            padding-bottom: 8px !important;
           }
           .header-logo-img {
-            height: 40px !important;
+            height: 76px !important;
           }
           .header-mobile-toggle {
             flex-shrink: 0 !important;
