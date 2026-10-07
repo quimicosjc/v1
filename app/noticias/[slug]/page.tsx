@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import HeaderPublico from '@/components/publico/HeaderPublico'
 import FooterPublico from '@/components/publico/FooterPublico'
 import CarrosselNoticia from '@/components/publico/CarrosselNoticia'
+import BarraCompartilhamento from '@/components/publico/BarraCompartilhamento'
 import { formatarDataHoraNoticia } from '@/lib/data-formatada'
 import { CONTAINER_STYLE } from '@/lib/design'
 
@@ -69,6 +70,18 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
   if (error || !noticia) {
     notFound()
   }
+
+  // Busca matérias relacionadas para o bloco "Leia Também"
+  const { data: relacionadasData } = await supabase
+    .from('conteudos')
+    .select('id, titulo, slug, resumo, chapeu, banner_url, imagem_y, publicado_em, fotos_json')
+    .eq('tipo', 'noticia')
+    .eq('status', 'publicado')
+    .neq('id', noticia.id)
+    .order('publicado_em', { ascending: false })
+    .limit(3)
+
+  const relacionadas: any[] = relacionadasData || []
 
   // Parse fotos
   let fotos: FotoItem[] = []
@@ -197,9 +210,7 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
             style={{
               fontSize: '13px',
               color: '#71636a',
-              padding: '10px 0 20px 0',
-              borderBottom: '1px solid #e4dce0',
-              marginBottom: '28px',
+              padding: '6px 0 10px 0',
               display: 'flex',
               flexWrap: 'wrap',
               gap: '8px',
@@ -217,6 +228,9 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
             )}
           </div>
 
+          {/* Barra de Compartilhamento no Topo (WhatsApp, Facebook, Copiar link e Tamanho de Fonte) */}
+          <BarraCompartilhamento titulo={noticia.titulo} modo="topo" />
+
           {/* Carrossel Editorial de Fotos (Documento Mestre § 3.4 com proporção 3:2 e botão de foto completa) */}
           <CarrosselNoticia fotos={fotos} titulo={noticia.titulo} />
 
@@ -231,6 +245,9 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
             }}
             dangerouslySetInnerHTML={{ __html: corpoFormatado }}
           />
+
+          {/* Barra de Compartilhamento no Rodapé do Artigo */}
+          <BarraCompartilhamento titulo={noticia.titulo} modo="rodape" />
 
           {/* URL de Referência */}
           {noticia.url_referencia && (
@@ -423,6 +440,198 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
           </div>
 
         </article>
+
+        {/* ── BLOCO LEIA TAMBÉM (RETENÇÃO EDITORIAL) ── */}
+        {relacionadas.length > 0 && (
+          <section
+            style={{
+              maxWidth: '1000px',
+              margin: '56px auto 0 auto',
+              borderTop: '2px solid #ebdbe0',
+              paddingTop: '36px',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '22px',
+                flexWrap: 'wrap',
+                gap: '12px',
+              }}
+            >
+              <h2
+                style={{
+                  fontFamily: 'var(--font-condensed), sans-serif',
+                  fontSize: '26px',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  color: '#30252a',
+                  margin: 0,
+                  letterSpacing: '0.4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                }}
+              >
+                <span
+                  style={{
+                    width: '4px',
+                    height: '22px',
+                    background: '#861e32',
+                    display: 'inline-block',
+                    borderRadius: '2px',
+                  }}
+                />
+                Leia Também
+              </h2>
+
+              <Link
+                href="/noticias"
+                style={{
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  color: '#861e32',
+                  textDecoration: 'none',
+                }}
+                className="breadcrumb-link"
+              >
+                Ver todas as notícias →
+              </Link>
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '22px',
+              }}
+            >
+              {relacionadas.map((rel: any) => {
+                let fotoUrl = rel.banner_url
+                let focoY = rel.imagem_y ?? 50
+                if (rel.fotos_json) {
+                  try {
+                    const arr = JSON.parse(rel.fotos_json)
+                    if (arr[0]?.url) {
+                      fotoUrl = arr[0].url
+                      focoY = arr[0].foco ?? focoY
+                    }
+                  } catch {}
+                }
+
+                return (
+                  <Link
+                    key={rel.id}
+                    href={`/noticias/${rel.slug}`}
+                    style={{
+                      background: '#ffffff',
+                      border: '1px solid #ebdbe0',
+                      borderRadius: '6px',
+                      overflow: 'hidden',
+                      textDecoration: 'none',
+                      color: 'inherit',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                    }}
+                    className="news-card-hover"
+                  >
+                    <div
+                      style={{
+                        width: '100%',
+                        aspectRatio: '16 / 10',
+                        background: '#24141A',
+                        overflow: 'hidden',
+                        position: 'relative',
+                      }}
+                    >
+                      {fotoUrl ? (
+                        <img
+                          src={fotoUrl}
+                          alt={rel.titulo}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            objectPosition: `50% ${focoY}%`,
+                            display: 'block',
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: '#f8f2f4',
+                          }}
+                        >
+                          <img
+                            src="/logo-sindicato.png"
+                            alt="Sindicato"
+                            style={{ maxHeight: '48px', opacity: 0.8 }}
+                          />
+                        </div>
+                      )}
+                      {rel.chapeu && (
+                        <span
+                          style={{
+                            position: 'absolute',
+                            top: '10px',
+                            left: '10px',
+                            background: '#861e32',
+                            color: '#ffffff',
+                            fontSize: '10.5px',
+                            fontWeight: 700,
+                            padding: '3px 7px',
+                            borderRadius: '3px',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          {rel.chapeu}
+                        </span>
+                      )}
+                    </div>
+                    <div
+                      style={{
+                        padding: '16px 18px',
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <h3
+                        style={{
+                          fontSize: '16px',
+                          fontWeight: 700,
+                          lineHeight: 1.35,
+                          color: '#30252a',
+                          margin: '0 0 12px 0',
+                        }}
+                      >
+                        {rel.titulo}
+                      </h3>
+                      <span
+                        style={{
+                          fontSize: '12.5px',
+                          fontWeight: 700,
+                          color: '#861e32',
+                        }}
+                      >
+                        Ler notícia →
+                      </span>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </section>
+        )}
       </main>
 
       {/* Rodapé institucional oficial */}

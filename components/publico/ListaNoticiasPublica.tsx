@@ -60,6 +60,10 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
     return filtradas.slice(inicio, inicio + ITENS_POR_PAGINA)
   }, [filtradas, pagina])
 
+  const temDestaque = busca.trim() === '' && chapeuSelecionado === 'todos' && pagina === 1 && itensPagina.length > 0
+  const materiaDestaque = temDestaque ? itensPagina[0] : null
+  const materiasParaGrade = temDestaque ? itensPagina.slice(1) : itensPagina
+
   function mudarBusca(val: string) {
     setBusca(val)
     setPagina(1)
@@ -145,6 +149,207 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
         </div>
       </div>
 
+      {/* ── SUPER DESTAQUE DA MATÉRIA PRINCIPAL (Quando sem filtro e na 1ª página) ── */}
+      {temDestaque && materiaDestaque && (() => {
+        let fotoUrlDestaque = materiaDestaque.banner_url
+        let focoYDestaque = materiaDestaque.imagem_y ?? 50
+        if (materiaDestaque.fotos_json) {
+          try {
+            const arr = JSON.parse(materiaDestaque.fotos_json)
+            if (arr[0]?.url) {
+              fotoUrlDestaque = arr[0].url
+              focoYDestaque = arr[0].foco ?? focoYDestaque
+            }
+          } catch {}
+        }
+
+        return (
+          <div style={{ marginBottom: '36px' }}>
+            <Link
+              href={`/noticias/${materiaDestaque.slug}`}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                background: '#ffffff',
+                border: '1px solid #ebdbe0',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                textDecoration: 'none',
+                color: 'inherit',
+                boxShadow: '0 4px 14px rgba(48,37,42,0.05)',
+                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+              }}
+              className="news-card-hover"
+            >
+              <div
+                style={{
+                  aspectRatio: '16 / 10',
+                  minHeight: '260px',
+                  background: '#24141A',
+                  overflow: 'hidden',
+                  position: 'relative',
+                }}
+              >
+                {fotoUrlDestaque ? (
+                  <img
+                    src={fotoUrlDestaque}
+                    alt={materiaDestaque.titulo}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: `50% ${focoYDestaque}%`,
+                      display: 'block',
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: '#f8f2f4',
+                    }}
+                  >
+                    <img
+                      src="/logo-sindicato.png"
+                      alt="Sindicato"
+                      style={{ maxHeight: '72px', opacity: 0.85 }}
+                    />
+                  </div>
+                )}
+                {materiaDestaque.chapeu && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: '14px',
+                      left: '14px',
+                      background: '#861e32',
+                      color: '#ffffff',
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      padding: '4px 9px',
+                      borderRadius: '3px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}
+                  >
+                    {materiaDestaque.chapeu}
+                  </span>
+                )}
+              </div>
+
+              <div
+                style={{
+                  padding: '28px 32px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                }}
+              >
+                {materiaDestaque.publicado_em && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '12.5px',
+                      color: '#71636a',
+                      marginBottom: '10px',
+                    }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#71636a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                      <line x1="16" y1="2" x2="16" y2="6" />
+                      <line x1="8" y1="2" x2="8" y2="6" />
+                      <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                    <span>{formatarDataExtenso(materiaDestaque.publicado_em)}</span>
+                  </div>
+                )}
+                <h2
+                  style={{
+                    fontFamily: 'var(--font-condensed), sans-serif',
+                    fontSize: '28px',
+                    fontWeight: 800,
+                    lineHeight: 1.15,
+                    color: '#1a1417',
+                    margin: '0 0 12px 0',
+                    letterSpacing: '-0.2px',
+                  }}
+                >
+                  {materiaDestaque.titulo}
+                </h2>
+                {materiaDestaque.resumo && (
+                  <p
+                    style={{
+                      fontSize: '15px',
+                      lineHeight: 1.6,
+                      color: '#554950',
+                      margin: '0 0 20px 0',
+                    }}
+                  >
+                    {materiaDestaque.resumo}
+                  </p>
+                )}
+                <div>
+                  <span
+                    style={{
+                      background: '#861e32',
+                      color: '#ffffff',
+                      padding: '9px 18px',
+                      borderRadius: '5px',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    Ler matéria completa →
+                  </span>
+                </div>
+              </div>
+            </Link>
+
+            {materiasParaGrade.length > 0 && (
+              <div
+                style={{
+                  margin: '36px 0 20px 0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                }}
+              >
+                <span
+                  style={{
+                    width: '4px',
+                    height: '20px',
+                    background: '#861e32',
+                    display: 'inline-block',
+                    borderRadius: '2px',
+                  }}
+                />
+                <h3
+                  style={{
+                    fontFamily: 'var(--font-condensed), sans-serif',
+                    fontSize: '22px',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    color: '#30252a',
+                    margin: 0,
+                  }}
+                >
+                  Mais Notícias da Categoria
+                </h3>
+              </div>
+            )}
+          </div>
+        )
+      })()}
+
       {/* ── GRADE DE NOTÍCIAS ── */}
       {itensPagina.length === 0 ? (
         <div style={{ background: '#ffffff', border: '1px solid #e4dce0', borderRadius: '8px', padding: '40px', textAlign: 'center', color: '#71636a' }}>
@@ -152,7 +357,7 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '22px', marginBottom: '32px' }}>
-          {itensPagina.map((item) => {
+          {materiasParaGrade.map((item) => {
             let fotoUrl = item.banner_url
             let focoY = item.imagem_y ?? 50
             if (item.fotos_json) {
