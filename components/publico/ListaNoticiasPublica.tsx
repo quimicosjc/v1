@@ -188,8 +188,8 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
                   display: 'flex',
                   flexDirection: 'column',
                   boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
-                  transition: 'transform 0.15s ease',
                 }}
+                className="news-card-hover"
               >
                 <div style={{ width: '100%', aspectRatio: '3 / 2', background: '#eee', overflow: 'hidden', position: 'relative' }}>
                   {fotoUrl ? (
@@ -232,8 +232,14 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
                 <div style={{ padding: '18px 20px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
                     {item.publicado_em && (
-                      <div style={{ fontSize: '12px', color: '#71636a', marginBottom: '6px' }}>
-                        📅 {formatarData(item.publicado_em)}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#71636a', marginBottom: '8px' }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#71636a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                          <line x1="16" y1="2" x2="16" y2="6" />
+                          <line x1="8" y1="2" x2="8" y2="6" />
+                          <line x1="3" y1="10" x2="21" y2="10" />
+                        </svg>
+                        <span>{formatarData(item.publicado_em)}</span>
                       </div>
                     )}
                     <h3 style={{ fontSize: '17px', fontWeight: 700, lineHeight: 1.35, color: '#30252a', margin: '0 0 8px 0' }}>

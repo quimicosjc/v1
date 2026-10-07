@@ -1,5 +1,12 @@
 import type { Metadata } from 'next'
+import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
+
+const fontSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  weight: ['400', '500', '600', '700', '800'],
+})
 
 // ─── Metadados padrão do site ────────────────────────────────────────────────
 // Cada página pode sobrescrever esses valores individualmente
@@ -30,8 +37,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR">
-      <body>{children}</body>
+    <html lang="pt-BR" className={fontSans.className}>
+      <body style={{ margin: 0, padding: 0, background: '#f7f5f6', color: '#30252a', fontFamily: 'inherit' }}>
+        {children}
+      </body>
     </html>
   )
 }

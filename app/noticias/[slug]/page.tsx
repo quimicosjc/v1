@@ -124,21 +124,61 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
     .replace(/&lt;iframe([\s\S]*?)\/&gt;/gi, '<iframe$1></iframe>')
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f7f5f6', display: 'flex', flexDirection: 'column', color: '#30252a', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#f7f5f6', display: 'flex', flexDirection: 'column', color: '#30252a' }}>
       {/* Topo institucional unificado */}
       <HeaderPublico slugAtivo="noticias" />
+
+      {/* ── FAIXA HERO INSTITUCIONAL COM BREADCRUMB ── */}
+      <section
+        style={{
+          background: '#ffffff',
+          borderBottom: '1px solid #e4dce0',
+          padding: '24px 20px 28px 20px',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+        }}
+      >
+        <div style={{ maxWidth: '860px', margin: '0 auto' }}>
+          {/* Breadcrumb navegável */}
+          <nav
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '12.5px',
+              color: '#71636a',
+              flexWrap: 'wrap',
+            }}
+          >
+            <Link href="/" style={{ color: '#71636a', textDecoration: 'none' }} className="breadcrumb-link">
+              Início
+            </Link>
+            <span style={{ opacity: 0.4 }}>›</span>
+            <Link href="/noticias" style={{ color: '#861e32', textDecoration: 'none', fontWeight: 600 }} className="breadcrumb-link">
+              Imprensa
+            </Link>
+            <span style={{ opacity: 0.4 }}>›</span>
+            <Link href="/noticias" style={{ color: '#71636a', textDecoration: 'none' }} className="breadcrumb-link">
+              Notícias
+            </Link>
+            <span style={{ opacity: 0.4 }}>›</span>
+            <span style={{ color: '#30252a', fontWeight: 600, maxWidth: '340px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {noticia.titulo}
+            </span>
+          </nav>
+        </div>
+      </section>
 
       {/* Conteúdo principal da Notícia */}
       <main style={{ flex: 1, padding: '36px 16px' }}>
         <article
           style={{
-            maxWidth: '840px',
+            maxWidth: '860px',
             margin: '0 auto',
             background: '#ffffff',
-            borderRadius: '8px',
+            borderRadius: '10px',
             border: '1px solid #e4dce0',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-            padding: '36px 40px',
+            boxShadow: '0 4px 16px rgba(48,37,42,0.04)',
+            padding: '40px 44px',
           }}
         >
           {/* Chapéu / Assunto */}
@@ -146,11 +186,11 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
             <div
               style={{
                 color: '#861e32',
-                fontSize: '13px',
-                fontWeight: 700,
+                fontSize: '12.5px',
+                fontWeight: 800,
                 textTransform: 'uppercase',
-                letterSpacing: '0.8px',
-                marginBottom: '12px',
+                letterSpacing: '1px',
+                marginBottom: '10px',
               }}
             >
               {noticia.chapeu}
@@ -165,87 +205,113 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
               lineHeight: 1.25,
               color: '#30252a',
               margin: '0 0 16px 0',
+              letterSpacing: '-0.3px',
             }}
           >
             {noticia.titulo}
           </h1>
 
-          {/* Subtítulo */}
+          {/* Subtítulo / Lead */}
           {noticia.subtitulo && (
-            <h2
+            <div
               style={{
-                fontSize: '18px',
-                fontWeight: 400,
-                lineHeight: 1.5,
-                color: '#71636a',
-                margin: '0 0 20px 0',
+                fontSize: '17px',
+                lineHeight: 1.6,
+                color: '#65575e',
+                borderLeft: '3px solid #861e32',
+                paddingLeft: '14px',
+                margin: '0 0 24px 0',
               }}
             >
               {noticia.subtitulo}
-            </h2>
+            </div>
           )}
 
-          {/* Linha de Metadados: Data, Crédito, Compartilhar */}
+          {/* Linha de Metadados: Data, Crédito, Destaque */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               flexWrap: 'wrap',
-              gap: '10px',
+              gap: '12px',
               padding: '14px 0',
               borderTop: '1px solid #e4dce0',
               borderBottom: '1px solid #e4dce0',
-              marginBottom: '28px',
+              marginBottom: '32px',
               fontSize: '13px',
               color: '#71636a',
             }}
           >
-            <div>
-              <span>Publicado em <strong>{formatarDataCompleta(noticia.publicado_em || noticia.criado_em)}</strong></span>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#71636a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                <span>Publicado em <strong>{formatarDataCompleta(noticia.publicado_em || noticia.criado_em)}</strong></span>
+              </div>
+
               {noticia.credito && (
-                <span style={{ marginLeft: '12px' }}>
-                  • Por <strong>{noticia.credito}</strong>
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#71636a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <span>Por <strong>{noticia.credito}</strong></span>
+                </div>
               )}
             </div>
 
             {noticia.destaque && (
               <span
                 style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
                   background: '#fff2df',
                   color: '#825914',
                   borderRadius: '4px',
-                  padding: '2px 8px',
+                  padding: '3px 8px',
                   fontSize: '12px',
                   fontWeight: 600,
                 }}
               >
-                ★ Notícia em Destaque
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="#825914" stroke="#825914" strokeWidth="1">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+                Notícia em Destaque
               </span>
             )}
           </div>
 
-          {/* Foto Principal */}
+          {/* Foto Principal com Preservação de Orientação Original (Regra de Ouro) */}
           {fotoPrincipal && (
-            <figure style={{ margin: '0 0 32px 0' }}>
+            <figure style={{ margin: '0 0 36px 0' }}>
               <div
                 style={{
                   width: '100%',
-                  aspectRatio: '16 / 9',
-                  borderRadius: '6px',
+                  maxHeight: '540px',
+                  borderRadius: '8px',
                   overflow: 'hidden',
-                  background: '#f0e8ea',
+                  background: '#f8fafb',
+                  border: '1px solid #e4dce0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
                 <img
                   src={fotoPrincipal.url}
                   alt={fotoPrincipal.legenda || noticia.titulo}
                   style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    objectPosition: `50% ${fotoPrincipal.foco ?? 50}%`,
+                    maxWidth: '100%',
+                    maxHeight: '540px',
+                    width: 'auto',
+                    height: 'auto',
+                    objectFit: 'contain',
                     display: 'block',
                   }}
                 />
@@ -253,7 +319,7 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
               {(fotoPrincipal.legenda || fotoPrincipal.credito) && (
                 <figcaption
                   style={{
-                    fontSize: '13px',
+                    fontSize: '12.5px',
                     color: '#71636a',
                     marginTop: '8px',
                     lineHeight: 1.4,
@@ -261,11 +327,13 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
                     justifyContent: 'space-between',
                     flexWrap: 'wrap',
                     gap: '6px',
+                    fontStyle: 'italic',
+                    paddingLeft: '4px',
                   }}
                 >
                   <span>{fotoPrincipal.legenda}</span>
                   {fotoPrincipal.credito && (
-                    <span style={{ fontStyle: 'italic', opacity: 0.85 }}>Foto: {fotoPrincipal.credito}</span>
+                    <span>Foto: {fotoPrincipal.credito}</span>
                   )}
                 </figcaption>
               )}
@@ -278,7 +346,7 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
             dangerouslySetInnerHTML={{ __html: corpoFormatado }}
           />
 
-          {/* Fotos adicionais da matéria — 100% de largura no fluxo da matéria */}
+          {/* Fotos adicionais da matéria com Preservação de Orientação Original (Regra de Ouro) */}
           {fotosGaleria.length > 0 && (
             <div style={{ marginTop: '36px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
               {fotosGaleria.map((foto, idx) => (
@@ -286,20 +354,25 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
                   <div
                     style={{
                       width: '100%',
-                      aspectRatio: '16 / 9',
-                      borderRadius: '6px',
+                      maxHeight: '540px',
+                      borderRadius: '8px',
                       overflow: 'hidden',
-                      background: '#f0e8ea',
+                      background: '#f8fafb',
+                      border: '1px solid #e4dce0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                   >
                     <img
                       src={foto.url}
                       alt={foto.legenda || `Foto ${idx + 2}`}
                       style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        objectPosition: `50% ${foto.foco ?? 50}%`,
+                        maxWidth: '100%',
+                        maxHeight: '540px',
+                        width: 'auto',
+                        height: 'auto',
+                        objectFit: 'contain',
                         display: 'block',
                       }}
                     />
@@ -307,7 +380,7 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
                   {(foto.legenda || foto.credito) && (
                     <figcaption
                       style={{
-                        fontSize: '13px',
+                        fontSize: '12.5px',
                         color: '#71636a',
                         marginTop: '8px',
                         lineHeight: 1.4,
@@ -315,11 +388,13 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
                         justifyContent: 'space-between',
                         flexWrap: 'wrap',
                         gap: '6px',
+                        fontStyle: 'italic',
+                        paddingLeft: '4px',
                       }}
                     >
                       <span>{foto.legenda}</span>
                       {foto.credito && (
-                        <span style={{ fontStyle: 'italic', opacity: 0.85 }}>Foto: {foto.credito}</span>
+                        <span>Foto: {foto.credito}</span>
                       )}
                     </figcaption>
                   )}
@@ -374,8 +449,14 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
                       gap: '12px',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span style={{ fontSize: '20px' }}>📄</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10 9 9 9 8 9" />
+                      </svg>
                       <div>
                         <div style={{ fontSize: '14px', fontWeight: 600, color: '#30252a' }}>
                           {doc.nome}
@@ -441,6 +522,25 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
               ))}
             </div>
           )}
+
+          {/* Navegação Inferior: Retornar às Notícias */}
+          <div style={{ marginTop: '40px', borderTop: '1px solid #e4dce0', paddingTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Link
+              href="/noticias"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                color: '#861e32',
+                fontSize: '14px',
+                fontWeight: 700,
+                textDecoration: 'none',
+              }}
+              className="breadcrumb-link"
+            >
+              ← Voltar para todas as notícias
+            </Link>
+          </div>
         </article>
       </main>
 

@@ -36,7 +36,23 @@ export default function FormularioCadastroNoticias() {
           marginTop: '24px',
         }}
       >
-        <div style={{ fontSize: '36px', marginBottom: '8px' }}>📬</div>
+        <div
+          style={{
+            width: '52px',
+            height: '52px',
+            borderRadius: '50%',
+            background: '#23634e',
+            color: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 12px auto',
+          }}
+        >
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
         <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#23634e', margin: '0 0 8px 0' }}>
           Cadastro Realizado com Sucesso!
         </h3>
@@ -90,8 +106,13 @@ export default function FormularioCadastroNoticias() {
       <input type="text" name="website_extra" tabIndex={-1} autoComplete="off" style={{ display: 'none' }} />
 
       {erro && (
-        <div style={{ background: '#fdf2f2', border: '1px solid #f0a8a8', color: '#991b1b', padding: '10px 14px', borderRadius: '5px', marginBottom: '16px', fontSize: '14px' }}>
-          ⚠️ {erro}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fdf2f2', border: '1px solid #f0a8a8', color: '#991b1b', padding: '10px 14px', borderRadius: '5px', marginBottom: '16px', fontSize: '14px' }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#991b1b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <span>{erro}</span>
         </div>
       )}
 

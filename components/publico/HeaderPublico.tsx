@@ -1,127 +1,819 @@
-import React from 'react'
+'use client'
+
+import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 
 interface HeaderPublicoProps {
   slugAtivo?: string
 }
 
+interface MenuItem {
+  titulo: string
+  subtitulo: string
+  href: string
+  icone: React.ReactNode
+}
+
+interface MenuGrupo {
+  nome: string
+  items: MenuItem[]
+}
+
 export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
-  const linkStyle = (href: string): React.CSSProperties => {
-    let isActive = false
-    if (!slugAtivo || slugAtivo === '/' || slugAtivo === 'home' || slugAtivo === 'inicio') {
-      isActive = href === '/' && Boolean(slugAtivo)
-    } else {
-      if (href === '/') {
-        isActive = false
-      } else if (href === '/noticias') {
-        isActive = slugAtivo === 'noticias' || slugAtivo === 'lista-noticias'
-      } else if (href === '/jornais') {
-        isActive = slugAtivo === 'jornais'
-      } else {
-        const cleanHref = href.replace('/paginas/', '')
-        isActive = cleanHref === slugAtivo || slugAtivo.startsWith(cleanHref)
+  const [dropdownAtivo, setDropdownAtivo] = useState<string | null>(null)
+  const [mobileMenuAberto, setMobileMenuAberto] = useState(false)
+  const [mobileAcordeon, setMobileAcordeon] = useState<string | null>(null)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Fecha menus ao mudar rota ou redimensionar
+  useEffect(() => {
+    function handleResize() {
+      if (window.innerWidth > 960) {
+        setMobileMenuAberto(false)
       }
     }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
-    return {
-      color: '#ffffff',
-      fontSize: '13px',
-      textDecoration: 'none',
-      fontWeight: isActive ? 700 : 500,
-      borderBottom: isActive ? '2px solid #ffffff' : '2px solid transparent',
-      paddingBottom: '2px',
-      transition: 'border-color 0.15s ease',
-    }
+  function handleMouseEnter(grupo: string) {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    setDropdownAtivo(grupo)
+  }
+
+  function handleMouseLeave() {
+    timeoutRef.current = setTimeout(() => {
+      setDropdownAtivo(null)
+    }, 180)
+  }
+
+  // Grupos e itens conforme o Organograma do projeto
+  const menus: MenuGrupo[] = [
+    {
+      nome: 'Sindicato',
+      items: [
+        {
+          titulo: 'Nossa História',
+          subtitulo: 'A trajetória e lutas da categoria química',
+          href: '/paginas/historia',
+          icone: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+          ),
+        },
+        {
+          titulo: 'Diretoria Eleita',
+          subtitulo: 'Executiva, colegiada e conselho fiscal',
+          href: '/paginas/diretoria',
+          icone: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          ),
+        },
+        {
+          titulo: 'Filie-se ao Sindicato',
+          subtitulo: 'Sindicalize-se online e fortaleça sua voz',
+          href: '/paginas/fique-socio',
+          icone: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 20h9"/>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+          ),
+        },
+        {
+          titulo: 'Sedes & Atendimento',
+          subtitulo: 'SJC, Taubaté, Jacareí e Caçapava',
+          href: '/paginas/fale-conosco',
+          icone: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+          ),
+        },
+        {
+          titulo: 'Links Úteis',
+          subtitulo: 'Órgãos trabalhistas e centrais sindicais',
+          href: '/paginas/links-uteis',
+          icone: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+          ),
+        },
+        {
+          titulo: 'Política de Privacidade',
+          subtitulo: 'Proteção de dados e conformidade LGPD',
+          href: '/paginas/privacidade',
+          icone: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          ),
+        },
+      ],
+    },
+    {
+      nome: 'Serviços',
+      items: [
+        {
+          titulo: 'Colônia de Férias',
+          subtitulo: 'Unidades em Caraguatatuba e São Sebastião',
+          href: '/paginas/colonia',
+          icone: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+            </svg>
+          ),
+        },
+        {
+          titulo: 'Guia de Convênios',
+          subtitulo: 'Descontos em saúde, educação e lazer',
+          href: '/paginas/convenios',
+          icone: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+              <line x1="7" y1="7" x2="7.01" y2="7"/>
+            </svg>
+          ),
+        },
+        {
+          titulo: 'Carteirinha do Associado',
+          subtitulo: 'Solicitação da 1ª e 2ª via digital do sócio',
+          href: '/paginas/carteirinha',
+          icone: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <circle cx="8" cy="10" r="2"/>
+              <line x1="14" y1="9" x2="18" y2="9"/>
+              <line x1="14" y1="13" x2="18" y2="13"/>
+              <line x1="6" y1="16" x2="18" y2="16"/>
+            </svg>
+          ),
+        },
+        {
+          titulo: 'Atualização Cadastral',
+          subtitulo: 'Mantenha seus dados e dependentes em dia',
+          href: '/paginas/atualizar-cadastro',
+          icone: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="23 4 23 10 17 10"/>
+              <polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+          ),
+        },
+      ],
+    },
+    {
+      nome: 'Jurídico',
+      items: [
+        {
+          titulo: 'Convenções Coletivas (CCT)',
+          subtitulo: 'Acordos salariais e direitos conquistados',
+          href: '/paginas/cct',
+          icone: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          ),
+        },
+        {
+          titulo: 'Atendimento & Plantão',
+          subtitulo: 'Assessoria jurídica para o trabalhador químico',
+          href: '/paginas/juridico',
+          icone: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M16 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/>
+              <path d="M2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/>
+              <path d="M7 21h10"/>
+              <path d="M12 3v18"/>
+            </svg>
+          ),
+        },
+        {
+          titulo: 'Processos Coletivos',
+          subtitulo: 'Ações judiciais em defesa da categoria',
+          href: '/paginas/processos',
+          icone: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+            </svg>
+          ),
+        },
+        {
+          titulo: 'Homologações',
+          subtitulo: 'Regras, documentos e suporte de rescisão',
+          href: '/paginas/homologacao',
+          icone: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 11 12 14 22 4"/>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            </svg>
+          ),
+        },
+        {
+          titulo: 'Canal de Denúncias',
+          subtitulo: 'Canal seguro e sigiloso para desvios nas empresas',
+          href: '/paginas/denuncia',
+          icone: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          ),
+        },
+      ],
+    },
+    {
+      nome: 'Imprensa',
+      items: [
+        {
+          titulo: 'Notícias & Coberturas',
+          subtitulo: 'Arquivo completo de matérias e assembleias',
+          href: '/noticias',
+          icone: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
+              <path d="M18 14h-8"/>
+              <path d="M15 18h-5"/>
+              <path d="M10 6h8v4h-8V6Z"/>
+            </svg>
+          ),
+        },
+        {
+          titulo: 'Jornal Boca no Trombone',
+          subtitulo: 'Acervo digital de edições impressas em PDF',
+          href: '/jornais',
+          icone: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+          ),
+        },
+        {
+          titulo: 'Boletim por E-mail',
+          subtitulo: 'Receba informativos diretamente no e-mail',
+          href: '/paginas/cadastro-noticias',
+          icone: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          ),
+        },
+      ],
+    },
+  ]
+
+  // Verifica se o link é o ativo
+  function isGrupoAtivo(grupo: MenuGrupo): boolean {
+    if (!slugAtivo) return false
+    return grupo.items.some((item) => {
+      const cleanHref = item.href.replace('/paginas/', '').replace('/', '')
+      return cleanHref === slugAtivo || slugAtivo.startsWith(cleanHref)
+    })
   }
 
   return (
-    <header
-      style={{
-        background: '#65172A',
-        color: '#ffffff',
-        borderBottom: '3px solid #861e32',
-        padding: '14px 20px',
-      }}
-    >
+    <>
+      {/* ── 1. FAIXA SUPERIOR INSTITUCIONAL (INFOBAR) ── */}
       <div
         style={{
-          maxWidth: '1100px',
-          margin: '0 auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '16px',
-          flexWrap: 'wrap',
+          background: '#521322',
+          color: '#f6e7ec',
+          fontSize: '12px',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          padding: '6px 20px',
         }}
       >
-        <Link
-          href="/"
+        <div
           style={{
+            maxWidth: '1200px',
+            margin: '0 auto',
             display: 'flex',
             alignItems: 'center',
-            gap: '14px',
-            textDecoration: 'none',
-            color: 'inherit',
+            justifyContent: 'space-between',
+            gap: '12px',
+            flexWrap: 'wrap',
           }}
         >
-          <img
-            src="/logo-sindicato.png"
-            alt="Logo Sindicato dos Químicos SJC"
-            style={{ height: '44px', width: 'auto', display: 'block' }}
-          />
-          <div>
-            <div style={{ fontSize: '15px', fontWeight: 800, letterSpacing: '0.4px', lineHeight: 1.2 }}>
-              Sindicato dos Químicos
-            </div>
-            <div style={{ fontSize: '11px', opacity: 0.85, letterSpacing: '0.3px' }}>
-              São José dos Campos e Região • Desde 1963
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', opacity: 0.9 }}>
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80' }} />
+              Filiado à CSP-Conlutas
+            </span>
+            <span style={{ opacity: 0.4 }}>•</span>
+            <span style={{ opacity: 0.85 }}>São José dos Campos • Taubaté • Jacareí • Caçapava</span>
           </div>
-        </Link>
 
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-          <Link href="/" style={linkStyle('/')}>
-            Início
-          </Link>
-          <Link href="/noticias" style={linkStyle('/noticias')}>
-            Notícias
-          </Link>
-          <Link href="/paginas/diretoria" style={linkStyle('diretoria')}>
-            Diretoria
-          </Link>
-          <Link href="/paginas/convenios" style={linkStyle('convenios')}>
-            Convênios
-          </Link>
-          <Link href="/paginas/cct" style={linkStyle('cct')}>
-            Jurídico & CCT
-          </Link>
-          <Link href="/paginas/colonia" style={linkStyle('colonia')}>
-            Colônia
-          </Link>
-          <Link href="/jornais" style={linkStyle('/jornais')}>
-            Jornais
-          </Link>
-          <Link href="/paginas/fale-conosco" style={linkStyle('fale-conosco')}>
-            Sedes & Contatos
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <a
+              href="tel:1239218177"
+              style={{
+                color: '#f6e7ec',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                opacity: 0.9,
+              }}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+              (12) 3921-8177
+            </a>
+            <span style={{ opacity: 0.4 }}>•</span>
+            <Link
+              href="/admin"
+              style={{
+                color: '#ffffff',
+                textDecoration: 'none',
+                background: 'rgba(255,255,255,0.12)',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                fontSize: '11px',
+                fontWeight: 600,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              Área Restrita
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 2. CABEÇALHO PRINCIPAL DE NAVEGAÇÃO ── */}
+      <header
+        style={{
+          background: '#65172A',
+          color: '#ffffff',
+          borderBottom: '3px solid #861e32',
+          position: 'sticky',
+          top: 0,
+          zIndex: 100,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+        }}
+      >
+        <div
+          style={{
+            maxWidth: '1200px',
+            margin: '0 auto',
+            padding: '12px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '20px',
+          }}
+        >
+          {/* Logo e Identificação */}
           <Link
-            href="/admin"
+            href="/"
             style={{
-              background: 'rgba(255,255,255,0.14)',
-              color: '#ffffff',
-              border: '1px solid rgba(255,255,255,0.3)',
-              borderRadius: '4px',
-              padding: '5px 12px',
-              fontSize: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '14px',
               textDecoration: 'none',
-              fontWeight: 600,
-              marginLeft: '4px',
+              color: 'inherit',
+              flexShrink: 0,
             }}
           >
-            Área Restrita 🔒
+            <img
+              src="/logo-sindicato.png"
+              alt="Logo Sindicato dos Químicos SJC"
+              style={{ height: '48px', width: 'auto', display: 'block' }}
+            />
+            <div>
+              <div
+                style={{
+                  fontSize: '17px',
+                  fontWeight: 800,
+                  letterSpacing: '0.3px',
+                  lineHeight: 1.15,
+                  color: '#ffffff',
+                }}
+              >
+                Sindicato dos Químicos
+              </div>
+              <div
+                style={{
+                  fontSize: '11px',
+                  opacity: 0.85,
+                  letterSpacing: '0.4px',
+                  marginTop: '2px',
+                  fontWeight: 500,
+                }}
+              >
+                São José dos Campos e Região • Desde 1963
+              </div>
+            </div>
           </Link>
-        </nav>
-      </div>
-    </header>
+
+          {/* Navegação Desktop */}
+          <nav
+            style={{
+              display: 'none',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+            className="header-desktop-nav"
+          >
+            {/* Link Início */}
+            <Link
+              href="/"
+              style={{
+                color: '#ffffff',
+                fontSize: '14px',
+                fontWeight: (!slugAtivo || slugAtivo === '/' || slugAtivo === 'home') ? 700 : 500,
+                textDecoration: 'none',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                background: (!slugAtivo || slugAtivo === '/' || slugAtivo === 'home') ? 'rgba(255,255,255,0.12)' : 'transparent',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              Início
+            </Link>
+
+            {/* Menus Dropdown (Organograma: Sindicato, Serviços, Jurídico, Imprensa) */}
+            {menus.map((grupo) => {
+              const ativo = isGrupoAtivo(grupo)
+              const aberto = dropdownAtivo === grupo.nome
+
+              return (
+                <div
+                  key={grupo.nome}
+                  style={{ position: 'relative' }}
+                  onMouseEnter={() => handleMouseEnter(grupo.nome)}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setDropdownAtivo(aberto ? null : grupo.nome)}
+                    style={{
+                      background: aberto || ativo ? 'rgba(255,255,255,0.14)' : 'transparent',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '8px 12px',
+                      fontSize: '14px',
+                      fontWeight: ativo ? 700 : 500,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      fontFamily: 'inherit',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <span>{grupo.nome}</span>
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{
+                        transform: aberto ? 'rotate(180deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.18s ease',
+                      }}
+                    >
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </button>
+
+                  {/* Dropdown Menu Flutuante */}
+                  {aberto && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: '0',
+                        paddingTop: '8px',
+                        zIndex: 110,
+                        minWidth: '320px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          background: '#ffffff',
+                          borderRadius: '10px',
+                          boxShadow: '0 16px 48px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(0,0,0,0.06)',
+                          padding: '10px',
+                          display: 'grid',
+                          gap: '4px',
+                        }}
+                      >
+                        <div
+                          style={{
+                            padding: '6px 10px 4px 10px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.8px',
+                            color: '#861e32',
+                            borderBottom: '1px solid #f0e8ea',
+                            marginBottom: '4px',
+                          }}
+                        >
+                          {grupo.nome} • Acesso Rápido
+                        </div>
+
+                        {grupo.items.map((item) => (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={() => setDropdownAtivo(null)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              gap: '12px',
+                              padding: '10px 12px',
+                              borderRadius: '6px',
+                              textDecoration: 'none',
+                              color: '#30252a',
+                              transition: 'background 0.15s ease',
+                            }}
+                            className="dropdown-item"
+                          >
+                            <div
+                              style={{
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '6px',
+                                background: '#f8f2f4',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                                marginTop: '2px',
+                              }}
+                            >
+                              {item.icone}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div
+                                style={{
+                                  fontSize: '13.5px',
+                                  fontWeight: 700,
+                                  color: '#30252a',
+                                  lineHeight: 1.3,
+                                }}
+                              >
+                                {item.titulo}
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: '11.5px',
+                                  color: '#71636a',
+                                  lineHeight: 1.35,
+                                  marginTop: '2px',
+                                }}
+                              >
+                                {item.subtitulo}
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+
+            {/* Botão de Destaque Filie-se */}
+            <Link
+              href="/paginas/fique-socio"
+              style={{
+                marginLeft: '8px',
+                background: '#861e32',
+                color: '#ffffff',
+                padding: '9px 16px',
+                borderRadius: '6px',
+                fontSize: '13px',
+                fontWeight: 700,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 2px 8px rgba(134,30,50,0.25)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                transition: 'transform 0.15s ease, background 0.15s ease',
+              }}
+              className="btn-filie-se"
+            >
+              <span>Sindicalize-se</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </Link>
+          </nav>
+
+          {/* Botão Hambúrguer Mobile */}
+          <button
+            type="button"
+            onClick={() => setMobileMenuAberto(!mobileMenuAberto)}
+            aria-label="Abrir menu de navegação"
+            style={{
+              background: 'rgba(255,255,255,0.12)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '6px',
+              padding: '8px 10px',
+              color: '#ffffff',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            className="header-mobile-toggle"
+          >
+            {mobileMenuAberto ? (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            ) : (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+            )}
+          </button>
+        </div>
+
+        {/* ── 3. MENU MOBILE DRAWER ── */}
+        {mobileMenuAberto && (
+          <div
+            style={{
+              background: '#581424',
+              borderTop: '1px solid rgba(255,255,255,0.1)',
+              padding: '16px 20px 24px 20px',
+              maxHeight: '80vh',
+              overflowY: 'auto',
+            }}
+          >
+            <div style={{ display: 'grid', gap: '8px' }}>
+              <Link
+                href="/"
+                onClick={() => setMobileMenuAberto(false)}
+                style={{
+                  color: '#ffffff',
+                  padding: '10px 14px',
+                  borderRadius: '6px',
+                  textDecoration: 'none',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  background: 'rgba(255,255,255,0.06)',
+                  display: 'block',
+                }}
+              >
+                Início
+              </Link>
+
+              {menus.map((grupo) => {
+                const aberto = mobileAcordeon === grupo.nome
+
+                return (
+                  <div key={grupo.nome} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                    <button
+                      type="button"
+                      onClick={() => setMobileAcordeon(aberto ? null : grupo.nome)}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#ffffff',
+                        padding: '12px 14px',
+                        fontSize: '15px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      <span>{grupo.nome}</span>
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        style={{
+                          transform: aberto ? 'rotate(180deg)' : 'rotate(0deg)',
+                          transition: 'transform 0.15s ease',
+                        }}
+                      >
+                        <polyline points="6 9 12 15 18 9"/>
+                      </svg>
+                    </button>
+
+                    {aberto && (
+                      <div style={{ padding: '0 8px 12px 14px', display: 'grid', gap: '4px' }}>
+                        {grupo.items.map((item) => (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={() => setMobileMenuAberto(false)}
+                            style={{
+                              color: 'rgba(255,255,255,0.9)',
+                              padding: '8px 10px',
+                              borderRadius: '4px',
+                              textDecoration: 'none',
+                              fontSize: '13.5px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '10px',
+                            }}
+                          >
+                            <span style={{ filter: 'brightness(2)' }}>{item.icone}</span>
+                            <span>{item.titulo}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+
+              <Link
+                href="/paginas/fique-socio"
+                onClick={() => setMobileMenuAberto(false)}
+                style={{
+                  marginTop: '12px',
+                  background: '#861e32',
+                  color: '#ffffff',
+                  padding: '12px',
+                  borderRadius: '6px',
+                  textAlign: 'center',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  textDecoration: 'none',
+                  display: 'block',
+                }}
+              >
+                Sindicalize-se Agora
+              </Link>
+            </div>
+          </div>
+        )}
+      </header>
+
+      {/* Estilos CSS Responsivos */}
+      <style>{`
+        @media (min-width: 960px) {
+          .header-desktop-nav {
+            display: flex !important;
+          }
+          .header-mobile-toggle {
+            display: none !important;
+          }
+        }
+        .dropdown-item:hover {
+          background: #f8f4f5 !important;
+        }
+        .btn-filie-se:hover {
+          background: #9c243c !important;
+          transform: translateY(-1px);
+        }
+      `}</style>
+    </>
   )
 }
