@@ -7,6 +7,10 @@ import FormularioCarteirinha from '@/components/publico/FormularioCarteirinha'
 import FormularioAtualizacao from '@/components/publico/FormularioAtualizacao'
 import FormularioDenuncia from '@/components/publico/FormularioDenuncia'
 import FormularioCadastroNoticias from '@/components/publico/FormularioCadastroNoticias'
+import HeaderPublico from '@/components/publico/HeaderPublico'
+import FooterPublico from '@/components/publico/FooterPublico'
+import ColoniaNav from '@/components/publico/ColoniaNav'
+import ListaNoticiasPublica, { type NoticiaItemPublico } from '@/components/publico/ListaNoticiasPublica'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -131,74 +135,22 @@ export default async function PaginaPublicaPage({ params }: PageProps) {
   const records = dadosEstruturados?.records || []
   const tipoPagina = dadosEstruturados?.tipoPagina || ''
 
+  // Se for a página de lista de notícias, busca todas as notícias publicadas para exibir o índice
+  let noticiasParaLista: NoticiaItemPublico[] = []
+  if (slug === 'lista-noticias') {
+    const { data: nData } = await supabase
+      .from('conteudos')
+      .select('id, titulo, slug, resumo, chapeu, banner_url, imagem_y, publicado_em, fotos_json')
+      .eq('tipo', 'noticia')
+      .eq('status', 'publicado')
+      .order('publicado_em', { ascending: false })
+    noticiasParaLista = (nData as any[]) || []
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#f7f5f6', display: 'flex', flexDirection: 'column', color: '#30252a', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      {/* Topo institucional */}
-      <header
-        style={{
-          background: '#65172A',
-          color: '#ffffff',
-          borderBottom: '3px solid #861e32',
-          padding: '14px 20px',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '920px',
-            margin: '0 auto',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px',
-          }}
-        >
-          <Link
-            href="/"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '14px',
-              textDecoration: 'none',
-              color: 'inherit',
-            }}
-          >
-            <img
-              src="/logo-sindicato.png"
-              alt="Logo Sindicato dos Químicos SJC"
-              style={{ height: '42px', width: 'auto', display: 'block' }}
-            />
-            <div>
-              <div style={{ fontSize: '14px', fontWeight: 700, letterSpacing: '0.3px', lineHeight: 1.2 }}>
-                Sindicato dos Químicos
-              </div>
-              <div style={{ fontSize: '11px', opacity: 0.85, letterSpacing: '0.2px' }}>
-                São José dos Campos e Região
-              </div>
-            </div>
-          </Link>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Link
-              href={pagina.tipo === 'institucional' ? '/admin/paginas' : '/admin/avulsas'}
-              style={{
-                background: 'rgba(255,255,255,0.12)',
-                color: '#ffffff',
-                border: '1px solid rgba(255,255,255,0.25)',
-                borderRadius: '5px',
-                padding: '6px 14px',
-                fontSize: '12px',
-                textDecoration: 'none',
-                fontWeight: 500,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-            >
-              ← Painel de Controle
-            </Link>
-          </div>
-        </div>
-      </header>
+      {/* Topo institucional unificado */}
+      <HeaderPublico slugAtivo={slug} />
 
       {/* Conteúdo principal */}
       <main style={{ flex: 1, padding: '36px 16px' }}>
@@ -257,6 +209,9 @@ export default async function PaginaPublicaPage({ params }: PageProps) {
               {pagina.subtitulo}
             </div>
           )}
+
+          {/* Navegação por Abas das Subpáginas da Colônia de Férias */}
+          <ColoniaNav slugAtual={slug} />
 
           {/* Foto Principal com Enquadramento 3:2 Preservado */}
           {fotoPrincipal && (
@@ -461,6 +416,13 @@ export default async function PaginaPublicaPage({ params }: PageProps) {
           {slug === 'denuncia' && <FormularioDenuncia />}
           {slug === 'cadastro-noticias' && <FormularioCadastroNoticias />}
 
+          {/* 8. ÍNDICE DINÂMICO DE NOTÍCIAS */}
+          {slug === 'lista-noticias' && (
+            <div style={{ marginTop: '32px' }}>
+              <ListaNoticiasPublica noticiasIniciais={noticiasParaLista} />
+            </div>
+          )}
+
           {/* Galeria de Fotos Adicionais (se houver) */}
           {fotosGaleria.length > 0 && (
             <div style={{ marginTop: '36px' }}>
@@ -568,24 +530,8 @@ export default async function PaginaPublicaPage({ params }: PageProps) {
         </article>
       </main>
 
-      {/* Rodapé institucional */}
-      <footer
-        style={{
-          background: '#ffffff',
-          borderTop: '1px solid #e4dce0',
-          padding: '24px 20px',
-          textAlign: 'center',
-          color: '#71636a',
-          fontSize: '13px',
-        }}
-      >
-        <div style={{ maxWidth: '920px', margin: '0 auto' }}>
-          <div>Sindicato dos Químicos de São José dos Campos e Região</div>
-          <div style={{ marginTop: '4px', fontSize: '12px' }}>
-            Praça Romualdo César de Almeida, 120 — Jardim Sul, São José dos Campos/SP
-          </div>
-        </div>
-      </footer>
+      {/* Rodapé institucional oficial */}
+      <FooterPublico />
     </div>
   )
 }

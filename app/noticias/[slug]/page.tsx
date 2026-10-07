@@ -2,6 +2,8 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import HeaderPublico from '@/components/publico/HeaderPublico'
+import FooterPublico from '@/components/publico/FooterPublico'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -123,61 +125,8 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f7f5f6', display: 'flex', flexDirection: 'column', color: '#30252a', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      {/* Topo institucional */}
-      <header
-        style={{
-          background: '#65172A',
-          color: '#ffffff',
-          borderBottom: '3px solid #861e32',
-          padding: '14px 20px',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '920px',
-            margin: '0 auto',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <img
-              src="/logo-sindicato.png"
-              alt="Logo Sindicato dos Químicos SJC"
-              style={{ height: '42px', width: 'auto', display: 'block' }}
-            />
-            <div>
-              <div style={{ fontSize: '14px', fontWeight: 700, letterSpacing: '0.3px', lineHeight: 1.2 }}>
-                Sindicato dos Químicos
-              </div>
-              <div style={{ fontSize: '11px', opacity: 0.85, letterSpacing: '0.2px' }}>
-                São José dos Campos e Região
-              </div>
-            </div>
-          </div>
-
-          <Link
-            href="/admin/noticias"
-            style={{
-              background: 'rgba(255,255,255,0.12)',
-              color: '#ffffff',
-              border: '1px solid rgba(255,255,255,0.25)',
-              borderRadius: '5px',
-              padding: '6px 14px',
-              fontSize: '12px',
-              textDecoration: 'none',
-              fontWeight: 500,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
-            ← Painel de Controle
-          </Link>
-        </div>
-      </header>
+      {/* Topo institucional unificado */}
+      <HeaderPublico slugAtivo="noticias" />
 
       {/* Conteúdo principal da Notícia */}
       <main style={{ flex: 1, padding: '36px 16px' }}>
@@ -495,24 +444,8 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
         </article>
       </main>
 
-      {/* Rodapé institucional */}
-      <footer
-        style={{
-          background: '#30252a',
-          color: '#e4dce0',
-          padding: '24px 20px',
-          textAlign: 'center',
-          fontSize: '13px',
-          borderTop: '1px solid #4a3b42',
-        }}
-      >
-        <p style={{ margin: '0 0 6px 0' }}>
-          Sindicato dos Químicos de São José dos Campos e Região
-        </p>
-        <p style={{ margin: 0, opacity: 0.7, fontSize: '12px' }}>
-          Todos os direitos reservados • Sistema Institucional
-        </p>
-      </footer>
+      {/* Rodapé institucional oficial */}
+      <FooterPublico />
 
       {/* Estilos Scoped para a renderização do corpo da notícia */}
       <style>{`

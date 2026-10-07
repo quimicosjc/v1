@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import HeaderPublico from '@/components/publico/HeaderPublico'
+import FooterPublico from '@/components/publico/FooterPublico'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,26 +47,8 @@ export default async function JornaisPublicosPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#f7f5f6', color: '#30252a', fontFamily: 'system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
       
-      {/* Topo institucional */}
-      <header style={{ background: '#65172A', color: '#ffffff', borderBottom: '3px solid #861e32', padding: '14px 20px' }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '14px', textDecoration: 'none', color: 'inherit' }}>
-            <img src="/logo-sindicato.png" alt="Logo Sindicato dos Químicos SJC" style={{ height: '42px', width: 'auto', display: 'block' }} />
-            <div>
-              <div style={{ fontSize: '14px', fontWeight: 700, letterSpacing: '0.3px', lineHeight: 1.2 }}>
-                Sindicato dos Químicos
-              </div>
-              <div style={{ fontSize: '11px', opacity: 0.85, letterSpacing: '0.2px' }}>
-                São José dos Campos e Região
-              </div>
-            </div>
-          </Link>
-
-          <Link href="/" style={{ color: '#ffffff', fontSize: '13px', textDecoration: 'none', fontWeight: 500 }}>
-            ← Voltar para a Início
-          </Link>
-        </div>
-      </header>
+      {/* Topo institucional unificado */}
+      <HeaderPublico slugAtivo="jornais" />
 
       {/* Conteúdo principal */}
       <main style={{ flex: 1, padding: '36px 16px' }}>
@@ -182,10 +166,8 @@ export default async function JornaisPublicosPage() {
         </div>
       </main>
 
-      {/* Rodapé simples */}
-      <footer style={{ background: '#30252a', color: '#ffffff', textAlign: 'center', padding: '20px', fontSize: '13px', opacity: 0.85 }}>
-        Sindicato dos Químicos de São José dos Campos e Região • contato@quimicosjc.org.br
-      </footer>
+      {/* Rodapé institucional oficial */}
+      <FooterPublico />
 
     </div>
   )

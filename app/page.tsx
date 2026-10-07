@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import HeaderPublico from '@/components/publico/HeaderPublico'
+import FooterPublico from '@/components/publico/FooterPublico'
 
 export const dynamic = 'force-dynamic'
 
@@ -63,59 +65,8 @@ export default async function HomePage() {
   return (
     <div style={{ minHeight: '100vh', background: '#f7f5f6', color: '#30252a', fontFamily: 'system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
       
-      {/* ── TOPO INSTITUCIONAL ── */}
-      <header style={{ background: '#65172A', color: '#ffffff', borderBottom: '3px solid #861e32', padding: '14px 20px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-          
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '14px', textDecoration: 'none', color: 'inherit' }}>
-            <img src="/logo-sindicato.png" alt="Logo Sindicato dos Químicos SJC" style={{ height: '46px', width: 'auto', display: 'block' }} />
-            <div>
-              <div style={{ fontSize: '15px', fontWeight: 800, letterSpacing: '0.4px', lineHeight: 1.2 }}>
-                Sindicato dos Químicos
-              </div>
-              <div style={{ fontSize: '11px', opacity: 0.85, letterSpacing: '0.3px' }}>
-                São José dos Campos e Região • Desde 1963
-              </div>
-            </div>
-          </Link>
-
-          <nav style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-            <Link href="/paginas/diretoria" style={{ color: '#ffffff', fontSize: '13px', textDecoration: 'none', fontWeight: 500 }}>
-              Diretoria
-            </Link>
-            <Link href="/paginas/convenios" style={{ color: '#ffffff', fontSize: '13px', textDecoration: 'none', fontWeight: 500 }}>
-              Convênios
-            </Link>
-            <Link href="/paginas/cct" style={{ color: '#ffffff', fontSize: '13px', textDecoration: 'none', fontWeight: 500 }}>
-              Jurídico & CCT
-            </Link>
-            <Link href="/paginas/colonia" style={{ color: '#ffffff', fontSize: '13px', textDecoration: 'none', fontWeight: 500 }}>
-              Colônia
-            </Link>
-            <Link href="/jornais" style={{ color: '#ffffff', fontSize: '13px', textDecoration: 'none', fontWeight: 500 }}>
-              Jornais
-            </Link>
-            <Link href="/paginas/fale-conosco" style={{ color: '#ffffff', fontSize: '13px', textDecoration: 'none', fontWeight: 500 }}>
-              Sedes & Contatos
-            </Link>
-            <Link
-              href="/admin"
-              style={{
-                background: 'rgba(255,255,255,0.12)',
-                color: '#ffffff',
-                border: '1px solid rgba(255,255,255,0.25)',
-                borderRadius: '4px',
-                padding: '5px 12px',
-                fontSize: '12px',
-                textDecoration: 'none',
-                fontWeight: 600,
-              }}
-            >
-              Área Restrita 🔒
-            </Link>
-          </nav>
-        </div>
-      </header>
+      {/* Topo institucional unificado */}
+      <HeaderPublico slugAtivo="/" />
 
       {/* ── FAIXA DE ATALHOS RÁPIDOS (SERVIÇOS AO TRABALHADOR) ── */}
       <section style={{ background: '#ffffff', borderBottom: '1px solid #e4dce0', padding: '16px 20px' }}>
@@ -396,60 +347,8 @@ export default async function HomePage() {
 
       </main>
 
-      {/* ── RODAPÉ INSTITUCIONAL ── */}
-      <footer style={{ background: '#30252a', color: '#ffffff', borderTop: '4px solid #861e32', padding: '36px 20px 24px 20px', marginTop: 'auto' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '28px', marginBottom: '28px' }}>
-            <div>
-              <div style={{ fontSize: '16px', fontWeight: 800, color: '#ffffff', marginBottom: '8px' }}>
-                Sindicato dos Químicos
-              </div>
-              <p style={{ fontSize: '13px', lineHeight: 1.6, opacity: 0.8, margin: 0 }}>
-                Sindicato dos Trabalhadores nas Indústrias Químicas e Farmacêuticas de São José dos Campos e Região.
-              </p>
-              <div style={{ marginTop: '12px', fontSize: '12px', opacity: 0.7 }}>
-                Filiado à CSP-Conlutas
-              </div>
-            </div>
-
-            <div>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff', marginBottom: '8px', textTransform: 'uppercase' }}>
-                Sedes e Atendimento
-              </div>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13px', lineHeight: 1.7, opacity: 0.85 }}>
-                <li>📍 <strong>SJC (Sede):</strong> Praça Carlos Gomes, 81 — (12) 3921-8177</li>
-                <li>📍 <strong>Taubaté:</strong> (12) 3632-0932</li>
-                <li>📍 <strong>Jacareí:</strong> (12) 3953-3277</li>
-                <li>📍 <strong>Caçapava:</strong> (12) 3655-6044</li>
-              </ul>
-            </div>
-
-            <div>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff', marginBottom: '8px', textTransform: 'uppercase' }}>
-                Acesso Rápido
-              </div>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13px', lineHeight: 1.7 }}>
-                <li><Link href="/paginas/historia" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none' }}>Nossa História</Link></li>
-                <li><Link href="/paginas/diretoria" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none' }}>Diretoria Eleita</Link></li>
-                <li><Link href="/paginas/cct" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none' }}>Convenção Coletiva (CCT)</Link></li>
-                <li><Link href="/paginas/privacidade" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none' }}>Política de Privacidade</Link></li>
-                <li><Link href="/paginas/links-uteis" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none' }}>Links Úteis</Link></li>
-              </ul>
-            </div>
-          </div>
-
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', fontSize: '12px', opacity: 0.7 }}>
-            <div>
-              © {new Date().getFullYear()} Sindicato dos Químicos de SJC e Região. Todos os direitos reservados.
-            </div>
-            <div>
-              Contato: contato@quimicosjc.org.br
-            </div>
-          </div>
-
-        </div>
-      </footer>
+      {/* Rodapé institucional oficial */}
+      <FooterPublico />
 
     </div>
   )
