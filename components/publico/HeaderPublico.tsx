@@ -338,8 +338,8 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
             >
               Unidos pra Lutar
             </a>
-            <span style={{ opacity: 0.4 }}>•</span>
-            <span style={{ opacity: 0.85 }}>SJC • Taubaté • Jacareí • Caçapava</span>
+            <span style={{ opacity: 0.4 }} className="header-cities-text">•</span>
+            <span style={{ opacity: 0.85 }} className="header-cities-text">SJC • Taubaté • Jacareí • Caçapava</span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -405,8 +405,9 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '20px',
+            gap: '12px',
           }}
+          className="header-main-bar"
         >
           {/* Logo e Identificação */}
           <Link
@@ -414,18 +415,20 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '14px',
+              gap: '10px',
               textDecoration: 'none',
               color: 'inherit',
-              flexShrink: 0,
+              flex: 1,
+              minWidth: 0,
             }}
           >
             <img
               src="/logo-sindicato.png"
               alt="Logo Sindicato dos Químicos SJC"
               style={{ height: '48px', width: 'auto', display: 'block' }}
+              className="header-logo-img"
             />
-            <div>
+            <div style={{ minWidth: 0 }}>
               <div
                 style={{
                   fontSize: '17px',
@@ -433,7 +436,11 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                   letterSpacing: '0.3px',
                   lineHeight: 1.15,
                   color: '#ffffff',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 }}
+                className="header-logo-title"
               >
                 Sindicato dos Químicos
               </div>
@@ -446,7 +453,8 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                   fontWeight: 500,
                 }}
               >
-                São José dos Campos e Região • Desde 1963
+                <span>São José dos Campos e Região</span>
+                <span className="header-cities-text"> • Desde 1963</span>
               </div>
             </div>
           </Link>
@@ -820,6 +828,24 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           }
           .header-mobile-toggle {
             display: none !important;
+          }
+        }
+        @media (max-width: 600px) {
+          .header-cities-text {
+            display: none !important;
+          }
+          .header-main-bar {
+            padding: 10px 14px !important;
+            gap: 8px !important;
+          }
+          .header-logo-img {
+            height: 38px !important;
+          }
+          .header-logo-title {
+            font-size: 15px !important;
+          }
+          .header-mobile-toggle {
+            flex-shrink: 0 !important;
           }
         }
         .dropdown-item:hover {
