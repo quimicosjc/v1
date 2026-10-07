@@ -78,6 +78,7 @@ const BANNERS_PADRAO: BannerItemData[] = [
   {
     id: 'b1',
     imagem: '/banners/banner-1.png',
+    imagem_mobile: '/banners/banner-1-mobile.png',
     link: '/paginas/cct',
     titulo: 'Campanha Salarial 2026',
     ativo: true,
@@ -85,6 +86,7 @@ const BANNERS_PADRAO: BannerItemData[] = [
   {
     id: 'b2',
     imagem: '/banners/banner-2.png',
+    imagem_mobile: '/banners/banner-2-mobile.png',
     link: '/paginas/colonia',
     titulo: 'Colônia de Férias',
     ativo: true,
@@ -92,6 +94,7 @@ const BANNERS_PADRAO: BannerItemData[] = [
   {
     id: 'b3',
     imagem: '/banners/banner-3.png',
+    imagem_mobile: '/banners/banner-3-mobile.png',
     link: '/paginas/fique-socio',
     titulo: 'Fique Sócio Online',
     ativo: true,
@@ -126,6 +129,7 @@ export default async function HomePage() {
         banners = v.banners.map((b: any, idx: number) => ({
           id: b.id || `b-${idx}`,
           imagem: b.imagem,
+          imagem_mobile: b.imagem_mobile || b.imagemMobile || null,
           link: b.link,
           titulo: b.titulo,
           ativo: b.ativo !== false,

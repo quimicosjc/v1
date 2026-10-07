@@ -8,6 +8,7 @@ export interface BannerItem {
   titulo: string
   texto?: string
   imagem: string
+  imagem_mobile?: string
   link: string
   ativo: boolean
   ordem?: number
@@ -30,14 +31,42 @@ function getSupabaseAdmin() {
 }
 
 const CONFIG_PADRAO: HomepageConfig = {
-  blocks: ['Atalhos de serviços', 'Notícias em destaque', 'Jornais', 'Banners rotativos'],
+  blocks: ['Notícias em destaque', 'Banners rotativos', 'Jornais'],
   hidden: [],
   shortcuts: ['fique-socio', 'denuncia', 'colonia', 'juridico'],
-  model: 'A',
-  banners: [],
-  footer: `Sindicato dos Químicos de São José dos Campos e Região
-São José dos Campos — (12) 3921-8177 | Taubaté — (12) 3632-0932 | Jacareí — (12) 3953-3277 | Caçapava — (12) 3655-6044
-E-mail: contato@quimicosjc.org.br`,
+  model: 'B',
+  banners: [
+    {
+      id: 'b1',
+      titulo: 'Campanha Salarial 2026',
+      imagem: '/banners/banner-1.png',
+      imagem_mobile: '/banners/banner-1-mobile.png',
+      link: '/paginas/cct',
+      ativo: true,
+      ordem: 1,
+    },
+    {
+      id: 'b2',
+      titulo: 'Colônia de Férias',
+      imagem: '/banners/banner-2.png',
+      imagem_mobile: '/banners/banner-2-mobile.png',
+      link: '/paginas/colonia',
+      ativo: true,
+      ordem: 2,
+    },
+    {
+      id: 'b3',
+      titulo: 'Fique Sócio Online',
+      imagem: '/banners/banner-3.png',
+      imagem_mobile: '/banners/banner-3-mobile.png',
+      link: '/paginas/fique-socio',
+      ativo: true,
+      ordem: 3,
+    },
+  ],
+  footer: `Sindicato dos Trabalhadores nas Indústrias Químicas, Plásticas e Farmacêuticas de São José dos Campos e Região
+São José dos Campos: (12) 3921-8177 | Taubaté: (12) 3632-0932 | Jacareí: (12) 3953-3277 | Caçapava: (12) 3655-6044
+E-mail: contato@quimicosjc.org.br | Horário: Segunda a sexta, das 8h às 17h`,
 }
 
 /**
@@ -64,7 +93,7 @@ export async function obterConfigHomepage(): Promise<HomepageConfig> {
       hidden: valor.hidden || CONFIG_PADRAO.hidden,
       shortcuts: valor.shortcuts || CONFIG_PADRAO.shortcuts,
       model: valor.model || CONFIG_PADRAO.model,
-      banners: Array.isArray(valor.banners) ? valor.banners : [],
+      banners: Array.isArray(valor.banners) && valor.banners.length > 0 ? valor.banners : CONFIG_PADRAO.banners,
       footer: valor.footer || CONFIG_PADRAO.footer,
     }
   } catch (err) {

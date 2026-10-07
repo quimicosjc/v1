@@ -132,8 +132,8 @@ export default async function JornaisPublicosPage() {
                     }}
                     className="news-card-hover"
                   >
-                    {/* Capa preservada em proporção vertical sem corte destrutivo */}
-                    <div style={{ aspectRatio: '3 / 4', background: '#24141A', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
+                    {/* Capa preservada em proporção vertical física 1:1.42 */}
+                    <div style={{ aspectRatio: '1 / 1.42', background: '#24141A', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
                       {ed.capa_url ? (
                         <img src={ed.capa_url} alt={`Capa ${pubNome} nº ${ed.numero}`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                       ) : (

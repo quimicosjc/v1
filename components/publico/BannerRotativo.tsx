@@ -6,6 +6,7 @@ import { CORES } from '@/lib/design'
 export interface BannerItemData {
   id: string
   imagem: string
+  imagem_mobile?: string | null
   link?: string | null
   titulo?: string | null
   ativo?: boolean
@@ -47,7 +48,6 @@ export default function BannerRotativo({ banners }: BannerRotativoProps) {
       style={{
         position: 'relative',
         width: '100%',
-        aspectRatio: '9 / 2',
         borderRadius: '4px',
         overflow: 'hidden',
         background: '#1A0E13',
@@ -55,16 +55,22 @@ export default function BannerRotativo({ banners }: BannerRotativoProps) {
       }}
       className="banner-rotativo-frame"
     >
-      <img
-        src={banner.imagem}
-        alt={banner.titulo || 'Banner institucional'}
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          display: 'block',
-        }}
-      />
+      <picture style={{ width: '100%', height: '100%', display: 'block' }}>
+        {banner.imagem_mobile && (
+          <source media="(max-width: 640px)" srcSet={banner.imagem_mobile} />
+        )}
+        <img
+          src={banner.imagem}
+          alt={banner.titulo || 'Banner institucional'}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block',
+          }}
+          className="banner-rotativo-img"
+        />
+      </picture>
     </div>
   )
 
@@ -184,8 +190,16 @@ export default function BannerRotativo({ banners }: BannerRotativoProps) {
       )}
 
       <style>{`
+        .banner-rotativo-frame {
+          aspect-ratio: 9 / 2;
+        }
         .banner-nav-btn:hover {
           background: ${CORES.action} !important;
+        }
+        @media (max-width: 640px) {
+          .banner-rotativo-frame {
+            aspect-ratio: 4 / 3 !important;
+          }
         }
       `}</style>
     </div>

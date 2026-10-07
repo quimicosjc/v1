@@ -27,8 +27,10 @@ export default function HomepageGerenciador({ configInicial, usuarioLogado }: Pr
   const [formBannerTitulo, setFormBannerTitulo] = useState('')
   const [formBannerLink, setFormBannerLink] = useState('')
   const [formBannerImagem, setFormBannerImagem] = useState('')
+  const [formBannerImagemMobile, setFormBannerImagemMobile] = useState('')
   const [formBannerAtivo, setFormBannerAtivo] = useState(true)
   const [uploadingBanner, setUploadingBanner] = useState(false)
+  const [uploadingBannerMobile, setUploadingBannerMobile] = useState(false)
 
   function showFeedback(msg: string, tipo: 'sucesso' | 'erro' = 'sucesso') {
     setToast({ msg, tipo })
@@ -72,6 +74,7 @@ export default function HomepageGerenciador({ configInicial, usuarioLogado }: Pr
     setFormBannerTitulo('')
     setFormBannerLink('')
     setFormBannerImagem('')
+    setFormBannerImagemMobile('')
     setFormBannerAtivo(true)
     setShowBannerModal(true)
   }
@@ -83,6 +86,7 @@ export default function HomepageGerenciador({ configInicial, usuarioLogado }: Pr
     setFormBannerTitulo(b.titulo)
     setFormBannerLink(b.link)
     setFormBannerImagem(b.imagem)
+    setFormBannerImagemMobile(b.imagem_mobile || '')
     setFormBannerAtivo(b.ativo)
     setShowBannerModal(true)
   }
@@ -124,6 +128,25 @@ export default function HomepageGerenciador({ configInicial, usuarioLogado }: Pr
     }
   }
 
+  async function handleUploadBannerImgMobile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingBannerMobile(true)
+    const formData = new FormData()
+    formData.append('arquivo', file)
+
+    const res = await uploadBanner(formData)
+    setUploadingBannerMobile(false)
+
+    if ('error' in res) {
+      showFeedback(res.error, 'erro')
+    } else {
+      setFormBannerImagemMobile(res.url)
+      showFeedback('Imagem para celular carregada com sucesso!')
+    }
+  }
+
   function handleSalvarBannerModal() {
     if (!formBannerTitulo.trim()) {
       showFeedback('Informe um título administrativo para o banner.', 'erro')
@@ -142,6 +165,7 @@ export default function HomepageGerenciador({ configInicial, usuarioLogado }: Pr
       titulo: formBannerTitulo.trim(),
       link: formBannerLink.trim() || '/',
       imagem: formBannerImagem,
+      imagem_mobile: formBannerImagemMobile.trim() || undefined,
       ativo: formBannerAtivo,
     }
 
@@ -943,6 +967,61 @@ export default function HomepageGerenciador({ configInicial, usuarioLogado }: Pr
                   {uploadingBanner
                     ? 'Enviando imagem do banner…'
                     : 'Formatos aceitos: JPG, PNG ou WebP.'}
+                </small>
+              </div>
+
+              {/* Upload de Imagem para Celular (4:3) */}
+              <div
+                style={{
+                  border: '1px solid #ced9df',
+                  borderRadius: '6px',
+                  padding: '14px',
+                  background: '#fcfbfa',
+                }}
+              >
+                <label style={{ ...labelStyle, marginBottom: '8px' }}>
+                  Versão para celular (Opcional — Proporção 4:3 — ref. 1200 × 900 px)
+                </label>
+
+                {formBannerImagemMobile ? (
+                  <div style={{ marginBottom: '10px' }}>
+                    <div
+                      style={{
+                        width: '160px',
+                        aspectRatio: '4 / 3',
+                        background: '#30252a',
+                        borderRadius: '4px',
+                        overflow: 'hidden',
+                        marginBottom: '6px',
+                      }}
+                    >
+                      <img
+                        src={formBannerImagemMobile}
+                        alt="Prévia do banner para celular"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormBannerImagemMobile('')}
+                      style={{ border: 'none', background: 'transparent', color: '#861e32', fontSize: '12px', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      Remover imagem de celular
+                    </button>
+                  </div>
+                ) : null}
+
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleUploadBannerImgMobile}
+                  disabled={uploadingBannerMobile}
+                  style={{ fontSize: '13px' }}
+                />
+                <small style={{ display: 'block', marginTop: '6px', color: '#71636a' }}>
+                  {uploadingBannerMobile
+                    ? 'Enviando imagem para celular…'
+                    : 'Se não informada, será usada a imagem panorâmica normal.'}
                 </small>
               </div>
 

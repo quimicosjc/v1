@@ -1,6 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { CORES, CONTAINER_STYLE } from '@/lib/design'
+import { createClient } from '@/lib/supabase/server'
 
 interface FooterPublicoProps {
   textoRodape?: string | null
@@ -10,8 +11,25 @@ const TEXTO_PADRAO = `Sindicato dos Trabalhadores nas Indústrias Químicas, Pl�
 São José dos Campos: (12) 3921-8177 | Taubaté: (12) 3632-0932 | Jacareí: (12) 3953-3277 | Caçapava: (12) 3655-6044
 E-mail: contato@quimicosjc.org.br | Horário: Segunda a sexta, das 8h às 17h`
 
-export default function FooterPublico({ textoRodape }: FooterPublicoProps) {
-  const texto = textoRodape?.trim() || TEXTO_PADRAO
+export default async function FooterPublico({ textoRodape }: FooterPublicoProps) {
+  let textoFinal = textoRodape
+
+  if (!textoFinal) {
+    try {
+      const supabase = await createClient()
+      const { data } = await supabase
+        .from('site_config')
+        .select('valor')
+        .eq('chave', 'homepage')
+        .maybeSingle()
+
+      if (typeof data?.valor?.footer === 'string' && data.valor.footer.trim()) {
+        textoFinal = data.valor.footer
+      }
+    } catch {}
+  }
+
+  const texto = textoFinal?.trim() || TEXTO_PADRAO
   const paragrafos = texto.split('\n').filter((p) => p.trim().length > 0)
 
   return (
@@ -20,42 +38,65 @@ export default function FooterPublico({ textoRodape }: FooterPublicoProps) {
         background: CORES.primary,
         color: '#FFFFFF',
         borderTop: `4px solid ${CORES.action}`,
-        padding: '36px 0 24px 0',
+        padding: '28px 0 18px 0',
         marginTop: 'auto',
       }}
     >
       <div style={CONTAINER_STYLE}>
-        {/* Topo do rodapé: SOMENTE O LOGO (sem texto por extenso, sem centrais, copiando sindmetalsjc.org.br) */}
+        {/* Opção A: Logo à esquerda e texto à direita na mesma faixa horizontal */}
         <div
           style={{
-            paddingBottom: '20px',
-            borderBottom: '1px solid rgba(255,255,255,0.12)',
-            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '36px',
           }}
+          className="rodape-corpo-row"
         >
-          <Link
-            href="/"
-            title="Sindicato dos Químicos de São José dos Campos e Região"
-            style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
+          {/* Logo do Sindicato com a mesma dimensão do cabeçalho (104px desktop / 76px mobile) */}
+          <div style={{ flexShrink: 0 }}>
+            <Link
+              href="/"
+              title="Sindicato dos Químicos de São José dos Campos e Região"
+              style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
+            >
+              <img
+                src="/logo-sindicato.svg"
+                alt="Sindicato dos Químicos de São José dos Campos e Região"
+                style={{ height: '104px', width: 'auto', display: 'block' }}
+                className="logo-rodape-img"
+              />
+            </Link>
+          </div>
+
+          {/* Texto institucional (§13.7: alinhado à direita no desktop, com cidades e telefones) */}
+          <div
+            style={{
+              flex: 1,
+              maxWidth: '720px',
+              fontSize: '13px',
+              lineHeight: 1.45,
+              color: '#f6e7ec',
+              opacity: 0.94,
+            }}
+            className="rodape-texto-bloco"
           >
-            <img
-              src="/logo-sindicato.svg"
-              alt="Sindicato dos Químicos de São José dos Campos e Região"
-              style={{ height: '88px', width: 'auto', display: 'block' }}
-            />
-          </Link>
+            {paragrafos.map((p, idx) => (
+              <p
+                key={idx}
+                style={{
+                  margin: '0 0 5px 0',
+                  fontWeight: idx === 0 ? 700 : 400,
+                  color: idx === 0 ? '#FFFFFF' : '#f6e7ec',
+                }}
+              >
+                {p}
+              </p>
+            ))}
+          </div>
         </div>
 
-        {/* Texto institucional do painel (§13.7: coluna única, line-height 1.4, margem 4px entre parágrafos) */}
-        <div style={{ fontSize: '13px', lineHeight: 1.4, color: '#f6e7ec', opacity: 0.92, marginBottom: '24px' }}>
-          {paragrafos.map((p, idx) => (
-            <p key={idx} style={{ margin: '0 0 4px 0' }}>
-              {p}
-            </p>
-          ))}
-        </div>
-
-        {/* Linha final com LGPD, Privacidade e Atendimento (sem Acesso Restrito) */}
+        {/* Linha final com LGPD, Privacidade e Atendimento */}
         <div
           style={{
             display: 'flex',
@@ -63,8 +104,9 @@ export default function FooterPublico({ textoRodape }: FooterPublicoProps) {
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: '12px',
+            marginTop: '20px',
             paddingTop: '16px',
-            borderTop: '1px solid rgba(255,255,255,0.08)',
+            borderTop: '1px solid rgba(255,255,255,0.1)',
             fontSize: '11.5px',
             color: 'rgba(255,255,255,0.7)',
           }}
@@ -89,6 +131,22 @@ export default function FooterPublico({ textoRodape }: FooterPublicoProps) {
           </div>
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 820px) {
+          .rodape-corpo-row {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 16px !important;
+          }
+          .logo-rodape-img {
+            height: 76px !important;
+          }
+          .rodape-texto-bloco {
+            max-width: 100% !important;
+          }
+        }
+      `}</style>
     </footer>
   )
 }
