@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import HeaderPublico from '@/components/publico/HeaderPublico'
 import FooterPublico from '@/components/publico/FooterPublico'
 import ListaNoticiasPublica, { type NoticiaItemPublico } from '@/components/publico/ListaNoticiasPublica'
+import { CONTAINER_STYLE } from '@/lib/design'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,15 +31,15 @@ export default async function NoticiasIndexPage() {
       {/* Topo institucional unificado */}
       <HeaderPublico slugAtivo="noticias" />
 
-      {/* ── FAIXA HERO INSTITUCIONAL COM BREADCRUMB ALINHADO A 1200PX ── */}
+      {/* ── FAIXA HERO INSTITUCIONAL COM BREADCRUMB ALINHADO AO CONTAINER ── */}
       <section
         style={{
           background: '#faf8f9',
           borderBottom: '1px solid #ebdbe0',
-          padding: '24px 20px 28px 20px',
+          padding: '24px 0 28px 0',
         }}
       >
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={CONTAINER_STYLE}>
           {/* Breadcrumb navegável */}
           <nav
             style={{
@@ -80,9 +81,9 @@ export default async function NoticiasIndexPage() {
         </div>
       </section>
 
-      {/* Conteúdo principal alinhado a 1200px */}
-      <main style={{ flex: 1, padding: '36px 20px 60px 20px' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      {/* Conteúdo principal alinhado ao CONTAINER_STYLE */}
+      <main style={{ flex: 1, padding: '36px 0 60px 0' }}>
+        <div style={CONTAINER_STYLE}>
           {/* Componente interativo de busca e listagem */}
           <ListaNoticiasPublica noticiasIniciais={noticias} />
         </div>

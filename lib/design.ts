@@ -29,9 +29,10 @@ export const TIPOGRAFIA = {
 }
 
 export const CONTAINER_STYLE: React.CSSProperties = {
-  maxWidth: '1200px',
+  maxWidth: '1140px',
   margin: '0 auto',
-  padding: '0 20px',
+  padding: '0 16px',
   boxSizing: 'border-box',
   width: '100%',
 }
+

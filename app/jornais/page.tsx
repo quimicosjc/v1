@@ -3,6 +3,7 @@ import { Metadata } from 'next'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import HeaderPublico from '@/components/publico/HeaderPublico'
 import FooterPublico from '@/components/publico/FooterPublico'
+import { CONTAINER_STYLE } from '@/lib/design'
 
 export const dynamic = 'force-dynamic'
 
@@ -59,10 +60,10 @@ export default async function JornaisPublicosPage() {
         style={{
           background: '#faf8f9',
           borderBottom: '1px solid #ebdbe0',
-          padding: '24px 20px 28px 20px',
+          padding: '24px 0 28px 0',
         }}
       >
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={CONTAINER_STYLE}>
           {/* Breadcrumb navegável */}
           <nav
             style={{
@@ -105,8 +106,8 @@ export default async function JornaisPublicosPage() {
       </section>
 
       {/* Conteúdo principal */}
-      <main style={{ flex: 1, padding: '36px 20px 60px 20px' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <main style={{ flex: 1, padding: '36px 0 60px 0' }}>
+        <div style={CONTAINER_STYLE}>
           
           {/* Grid de Edições */}
           {edicoes.length === 0 ? (

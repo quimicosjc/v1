@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { CONTAINER_STYLE } from '@/lib/design'
 
 interface HeaderPublicoProps {
   slugAtivo?: string
@@ -296,181 +297,54 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
 
   return (
     <>
-      {/* ── 1. FAIXA SUPERIOR INSTITUCIONAL (INFOBAR) ── */}
-      <div
-        style={{
-          background: '#521322',
-          color: '#f6e7ec',
-          fontSize: '12px',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
-          padding: '6px 20px',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px',
-            flexWrap: 'wrap',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.8px', opacity: 0.65, fontWeight: 600 }}>Filiado à:</span>
-            <a
-              href="https://www.cspconlutas.org.br"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: '#f6e7ec', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', opacity: 0.95 }}
-              title="CSP-Conlutas — Central Sindical e Popular"
-              className="header-affiliation-link"
-            >
-              <img
-                src="/logo-csp-conlutas.png"
-                alt="CSP-Conlutas"
-                style={{ height: '18px', width: 'auto', display: 'block', filter: 'brightness(1.1)' }}
-              />
-            </a>
-            <span style={{ opacity: 0.3 }}>•</span>
-            <a
-              href="https://www.instagram.com/unidospralutar/"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: '#f6e7ec', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', opacity: 0.95 }}
-              title="Unidos pra Lutar"
-              className="header-affiliation-link"
-            >
-              <img
-                src="/logo-unidos-pra-lutar.png"
-                alt="Unidos pra Lutar"
-                style={{ height: '20px', width: 'auto', display: 'block' }}
-              />
-              <span style={{ fontSize: '11.5px', fontWeight: 600, letterSpacing: '0.3px' }}>Unidos pra Lutar</span>
-            </a>
-            <span style={{ opacity: 0.3 }} className="header-cities-text">•</span>
-            <span style={{ opacity: 0.85, fontSize: '11.5px' }} className="header-cities-text">SJC • Taubaté • Jacareí • Caçapava</span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <a
-              href="tel:1239218177"
-              style={{
-                color: '#f6e7ec',
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                opacity: 0.9,
-              }}
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-              </svg>
-              (12) 3921-8177
-            </a>
-            <span style={{ opacity: 0.4 }}>•</span>
-            <Link
-              href="/admin"
-              style={{
-                color: '#ffffff',
-                textDecoration: 'none',
-                background: 'rgba(255,255,255,0.12)',
-                padding: '2px 8px',
-                borderRadius: '4px',
-                fontSize: '11px',
-                fontWeight: 600,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-            >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-              Área Restrita
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* ── 2. CABEÇALHO PRINCIPAL DE NAVEGAÇÃO ── */}
       <header
         style={{
-          background: '#65172A',
-          color: '#ffffff',
-          borderBottom: '3px solid #861e32',
           position: 'sticky',
           top: 0,
           zIndex: 100,
           boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
         }}
       >
+        {/* ── 1. CABEÇALHO PRINCIPAL DE NAVEGAÇÃO ── */}
         <div
           style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-            padding: '12px 20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px',
+            background: '#65172A',
+            color: '#ffffff',
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
           }}
-          className="header-main-bar"
         >
-          {/* Logo e Identificação */}
-          <Link
-            href="/"
+          <div
             style={{
+              ...CONTAINER_STYLE,
+              paddingTop: '12px',
+              paddingBottom: '12px',
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
-              textDecoration: 'none',
-              color: 'inherit',
-              flex: 1,
-              minWidth: 0,
+              justifyContent: 'space-between',
+              gap: '16px',
             }}
+            className="header-main-bar"
           >
-            <img
-              src="/logo-sindicato.svg"
-              alt="Logo Sindicato dos Químicos SJC"
-              style={{ height: '48px', width: 'auto', display: 'block' }}
-              className="header-logo-img"
-            />
-            <div style={{ minWidth: 0 }}>
-              <div
-                style={{
-                  fontFamily: 'var(--font-condensed), sans-serif',
-                  fontSize: '22px',
-                  fontWeight: 800,
-                  letterSpacing: '0.5px',
-                  lineHeight: 1.05,
-                  textTransform: 'uppercase',
-                  color: '#ffffff',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-                className="header-logo-title"
-              >
-                Sindicato dos Químicos
-              </div>
-              <div
-                style={{
-                  fontSize: '11px',
-                  opacity: 0.85,
-                  letterSpacing: '0.4px',
-                  marginTop: '2px',
-                  fontWeight: 500,
-                }}
-              >
-                <span>São José dos Campos e Região</span>
-                <span className="header-cities-text"> • Desde 1963</span>
-              </div>
-            </div>
-          </Link>
+            {/* Logo Exclusivo (sem nome por extenso, copiando sindmetalsjc.org.br) */}
+            <Link
+              href="/"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                textDecoration: 'none',
+                color: 'inherit',
+                flexShrink: 0,
+              }}
+              title="Sindicato dos Químicos de São José dos Campos e Região"
+            >
+              <img
+                src="/logo-sindicato.svg"
+                alt="Sindicato dos Químicos de São José dos Campos e Região"
+                style={{ height: '52px', width: 'auto', display: 'block' }}
+                className="header-logo-img"
+              />
+            </Link>
+
 
           {/* Navegação Desktop */}
           <nav
@@ -709,20 +583,101 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
             )}
           </button>
         </div>
+      </div>
 
-        {/* ── 3. MENU MOBILE DRAWER ── */}
-        {mobileMenuAberto && (
-          <div
+      {/* ── 2. SUB-BARRA COM AS CENTRAIS (ABAIXO DO MENU PRINCIPAL) ── */}
+      <div
+        style={{
+          background: '#521322',
+          borderBottom: '3px solid #861e32',
+          color: '#f6e7ec',
+          fontSize: '12px',
+          padding: '7px 0',
+        }}
+        className="header-sub-bar"
+      >
+        <div
+          style={{
+            ...CONTAINER_STYLE,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            flexWrap: 'wrap',
+          }}
+        >
+          <span
             style={{
-              background: '#581424',
-              borderTop: '1px solid rgba(255,255,255,0.1)',
-              padding: '16px 20px 24px 20px',
-              maxHeight: '80vh',
-              overflowY: 'auto',
+              fontSize: '11px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.8px',
+              opacity: 0.7,
+              fontWeight: 700,
             }}
           >
-            <div style={{ display: 'grid', gap: '8px' }}>
-              <Link
+            Filiado à:
+          </span>
+          <a
+            href="https://www.cspconlutas.org.br"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: '#f6e7ec',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              opacity: 0.95,
+              transition: 'opacity 0.15s ease',
+            }}
+            title="CSP-Conlutas — Central Sindical e Popular"
+            className="header-affiliation-link"
+          >
+            <img
+              src="/logo-csp-conlutas.png"
+              alt="CSP-Conlutas"
+              style={{ height: '18px', width: 'auto', display: 'block', filter: 'brightness(1.1)' }}
+            />
+          </a>
+          <span style={{ opacity: 0.35 }}>•</span>
+          <a
+            href="https://www.instagram.com/unidospralutar/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: '#f6e7ec',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              opacity: 0.95,
+              transition: 'opacity 0.15s ease',
+            }}
+            title="Unidos pra Lutar"
+            className="header-affiliation-link"
+          >
+            <img
+              src="/logo-unidos-pra-lutar.png"
+              alt="Unidos pra Lutar"
+              style={{ height: '19px', width: 'auto', display: 'block' }}
+            />
+            <span style={{ fontSize: '11.5px', fontWeight: 600, letterSpacing: '0.3px' }}>Unidos pra Lutar</span>
+          </a>
+        </div>
+      </div>
+
+      {/* ── 3. MENU MOBILE DRAWER ── */}
+      {mobileMenuAberto && (
+        <div
+          style={{
+            background: '#581424',
+            borderTop: '1px solid rgba(255,255,255,0.1)',
+            padding: '16px 20px 24px 20px',
+            maxHeight: '80vh',
+            overflowY: 'auto',
+          }}
+        >
+          <div style={{ display: 'grid', gap: '8px' }}>
+            <Link
                 href="/"
                 onClick={() => setMobileMenuAberto(false)}
                 style={{
@@ -844,18 +799,12 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           }
         }
         @media (max-width: 600px) {
-          .header-cities-text {
-            display: none !important;
-          }
           .header-main-bar {
-            padding: 10px 14px !important;
-            gap: 8px !important;
+            padding-top: 10px !important;
+            padding-bottom: 10px !important;
           }
           .header-logo-img {
-            height: 38px !important;
-          }
-          .header-logo-title {
-            font-size: 15px !important;
+            height: 40px !important;
           }
           .header-mobile-toggle {
             flex-shrink: 0 !important;
@@ -867,6 +816,9 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
         .btn-filie-se:hover {
           background: #9c243c !important;
           transform: translateY(-1px);
+        }
+        .header-affiliation-link:hover {
+          opacity: 1 !important;
         }
       `}</style>
     </>

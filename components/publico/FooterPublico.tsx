@@ -26,78 +26,25 @@ export default function FooterPublico({ textoRodape }: FooterPublicoProps) {
       }}
     >
       <div style={CONTAINER_STYLE}>
-        {/* Topo do rodapé com logo do Sindicato e filiação */}
+        {/* Topo do rodapé: SOMENTE O LOGO (sem texto por extenso, sem centrais, copiando sindmetalsjc.org.br) */}
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '16px',
             paddingBottom: '20px',
             borderBottom: '1px solid rgba(255,255,255,0.12)',
             marginBottom: '20px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Link
+            href="/"
+            title="Sindicato dos Químicos de São José dos Campos e Região"
+            style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
+          >
             <img
               src="/logo-sindicato.svg"
-              alt="Logo Sindicato dos Químicos SJC"
-              style={{ height: '40px', width: 'auto', display: 'block' }}
+              alt="Sindicato dos Químicos de São José dos Campos e Região"
+              style={{ height: '44px', width: 'auto', display: 'block' }}
             />
-            <div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-condensed), sans-serif',
-                  fontSize: '18px',
-                  fontWeight: 800,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  lineHeight: 1.1,
-                }}
-              >
-                Sindicato dos Químicos
-              </div>
-              <div style={{ fontSize: '11px', opacity: 0.8, letterSpacing: '0.3px' }}>
-                São José dos Campos e Região • Desde 1963
-              </div>
-            </div>
-          </div>
-
-          {/* Logos de filiação */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.8px', opacity: 0.65, fontWeight: 600 }}>
-              Filiado à:
-            </span>
-            <a
-              href="https://www.cspconlutas.org.br"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="CSP-Conlutas"
-              style={{ display: 'inline-flex', alignItems: 'center', opacity: 0.9 }}
-            >
-              <img
-                src="/logo-csp-conlutas.png"
-                alt="CSP-Conlutas"
-                style={{ height: '22px', width: 'auto', display: 'block' }}
-              />
-            </a>
-            <span style={{ opacity: 0.3 }}>•</span>
-            <a
-              href="https://www.instagram.com/unidospralutar/"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Unidos pra Lutar"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#FFFFFF', textDecoration: 'none', opacity: 0.9 }}
-            >
-              <img
-                src="/logo-unidos-pra-lutar.png"
-                alt="Unidos pra Lutar"
-                style={{ height: '22px', width: 'auto', display: 'block' }}
-              />
-              <span style={{ fontSize: '11.5px', fontWeight: 600 }}>Unidos pra Lutar</span>
-            </a>
-          </div>
+          </Link>
         </div>
 
         {/* Texto institucional do painel (§13.7: coluna única, line-height 1.4, margem 4px entre parágrafos) */}
@@ -109,7 +56,7 @@ export default function FooterPublico({ textoRodape }: FooterPublicoProps) {
           ))}
         </div>
 
-        {/* Linha final com LGPD, Privacidade e Copyright */}
+        {/* Linha final com LGPD, Privacidade e Atendimento (sem Acesso Restrito) */}
         <div
           style={{
             display: 'flex',
@@ -139,13 +86,6 @@ export default function FooterPublico({ textoRodape }: FooterPublicoProps) {
               style={{ color: 'rgba(255,255,255,0.85)', textDecoration: 'none', transition: 'color 0.15s ease' }}
             >
               Atendimento e Sedes
-            </Link>
-            <span>•</span>
-            <Link
-              href="/admin"
-              style={{ color: 'rgba(255,255,255,0.85)', textDecoration: 'none', transition: 'color 0.15s ease' }}
-            >
-              Acesso Restrito
             </Link>
           </div>
         </div>

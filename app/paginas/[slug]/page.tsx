@@ -11,6 +11,7 @@ import HeaderPublico from '@/components/publico/HeaderPublico'
 import FooterPublico from '@/components/publico/FooterPublico'
 import ColoniaNav from '@/components/publico/ColoniaNav'
 import ListaNoticiasPublica, { type NoticiaItemPublico } from '@/components/publico/ListaNoticiasPublica'
+import { CONTAINER_STYLE } from '@/lib/design'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -175,10 +176,10 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
         style={{
           background: '#faf8f9',
           borderBottom: '1px solid #ebdbe0',
-          padding: '24px 20px 28px 20px',
+          padding: '24px 0 28px 0',
         }}
       >
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={CONTAINER_STYLE}>
           {/* Breadcrumb navegável */}
           <nav
             style={{
@@ -251,12 +252,9 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
       </section>
 
       {/* Conteúdo principal fluido */}
-      <main style={{ flex: 1, padding: '36px 20px 64px 20px' }}>
+      <main style={{ flex: 1, padding: '36px 0 64px 0' }}>
         <article
-          style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-          }}
+          style={CONTAINER_STYLE}
         >
           {/* Navegação por Abas das Subpáginas da Colônia de Férias */}
           <ColoniaNav slugAtual={slug} />

@@ -6,6 +6,7 @@ import HeaderPublico from '@/components/publico/HeaderPublico'
 import FooterPublico from '@/components/publico/FooterPublico'
 import CarrosselNoticia from '@/components/publico/CarrosselNoticia'
 import { formatarDataHoraNoticia } from '@/lib/data-formatada'
+import { CONTAINER_STYLE } from '@/lib/design'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -113,9 +114,9 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
       {/* Topo institucional unificado */}
       <HeaderPublico slugAtivo="noticias" />
 
-      {/* ── BREADCRUMB LIMPO ALINHADO ÀS MARGENS DE 1200PX ── */}
+      {/* ── BREADCRUMB LIMPO ALINHADO ÀS MARGENS DO CONTAINER ── */}
       <div style={{ borderBottom: '1px solid #f0e8eb', background: '#faf8f9' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '12px 20px' }}>
+        <div style={{ ...CONTAINER_STYLE, paddingTop: '12px', paddingBottom: '12px' }}>
           <nav
             style={{
               display: 'flex',
