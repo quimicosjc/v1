@@ -4,7 +4,7 @@ import { createClient as createServiceClient } from '@supabase/supabase-js'
 import {
   enviarAvisoRecebimento,
   enviarAvisoDenuncia,
-  enviarConfirmacaoAoTrabalhador,
+  type AnexoDenunciaEmail,
 } from '@/lib/email/resend'
 
 function getSupabaseAdmin() {
@@ -32,7 +32,6 @@ async function obterFormularioId(slug: string): Promise<string> {
 
   if (data?.id) return data.id
 
-  // Fallback caso não encontre
   return '00000000-0000-0000-0000-000000000000'
 }
 
@@ -43,10 +42,8 @@ export async function submeterSindicalizacao(
   formData: FormData
 ): Promise<{ ok: boolean; protocolo?: string; erro?: string }> {
   try {
-    // 1. Verificação Honeypot contra robôs de spam
     const honeypot = formData.get('website_extra')?.toString()
     if (honeypot && honeypot.trim() !== '') {
-      // Retorna sucesso falso sem gravar nada no banco
       return { ok: true, protocolo: 'PROT-OK' }
     }
 
@@ -100,7 +97,6 @@ export async function submeterSindicalizacao(
       enviado_em: new Date().toISOString(),
     }
 
-    // Grava no banco de dados
     const { error: dbError } = await supabase.from('recebimentos').insert({
       formulario_id: formularioId,
       dados,
@@ -112,7 +108,7 @@ export async function submeterSindicalizacao(
       return { ok: false, erro: `Falha ao registrar solicitação: ${dbError.message}` }
     }
 
-    // Dispara avisos por e-mail de forma assíncrona tolerante a falhas
+    // Notificação interna para a equipe do Sindicato (SEM resposta automática ao trabalhador)
     enviarAvisoRecebimento({
       protocolo,
       formularioNome: 'Ficha de Sindicalização',
@@ -122,15 +118,6 @@ export async function submeterSindicalizacao(
       empresa,
       dados,
     }).catch(console.error)
-
-    if (email) {
-      enviarConfirmacaoAoTrabalhador({
-        email,
-        nome,
-        protocolo,
-        formularioNome: 'Ficha de Sindicalização',
-      }).catch(console.error)
-    }
 
     return { ok: true, protocolo }
   } catch (err: any) {
@@ -161,7 +148,6 @@ export async function submeterCarteirinha(
     if (!nome) return { ok: false, erro: 'Informe o seu nome completo.' }
     if (!telefone) return { ok: false, erro: 'Informe um telefone para contato.' }
 
-    // Upload de foto (se fornecida)
     let fotoUrl: string | null = null
     const fotoFile = formData.get('foto') as File | null
     if (fotoFile && fotoFile.size > 0 && fotoFile.size <= 5 * 1024 * 1024) {
@@ -211,6 +197,7 @@ export async function submeterCarteirinha(
       return { ok: false, erro: `Falha ao registrar: ${dbError.message}` }
     }
 
+    // Notificação interna para a equipe do Sindicato
     enviarAvisoRecebimento({
       protocolo,
       formularioNome: 'Solicitação de Carteirinha',
@@ -220,15 +207,6 @@ export async function submeterCarteirinha(
       empresa,
       dados,
     }).catch(console.error)
-
-    if (email) {
-      enviarConfirmacaoAoTrabalhador({
-        email,
-        nome,
-        protocolo,
-        formularioNome: 'Solicitação de Carteirinha',
-      }).catch(console.error)
-    }
 
     return { ok: true, protocolo }
   } catch (err: any) {
@@ -287,6 +265,7 @@ export async function submeterAtualizacaoCadastral(
       return { ok: false, erro: `Falha ao registrar: ${dbError.message}` }
     }
 
+    // Notificação interna para a equipe do Sindicato
     enviarAvisoRecebimento({
       protocolo,
       formularioNome: 'Atualização Cadastral',
@@ -297,15 +276,6 @@ export async function submeterAtualizacaoCadastral(
       dados,
     }).catch(console.error)
 
-    if (email) {
-      enviarConfirmacaoAoTrabalhador({
-        email,
-        nome,
-        protocolo,
-        formularioNome: 'Atualização Cadastral',
-      }).catch(console.error)
-    }
-
     return { ok: true, protocolo }
   } catch (err: any) {
     return { ok: false, erro: err?.message || 'Erro ao atualizar dados' }
@@ -313,8 +283,9 @@ export async function submeterAtualizacaoCadastral(
 }
 
 /**
- * 4. SUBMISSÃO DE CANAL DE DENÚNCIAS (SIGILOSA / ANÔNIMA)
- * REGRA CRÍTICA: Sigilo absoluto e protocolo durável
+ * 4. SUBMISSÃO DE CANAL DE DENÚNCIAS
+ * O e-mail para o Sindicato recebe o teor integral da denúncia e os anexos para apuração imediata.
+ * Nenhuma resposta automática é gerada para o trabalhador.
  */
 export async function submeterDenuncia(
   formData: FormData
@@ -337,21 +308,22 @@ export async function submeterDenuncia(
 
     // Processamento de anexos (até 5 arquivos, max 20MB cada)
     const arquivos = formData.getAll('arquivos') as File[]
-    const anexosSalvos: { nome: string; url: string; tipo: string; tamanho: number }[] = []
+    const anexosSalvos: AnexoDenunciaEmail[] = []
 
     if (arquivos && arquivos.length > 0) {
       const supabase = getSupabaseAdmin()
       for (const arq of arquivos.slice(0, 5)) {
         if (!arq || arq.size === 0) continue
-        if (arq.size > 20 * 1024 * 1024) continue // Limite 20MB
+        if (arq.size > 20 * 1024 * 1024) continue
 
         const ext = arq.name.split('.').pop()?.toLowerCase() || 'bin'
         const nomeArquivo = `denuncias/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`
         const arrayBuffer = await arq.arrayBuffer()
+        const buffer = Buffer.from(arrayBuffer)
 
         const { error: upErr } = await supabase.storage
           .from('midias')
-          .upload(nomeArquivo, Buffer.from(arrayBuffer), {
+          .upload(nomeArquivo, buffer, {
             contentType: arq.type,
             upsert: false,
           })
@@ -362,7 +334,7 @@ export async function submeterDenuncia(
             nome: arq.name,
             url: pubData.publicUrl,
             tipo: ext,
-            tamanho: arq.size,
+            buffer,
           })
         }
       }
@@ -371,6 +343,9 @@ export async function submeterDenuncia(
     const protocolo = gerarProtocolo('DEN')
     const formularioId = await obterFormularioId('denuncia')
     const supabase = getSupabaseAdmin()
+
+    // Para o banco de dados salvamos sem os buffers binários
+    const anexosBanco = anexosSalvos.map(({ nome, url, tipo }) => ({ nome, url, tipo }))
 
     const dados = {
       protocolo,
@@ -382,7 +357,7 @@ export async function submeterDenuncia(
       sigilo,
       nome: sigilo === 'anonimo' ? 'Anônimo' : nome,
       contato: sigilo === 'anonimo' ? '' : contato,
-      anexos: anexosSalvos,
+      anexos: anexosBanco,
       enviado_em: new Date().toISOString(),
     }
 
@@ -396,8 +371,17 @@ export async function submeterDenuncia(
       return { ok: false, erro: `Falha ao registrar denúncia: ${dbError.message}` }
     }
 
-    // Dispara alerta sigiloso de denúncia (apenas número do protocolo, sem vazar dados no e-mail)
-    enviarAvisoDenuncia({ protocolo }).catch(console.error)
+    // Dispara e-mail com conteúdo completo e anexos para o responsável do Sindicato
+    enviarAvisoDenuncia({
+      protocolo,
+      empresa,
+      tipoInfracao,
+      relato,
+      sigilo,
+      nome: sigilo === 'anonimo' ? undefined : nome,
+      contato: sigilo === 'anonimo' ? undefined : contato,
+      anexos: anexosSalvos,
+    }).catch(console.error)
 
     return { ok: true, protocolo }
   } catch (err: any) {
@@ -427,7 +411,6 @@ export async function submeterCadastroNoticias(
     const protocolo = gerarProtocolo('NOTIC')
     const supabase = getSupabaseAdmin()
 
-    // Insere ou atualiza na tabela inscricoes_noticias
     if (email) {
       await supabase.from('inscricoes_noticias').upsert(
         {
@@ -440,7 +423,6 @@ export async function submeterCadastroNoticias(
       )
     }
 
-    // Também registra como recebimento para rastreabilidade no painel
     const formularioId = await obterFormularioId('contato')
     await supabase.from('recebimentos').insert({
       formulario_id: formularioId,
