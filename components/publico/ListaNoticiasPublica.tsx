@@ -75,12 +75,11 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
       {/* ── BARRA DE BUSCA E FILTROS ── */}
       <div
         style={{
-          background: '#ffffff',
-          border: '1px solid #e4dce0',
-          borderRadius: '8px',
-          padding: '20px 24px',
+          background: '#faf8f9',
+          border: '1px solid #ebdbe0',
+          borderRadius: '6px',
+          padding: '18px 20px',
           marginBottom: '28px',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
         }}
       >
         <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -172,14 +171,13 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
                 href={`/noticias/${item.slug}`}
                 style={{
                   background: '#ffffff',
-                  border: '1px solid #e4dce0',
-                  borderRadius: '8px',
+                  border: '1px solid #ebdbe0',
+                  borderRadius: '6px',
                   overflow: 'hidden',
                   textDecoration: 'none',
                   color: 'inherit',
                   display: 'flex',
                   flexDirection: 'column',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
                 }}
                 className="news-card-hover"
               >

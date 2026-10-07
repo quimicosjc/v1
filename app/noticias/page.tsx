@@ -25,7 +25,7 @@ export default async function NoticiasIndexPage() {
   const noticias: NoticiaItemPublico[] = (noticiasData as any[]) || []
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f7f5f6', color: '#30252a', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: '#ffffff', color: '#1a1417', display: 'flex', flexDirection: 'column' }}>
       
       {/* Topo institucional unificado */}
       <HeaderPublico slugAtivo="noticias" />
@@ -33,10 +33,9 @@ export default async function NoticiasIndexPage() {
       {/* ── FAIXA HERO INSTITUCIONAL COM BREADCRUMB ALINHADO A 1200PX ── */}
       <section
         style={{
-          background: '#ffffff',
-          borderBottom: '1px solid #e4dce0',
-          padding: '28px 20px 32px 20px',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+          background: '#faf8f9',
+          borderBottom: '1px solid #ebdbe0',
+          padding: '24px 20px 28px 20px',
         }}
       >
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
