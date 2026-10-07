@@ -1,0 +1,1088 @@
+{
+  "diretores": [
+    {
+      "id": 1,
+      "name": "Rita de Cassia Oliveira da Fonseca",
+      "group": "Executiva",
+      "company": "Teknia",
+      "role": "Diretor(a) Executivo(a)",
+      "image": "https://quimicosjc.org.br/assets/img/logo.svg",
+      "active": true,
+      "order": 1
+    },
+    {
+      "id": 2,
+      "name": "Davi Paulo de Souza Junior",
+      "group": "Executiva",
+      "company": "Relações Sindicais",
+      "role": "Diretor(a) Executivo(a)",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693256002_875cb6b2ea8fd0cea771.webp",
+      "active": true,
+      "order": 2
+    },
+    {
+      "id": 3,
+      "name": "Gysele Miranda",
+      "group": "Executiva",
+      "company": "Secretaria das Mulheres",
+      "role": "Diretor(a) Executivo(a)",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693258690_46db407122bd51ddd0de.webp",
+      "active": true,
+      "order": 3
+    },
+    {
+      "id": 4,
+      "name": "Luiz Eduardo Sanches",
+      "group": "Executiva",
+      "company": "Secretaria de Finanças Coordenador Taubaté",
+      "role": "Diretor(a) Executivo(a)",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693256890_f5265d98ea43cfa7595f.webp",
+      "active": true,
+      "order": 4
+    },
+    {
+      "id": 5,
+      "name": "Marcos Valério",
+      "group": "Executiva",
+      "company": "Secretaria de Saúde Coordenador de Caçapava",
+      "role": "Diretor(a) Executivo(a)",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693257047_923aa5d59ed53f5c068d.webp",
+      "active": true,
+      "order": 5
+    },
+    {
+      "id": 6,
+      "name": "Reginaldo de Souza",
+      "group": "Executiva",
+      "company": "Secretaria de Formação Coordenador de Jacareí",
+      "role": "Diretor(a) Executivo(a)",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693257182_0fcde2c7b745058bd0b8.webp",
+      "active": true,
+      "order": 6
+    },
+    {
+      "id": 7,
+      "name": "Rogério Pinheiro Mauricio",
+      "group": "Executiva",
+      "company": "Coordenador de São José dos Campos",
+      "role": "Diretor(a) Executivo(a)",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693257574_13c6236b7863285e9100.webp",
+      "active": true,
+      "order": 7
+    },
+    {
+      "id": 8,
+      "name": "Wellington Luiz Cabral",
+      "group": "Executiva",
+      "company": "Secretaria Geral",
+      "role": "Diretor(a) Executivo(a)",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693260831_7c4988541a7b13d0515d.webp",
+      "active": true,
+      "order": 8
+    },
+    {
+      "id": 9,
+      "name": "Aldwilliam Cortes Muniz",
+      "group": "Colegiado",
+      "company": "Johnson Medical",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693255474_97f2280ae01df80ec831.webp",
+      "active": true,
+      "order": 9
+    },
+    {
+      "id": 10,
+      "name": "Almir Roberto Moreira Barp",
+      "group": "Colegiado",
+      "company": "Johnson Industrial",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693255530_38147210e2229b77ec0e.webp",
+      "active": true,
+      "order": 10
+    },
+    {
+      "id": 11,
+      "name": "Anderson Alexandre Pereira",
+      "group": "Colegiado",
+      "company": "Basf S/A",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693257707_b655d94455e268365c2a.webp",
+      "active": true,
+      "order": 11
+    },
+    {
+      "id": 12,
+      "name": "Antônio Cardoso de Medeiros",
+      "group": "Colegiado",
+      "company": "Tarkett",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1694537599_02bd7e36d17c188d8269.webp",
+      "active": true,
+      "order": 12
+    },
+    {
+      "id": 13,
+      "name": "Carlos Eduardo do Nascimento",
+      "group": "Colegiado",
+      "company": "Johnson Industrial",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693255774_46a333b8d7617dc594ab.webp",
+      "active": true,
+      "order": 13
+    },
+    {
+      "id": 14,
+      "name": "Cristiano Idalgo Leite",
+      "group": "Colegiado",
+      "company": "Saint Gobain – Brasilit",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693255890_0fe3a9afb247636e48dc.webp",
+      "active": true,
+      "order": 14
+    },
+    {
+      "id": 15,
+      "name": "Ebenezer Assis de Castro",
+      "group": "Colegiado",
+      "company": "Johnson Medical",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693256122_03e0ba2b18b74f60d166.webp",
+      "active": true,
+      "order": 15
+    },
+    {
+      "id": 16,
+      "name": "Edilson Ribeiro de Palma",
+      "group": "Colegiado",
+      "company": "Johnson Medical",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693259853_c4c50b2da5d35e886608.webp",
+      "active": true,
+      "order": 16
+    },
+    {
+      "id": 17,
+      "name": "Edson Henrique Castilho",
+      "group": "Colegiado",
+      "company": "IPA",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693256250_8957550dc61c47461a66.webp",
+      "active": true,
+      "order": 17
+    },
+    {
+      "id": 18,
+      "name": "Emiliana Izabel Silveira Queiroz",
+      "group": "Colegiado",
+      "company": "Johnson Industrial",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693260001_26843ebba9e17012d7ee.webp",
+      "active": true,
+      "order": 18
+    },
+    {
+      "id": 19,
+      "name": "Fabio Ribeiro Tiago",
+      "group": "Colegiado",
+      "company": "Campo Limpo",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693259256_3b32e598e2f710ef533b.webp",
+      "active": true,
+      "order": 19
+    },
+    {
+      "id": 20,
+      "name": "Juliano Augusto Lopes",
+      "group": "Colegiado",
+      "company": "Johnson Industrial",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693256668_402eca038f7b35f34256.webp",
+      "active": true,
+      "order": 20
+    },
+    {
+      "id": 21,
+      "name": "Lucia Helena Alves",
+      "group": "Colegiado",
+      "company": "Johnson Industrial",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1694537342_6338e49081637f8987eb.webp",
+      "active": true,
+      "order": 21
+    },
+    {
+      "id": 22,
+      "name": "Luiz Henrique de Barros",
+      "group": "Colegiado",
+      "company": "Plastic Omnium",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693261323_a5332853ec4b9d47a60d.webp",
+      "active": true,
+      "order": 22
+    },
+    {
+      "id": 23,
+      "name": "Marcos Dionisio Amorim",
+      "group": "Colegiado",
+      "company": "Johnson Medical",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1694537459_68d62bdaed2b7abe25be.webp",
+      "active": true,
+      "order": 23
+    },
+    {
+      "id": 24,
+      "name": "Michael Luiz dos Santos",
+      "group": "Colegiado",
+      "company": "Altec",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693260138_eb57a3b3cdcd050b3f08.webp",
+      "active": true,
+      "order": 24
+    },
+    {
+      "id": 25,
+      "name": "Onias Pires",
+      "group": "Colegiado",
+      "company": "FLC",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693260500_6fe8f8ba5161720dbbdf.webp",
+      "active": true,
+      "order": 25
+    },
+    {
+      "id": 26,
+      "name": "Solange Talhari Mendes",
+      "group": "Colegiado",
+      "company": "Johnson Industrial",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693258038_90cfd1f8784b4daa569a.webp",
+      "active": true,
+      "order": 26
+    },
+    {
+      "id": 27,
+      "name": "Thyerry Wendel Silva",
+      "group": "Colegiado",
+      "company": "Janssen",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693258135_e01863cb2181855a942f.webp",
+      "active": true,
+      "order": 27
+    },
+    {
+      "id": 28,
+      "name": "Vinicius Jose Ferreira Manta",
+      "group": "Colegiado",
+      "company": "Johnson Industrial",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693258313_f0016d746f9446ca2b79.webp",
+      "active": true,
+      "order": 28
+    },
+    {
+      "id": 29,
+      "name": "Wanderson Vital da Silva",
+      "group": "Colegiado",
+      "company": "Johnson Industrial",
+      "role": "Diretor(a) de Base",
+      "image": "https://quimicosjc.org.br/assets/uploads/1693258484_3b7c5de540253b4c2ac6.webp",
+      "active": true,
+      "order": 29
+    },
+    {
+      "id": 30,
+      "name": "Carlos Roberto de Souza",
+      "group": "Colegiado",
+      "company": "Secretaria Jurídica",
+      "role": "Diretor(a) de Base",
+      "image": "https://placehold.co/184x184?text=Carlos Roberto de Souza",
+      "active": true,
+      "order": 30
+    },
+    {
+      "id": 31,
+      "name": "Giovanni de Almeida Teles",
+      "group": "Colegiado",
+      "company": "Secretaria das Comunicações",
+      "role": "Diretor(a) de Base",
+      "image": "https://placehold.co/184x184?text=Giovanni de Almeida Teles",
+      "active": true,
+      "order": 31
+    }
+  ],
+  "convenios": [
+    {
+      "id": 1,
+      "name": "Centro de Reabilitação Caçapava",
+      "kind": "Fisioterapia",
+      "city": "Caçapava",
+      "description": "Desconto de 20% nas sessões para tratamento de Traumato-ortopedia (fisioterapia)",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 1
+    },
+    {
+      "id": 2,
+      "name": "Instituto de Tecnologia de Jacareí - ITJ",
+      "kind": "Escolas e Faculdades",
+      "city": "Jacareí",
+      "description": "Desconto de 10% nas mensalidades para os sócios e dependentes",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 2
+    },
+    {
+      "id": 3,
+      "name": "Instituto de Educacional Thereza Porto Marques",
+      "kind": "Geral",
+      "city": "São José dos Campos",
+      "description": "Desconto de 10% para Curso do Jardim ao Ensino Médio, Regular e Cursos Técnicos",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 3
+    },
+    {
+      "id": 4,
+      "name": "Anhanguera Educacional S/A",
+      "kind": "Geral",
+      "city": "São José dos Campos",
+      "description": "Tabela de cursos com valores diferenciados para sócios do Sindicato e seus dependentes que estejam iniciando o curso",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 4
+    },
+    {
+      "id": 5,
+      "name": "Faculdade de Tecnologia São Francisco - FATESF",
+      "kind": "Geral",
+      "city": "São José dos Campos",
+      "description": "Desconto de 25% nas mensalidades: Administração, Engenharia de Computação, Engenharia de Controle e Automação",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 5
+    },
+    {
+      "id": 6,
+      "name": "Decápole Profissionalizantes e idiomas",
+      "kind": "Idiomas",
+      "city": "São José dos Campos",
+      "description": "Desconto de 30% para os cursos de idiomas presenciais",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 6
+    },
+    {
+      "id": 7,
+      "name": "ALPS - Inglês Fluente",
+      "kind": "Geral",
+      "city": "São José dos Campos",
+      "description": "Desconto de 35% para cursos Inglês Flex, desconto de 30% para curso em grupo Idiomas (Class Adult) e desconto de 20% na matrícula.",
+      "phone": "(12) 3962-4816",
+      "address": "",
+      "active": true,
+      "order": 7
+    },
+    {
+      "id": 8,
+      "name": "Juliana Leonor de Souza Camilo",
+      "kind": "Geral",
+      "city": "São José dos Campos",
+      "description": "Desconto de 30% a 50% à vista ou parcelado",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 8
+    },
+    {
+      "id": 9,
+      "name": "Edilson Camilo",
+      "kind": "Geral",
+      "city": "São José dos Campos",
+      "description": "Desconto de 30% a 50% à vista ou parcelado",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 9
+    },
+    {
+      "id": 10,
+      "name": "Academia Falção Cross Força (Studio Falção Cross)",
+      "kind": "Academias",
+      "city": "São José dos Campos",
+      "description": "Desconto de 50% nos treinamentos: Cross força, Funcional, Boxe, Musculação resistida e Personal",
+      "phone": "(12) 98177-2585",
+      "address": "",
+      "active": true,
+      "order": 10
+    },
+    {
+      "id": 11,
+      "name": "Instituto Taubaté de Ensino Superior - ITES",
+      "kind": "Escolas e Faculdades",
+      "city": "Taubaté",
+      "description": "Desconto de 10% para cursos de Graduaçao e Pós-Graduação",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 11
+    },
+    {
+      "id": 12,
+      "name": "Skill Idiomas",
+      "kind": "Idiomas",
+      "city": "São José dos Campos",
+      "description": "Desconto de 30% na matrícula, material didático em 12X no cartão ou 6x no cheque e parcelas do curso com 10% de desconto à mais do que tabela promocional vigente",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 12
+    },
+    {
+      "id": 13,
+      "name": "Curso de Francês e Traduções - Prof. a Jeanne Monique",
+      "kind": "Geral",
+      "city": "São José dos Campos",
+      "description": "Desconto de 10% até o vencimento",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 13
+    },
+    {
+      "id": 14,
+      "name": "Dr. Alysson Martins Corrêa",
+      "kind": "Dentistas",
+      "city": "São José dos Campos",
+      "description": "Tratamento Odontológico com 30% de desconto sobre a tabela da APCD",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 14
+    },
+    {
+      "id": 15,
+      "name": "Dra. Éllen Renata de Pontes Coelho",
+      "kind": "Geral",
+      "city": "São José dos Campos",
+      "description": "Desconto especial para sócios e dependentes.",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 15
+    },
+    {
+      "id": 16,
+      "name": "Vanessa Alves Sena",
+      "kind": "Psicologia",
+      "city": "São José dos Campos",
+      "description": "Desconto de 50% sobre o valor da sessão terapêutica semanal",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 16
+    },
+    {
+      "id": 17,
+      "name": "Nutrisaúde",
+      "kind": "Suplementos",
+      "city": "São José dos Campos",
+      "description": "Desconto de 40% nas consultas, acompanhamentos de gestantes, crianças, idosos e para ganho de massa magra",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 17
+    },
+    {
+      "id": 18,
+      "name": "Big Gang Suplementos",
+      "kind": "Geral",
+      "city": "São José dos Campos",
+      "description": "Desconto de 20% para à vista e 10% à prazo",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 18
+    },
+    {
+      "id": 19,
+      "name": "Formatran-Centro CFC",
+      "kind": "Auto Escola",
+      "city": "São José dos Campos",
+      "description": "Desconto de 10% à vista",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 19
+    },
+    {
+      "id": 20,
+      "name": "Pit Stop",
+      "kind": "Automecânica",
+      "city": "São José dos Campos",
+      "description": "Desconto de 15% à vista",
+      "phone": "(12) 98208-8935",
+      "address": "",
+      "active": true,
+      "order": 20
+    },
+    {
+      "id": 21,
+      "name": "DR. Paulo Roberto Vilela",
+      "kind": "Dentistas",
+      "city": "São José dos Campos",
+      "description": "Tratamento Odontológico com preços reduzidos",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 21
+    },
+    {
+      "id": 22,
+      "name": "Vera Lúcia Sizue Tenguan",
+      "kind": "Geral",
+      "city": "São José dos Campos",
+      "description": "Desconto de 30% para Prótese, Ortodontia e Clínica Geral",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 22
+    },
+    {
+      "id": 23,
+      "name": "CETEC Educacional",
+      "kind": "Escolas",
+      "city": "São José dos Campos",
+      "description": "Bolsas de 50% sobre as cinco parcelas da semestralidade e desconto de pontualidade, conforme tabela da instituição.",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 23
+    },
+    {
+      "id": 24,
+      "name": "COC Ensino Médio e Pré-vestibular",
+      "kind": "Geral",
+      "city": "São José dos Campos",
+      "description": "Desconto de 10% no ensino médio e de 15% no pré-vestibular",
+      "phone": "(12) 2134-9300",
+      "address": "",
+      "active": true,
+      "order": 24
+    },
+    {
+      "id": 25,
+      "name": "ECOMPO",
+      "kind": "Geral",
+      "city": "São José dos Campos",
+      "description": "Desconto de 10% para Técnico em Química, Informática, Prótese Dentária e Ensino Médio *Esse desconto não é acumulativo com outros descontosr",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 25
+    },
+    {
+      "id": 26,
+      "name": "UNIP - Universidade Paulista",
+      "kind": "Geral",
+      "city": "São José dos Campos",
+      "description": "Desconto de 5% sobre o resultado + desconto para alunos que efetuam o pagamento até o 5º dia útil",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 26
+    },
+    {
+      "id": 27,
+      "name": "Anhanguera Educacional S/A",
+      "kind": "Geral",
+      "city": "São José dos Campos",
+      "description": "Tabela de cursos com valores diferenciados para sócios do Sindicato e seus dependentes que estejam iniciando o curso",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 27
+    },
+    {
+      "id": 28,
+      "name": "Curso Êxito",
+      "kind": "Geral",
+      "city": "São José dos Campos",
+      "description": "Desconto de 25% sobre o valor do curso Obs.: Desconto nas parcelas dos cursos oferecido, exceto não formandos.",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 28
+    },
+    {
+      "id": 29,
+      "name": "Livraria e Papelaria Itapuã",
+      "kind": "Livrarias e Papelaria",
+      "city": "Taubaté",
+      "description": "Material de papelaria, festa, enfeites e embalagens em geral",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 29
+    },
+    {
+      "id": 30,
+      "name": "Papelaria Hikari",
+      "kind": "Geral",
+      "city": "São José dos Campos",
+      "description": "Material escolar, escritório, informática, presente, brinquedos, higiene e limpeza",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 30
+    },
+    {
+      "id": 31,
+      "name": "DR. Leticia Novakoski",
+      "kind": "Nutricionistas",
+      "city": "São José dos Campos",
+      "description": "Avaliação nutricional, Montagem de planos alimentares e Assessoria Nutricional",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 31
+    },
+    {
+      "id": 32,
+      "name": "Óticas Sophia",
+      "kind": "Ótica",
+      "city": "São José dos Campos",
+      "description": "Desconto de 20% para sócios do sindicato e Consulta visual gratuita",
+      "phone": "(12) 3943-2115",
+      "address": "",
+      "active": true,
+      "order": 32
+    },
+    {
+      "id": 33,
+      "name": "Óticas Carvalho",
+      "kind": "Geral",
+      "city": "São José dos Campos",
+      "description": "Desconto de 15% à vista ou desconto de 10% para compras em até 6x Relógios, óculos com grau ou solares",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 33
+    },
+    {
+      "id": 34,
+      "name": "Óticas Diniz",
+      "kind": "Geral",
+      "city": "São José dos Campos",
+      "description": "Desconto e 10% no orçamento",
+      "phone": "",
+      "address": "",
+      "active": true,
+      "order": 34
+    }
+  ],
+  "links": [
+    {
+      "id": 1,
+      "name": "Unidos Pra Lutar",
+      "url": "https://unidospralutar.blogspot.com/",
+      "description": "Entidade e canal de consulta parceiro da categoria.",
+      "group": "Sindical e Trabalhista",
+      "active": true,
+      "order": 1
+    },
+    {
+      "id": 2,
+      "name": "Sindicato dos Trabalhadores nas Indústrias de Alimentação de São José dos Campos",
+      "url": "https://sindicato.stialimentacao.com.br/",
+      "description": "Entidade e canal de consulta parceiro da categoria.",
+      "group": "Sindical e Trabalhista",
+      "active": true,
+      "order": 2
+    },
+    {
+      "id": 3,
+      "name": "Auditoria Cidadã da Dívida",
+      "url": "http://www.divida-auditoriacidada.org.br/",
+      "description": "Entidade e canal de consulta parceiro da categoria.",
+      "group": "Sindical e Trabalhista",
+      "active": true,
+      "order": 3
+    },
+    {
+      "id": 4,
+      "name": "La Classe - Venezuela",
+      "url": "https://laclase.info/",
+      "description": "Entidade e canal de consulta parceiro da categoria.",
+      "group": "Sindical e Trabalhista",
+      "active": true,
+      "order": 4
+    },
+    {
+      "id": 5,
+      "name": "Sindicato dos Municipais de Jacareí/SP",
+      "url": "http://www.stpmj.org.br/index.html",
+      "description": "Entidade e canal de consulta parceiro da categoria.",
+      "group": "Sindical e Trabalhista",
+      "active": true,
+      "order": 5
+    },
+    {
+      "id": 6,
+      "name": "SINDSAAE/SP",
+      "url": "https://www.sindsaae.org.br/",
+      "description": "Entidade e canal de consulta parceiro da categoria.",
+      "group": "Sindical e Trabalhista",
+      "active": true,
+      "order": 6
+    },
+    {
+      "id": 7,
+      "name": "SINDSAÚDE-AP",
+      "url": "https://sindesaudeamapa.blogspot.com/",
+      "description": "Entidade e canal de consulta parceiro da categoria.",
+      "group": "Sindical e Trabalhista",
+      "active": true,
+      "order": 7
+    },
+    {
+      "id": 8,
+      "name": "SINTRAM-PA",
+      "url": "https://sintram-pa.blogspot.com/",
+      "description": "Entidade e canal de consulta parceiro da categoria.",
+      "group": "Sindical e Trabalhista",
+      "active": true,
+      "order": 8
+    },
+    {
+      "id": 9,
+      "name": "SINTSEP-PA",
+      "url": "https://www.sintseppa.org.br/",
+      "description": "Entidade e canal de consulta parceiro da categoria.",
+      "group": "Sindical e Trabalhista",
+      "active": true,
+      "order": 9
+    },
+    {
+      "id": 10,
+      "name": "SINTUFF-RJ",
+      "url": "https://www.sintuff.org.br/",
+      "description": "Entidade e canal de consulta parceiro da categoria.",
+      "group": "Sindical e Trabalhista",
+      "active": true,
+      "order": 10
+    },
+    {
+      "id": 11,
+      "name": "Pesquisar o CNAE de uma Empresa pelo CNPJ",
+      "url": "https://solucoes.receita.fazenda.gov.br/Servicos/cnpjreva/cnpjreva_solicitacao.asp",
+      "description": "Entidade e canal de consulta parceiro da categoria.",
+      "group": "Sindical e Trabalhista",
+      "active": true,
+      "order": 11
+    },
+    {
+      "id": 12,
+      "name": "SINPROQUIM Acordos Coletivos Gerais",
+      "url": "http://www.sinproquim.org.br/index.php/convencoes-coletivas",
+      "description": "Entidade e canal de consulta parceiro da categoria.",
+      "group": "Sindical e Trabalhista",
+      "active": true,
+      "order": 12
+    }
+  ],
+  "sedes": [
+    {
+      "id": 1,
+      "name": "Sede Central — São José dos Campos",
+      "kind": "Unidade",
+      "city": "São José dos Campos",
+      "address": "Rua Conselheiro Rodrigues Alves, 51 - Jd. Santa Luzia - CEP 12209-540",
+      "hours": "Segunda a sexta-feira, das 8h às 17h",
+      "phone": "(12) 3921-8177",
+      "whatsapp": "(12) 3921-8177",
+      "email": "contato@quimicosjc.org.br",
+      "url": "https://maps.google.com/?q=Rua+Conselheiro+Rodrigues+Alves+51+Sao+Jose+dos+Campos",
+      "description": "Atendimento geral, homologações, jurídico e secretaria."
+    },
+    {
+      "id": 2,
+      "name": "Subsede Jacareí",
+      "kind": "Unidade",
+      "city": "Jacareí",
+      "address": "Rua Floriano Peixoto, 78 - Centro - CEP 12308-030",
+      "hours": "Segunda a sexta-feira, das 8h às 17h",
+      "phone": "(12) 3953-3277",
+      "whatsapp": "(12) 3953-3277",
+      "email": "jacarei@quimicosjc.org.br",
+      "url": "https://maps.google.com/?q=Rua+Floriano+Peixoto+78+Jacarei",
+      "description": "Atendimento aos trabalhadores de Jacareí e região."
+    },
+    {
+      "id": 3,
+      "name": "Subsede Caçapava",
+      "kind": "Unidade",
+      "city": "Caçapava",
+      "address": "Rua Cel. José Guimarães, 331 - Centro - CEP 12282-330",
+      "hours": "Segunda a sexta-feira, das 8h às 17h",
+      "phone": "(12) 3655-6044",
+      "whatsapp": "(12) 3655-6044",
+      "email": "cacapava@quimicosjc.org.br",
+      "url": "https://maps.google.com/?q=Rua+Cel+Jose+Guimaraes+331+Cacapava",
+      "description": "Atendimento aos trabalhadores químicos de Caçapava."
+    },
+    {
+      "id": 4,
+      "name": "Subsede Taubaté",
+      "kind": "Unidade",
+      "city": "Taubaté",
+      "address": "Rua Sebastião Gil, 319 - Vila Costa - CEP 12050-200",
+      "hours": "Segunda a sexta-feira, das 8h às 17h",
+      "phone": "(12) 3655-0932",
+      "whatsapp": "(12) 3655-0932",
+      "email": "taubate@quimicosjc.org.br",
+      "url": "https://maps.google.com/?q=Rua+Sebastiao+Gil+319+Taubate",
+      "description": "Atendimento aos trabalhadores químicos de Taubaté."
+    },
+    {
+      "id": 5,
+      "name": "Salão de Assembleias e Lazer",
+      "kind": "Unidade",
+      "city": "São José dos Campos",
+      "address": "Praça Carlos Maldonado Campoy, 23 – Centro (rua atrás da sede)",
+      "hours": "Eventos, assembleias e reuniões da categoria",
+      "phone": "(12) 3921-8177",
+      "whatsapp": "",
+      "email": "contato@quimicosjc.org.br",
+      "url": "https://maps.google.com/?q=Praca+Carlos+Maldonado+Campoy+23+Sao+Jose+dos+Campos",
+      "description": "Espaço para assembleias, plenárias e atividades sindicais."
+    }
+  ],
+  "ccts": [
+    {
+      "id": 1,
+      "name": "Convenção Coletiva de Trabalho 2018-2020",
+      "kind": "Convenção",
+      "company": "Indústrias Químicas e Plásticas",
+      "validity": "2018 - 2020",
+      "file": "https://www.quimicosjc.org.br/pdfs/especiais/CCT_QUIMICOS_2018_2020.pdf",
+      "fileName": "CCT_QUIMICOS_2018_2020.pdf",
+      "active": true
+    },
+    {
+      "id": 2,
+      "name": "Acordo Coletivo de Trabalho 2017-2018",
+      "kind": "Acordo",
+      "company": "Empresas Acordantes",
+      "validity": "2017 - 2018",
+      "file": "https://www.quimicosjc.org.br/pdfs/Acordo-Coletivo-de-Trabalho-2017-2018.pdf",
+      "fileName": "Acordo-Coletivo-de-Trabalho-2017-2018.pdf",
+      "active": true
+    },
+    {
+      "id": 3,
+      "name": "Convenção Coletiva de Trabalho 2016-2017",
+      "kind": "Convenção",
+      "company": "Indústrias Químicas e Plásticas",
+      "validity": "2016 - 2017",
+      "file": "https://www.quimicosjc.org.br/pdfs/especiais/CCT_2016_2017.pdf",
+      "fileName": "CCT_2016_2017.pdf",
+      "active": true
+    },
+    {
+      "id": 4,
+      "name": "Convenção Coletiva de Trabalho 2015-2017",
+      "kind": "Convenção",
+      "company": "Indústrias Farmacêuticas",
+      "validity": "2015 - 2017",
+      "file": "https://www.quimicosjc.org.br/pdfs/especiais/CCT-2015-2017.pdf",
+      "fileName": "CCT-2015-2017.pdf",
+      "active": true
+    },
+    {
+      "id": 5,
+      "name": "Convenção Coletiva de Trabalho 2014-2015",
+      "kind": "Convenção",
+      "company": "Indústrias Químicas e Plásticas",
+      "validity": "2014 - 2015",
+      "file": "https://www.quimicosjc.org.br/pdfs/especiais/CCT_2014_2015.pdf",
+      "fileName": "CCT_2014_2015.pdf",
+      "active": true
+    },
+    {
+      "id": 6,
+      "name": "Comunicado às Empresas CCT 2014-2015",
+      "kind": "Aditivo",
+      "company": "Circular e Comunicado Oficial",
+      "validity": "2014 - 2015",
+      "file": "https://www.quimicosjc.org.br/pdfs/especiais/Comunicado_as_empresas_CCT_2014_2015.pdf",
+      "fileName": "Comunicado_as_empresas_CCT_2014_2015.pdf",
+      "active": true
+    }
+  ],
+  "processos": [
+    {
+      "id": 1,
+      "name": "Ação Coletiva — Henkel / Cognis / Basf",
+      "company": "Henkel / Cognis / Basf (Jacareí)",
+      "number": "TRT-15 Jacareí",
+      "description": "Processo coletivo referente aos direitos e adicionais dos trabalhadores.",
+      "updated": "15/08/2026",
+      "active": true
+    },
+    {
+      "id": 2,
+      "name": "Ação Coletiva — White Martins",
+      "company": "White Martins (Jacareí)",
+      "number": "TRT-15 Jacareí",
+      "description": "Acompanhamento processual de direitos coletivos da categoria química.",
+      "updated": "20/07/2026",
+      "active": true
+    },
+    {
+      "id": 3,
+      "name": "Ação Coletiva — Teknia",
+      "company": "Teknia (Jacareí)",
+      "number": "TRT-15 Jacareí",
+      "description": "Cumprimento de cláusulas coletivas e acordos de trabalho.",
+      "updated": "10/06/2026",
+      "active": true
+    },
+    {
+      "id": 4,
+      "name": "Ação Coletiva — Produquímica (JAC I e JAC II)",
+      "company": "Produquímica (Jacareí)",
+      "number": "TRT-15 Jacareí",
+      "description": "Processo de diferenças e adicionais coletivos.",
+      "updated": "02/05/2026",
+      "active": true
+    },
+    {
+      "id": 5,
+      "name": "Ação Coletiva — Brasilit",
+      "company": "Brasilit (Jacareí)",
+      "number": "TRT-15 Jacareí",
+      "description": "Ação coletiva de saúde, segurança e condições de trabalho.",
+      "updated": "18/04/2026",
+      "active": true
+    },
+    {
+      "id": 6,
+      "name": "Ação Coletiva — First Wave",
+      "company": "First Wave (Taubaté)",
+      "number": "TRT-15 Taubaté",
+      "description": "Processo coletivo de representação e verbas trabalhistas.",
+      "updated": "12/03/2026",
+      "active": true
+    }
+  ],
+  "plantoesJuridicos": [
+    {
+      "id": 1,
+      "name": "Dr. Fernando",
+      "unit": "Processos Coletivos",
+      "day": "Terças e quintas-feiras",
+      "hours": "Das 9h às 12h e das 14h às 17h",
+      "description": "Plantão para esclarecimentos sobre ações coletivas e dissídios.",
+      "phone": "(12) 3921-8177",
+      "email": "quimisjc.jur@gmail.com",
+      "active": true
+    },
+    {
+      "id": 2,
+      "name": "Dr. Emerson",
+      "unit": "Processos Trabalhistas",
+      "day": "Segundas e quartas-feiras",
+      "hours": "Das 9h às 12h e das 14h às 17h",
+      "description": "Orientação jurídica individual trabalhista e rescisória.",
+      "phone": "(12) 3921-8177",
+      "email": "quimisjc.jur@gmail.com",
+      "active": true
+    },
+    {
+      "id": 3,
+      "name": "Dr. Gabriel de Macedo",
+      "unit": "Processo Previdenciário",
+      "day": "Sextas-feiras",
+      "hours": "Das 9h às 12h e das 14h às 16h",
+      "description": "Orientação sobre aposentadorias, benefícios e auxílios do INSS.",
+      "phone": "(12) 3921-8177",
+      "email": "quimisjc.jur@gmail.com",
+      "active": true
+    }
+  ],
+  "coloniaPrecos": [
+    {
+      "id": 1,
+      "unit": "São Sebastião",
+      "public": "Associados dos Químicos",
+      "type": "Quarto de casal (somente 2 pessoas)",
+      "value": 80,
+      "charge": "por diária",
+      "capacity": "2 pessoas (sem crianças)",
+      "notes": "Exclusivo para o associado e acompanhante.",
+      "active": true
+    },
+    {
+      "id": 2,
+      "unit": "São Sebastião",
+      "public": "Associados dos Químicos",
+      "type": "Quarto familiar",
+      "value": 100,
+      "charge": "por diária",
+      "capacity": "3 a 6 pessoas",
+      "notes": "Acomodação coletiva para a família do sócio.",
+      "active": true
+    },
+    {
+      "id": 3,
+      "unit": "Caraguatatuba",
+      "public": "Associados dos Químicos",
+      "type": "Quarto para quatro pessoas",
+      "value": 100,
+      "charge": "por diária",
+      "capacity": "Até 4 pessoas",
+      "notes": "Unidade com quartos mobiliados e cozinha coletiva.",
+      "active": true
+    },
+    {
+      "id": 4,
+      "unit": "São Sebastião",
+      "public": "Conveniados de outros sindicatos",
+      "type": "Quarto de casal",
+      "value": 100,
+      "charge": "por diária",
+      "capacity": "2 pessoas",
+      "notes": "Trabalhadores com convênio intersindical.",
+      "active": true
+    },
+    {
+      "id": 5,
+      "unit": "São Sebastião",
+      "public": "Conveniados de outros sindicatos",
+      "type": "Quarto familiar",
+      "value": 120,
+      "charge": "por diária",
+      "capacity": "3 a 6 pessoas",
+      "notes": "Trabalhadores com convênio intersindical.",
+      "active": true
+    },
+    {
+      "id": 6,
+      "unit": "Todas as unidades",
+      "public": "Taxa de convidados / não-dependentes",
+      "type": "Taxa diária por pessoa",
+      "value": 40,
+      "charge": "por pessoa / dia",
+      "capacity": "Convidados do associado",
+      "notes": "Presença do sócio obrigatória durante toda a estadia. Não sócios e não dependentes pagam a taxa.",
+      "active": true
+    }
+  ]
+}

@@ -35,6 +35,7 @@ export default async function AdminPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '18px', marginBottom: '40px' }}>
         {[
           { label: 'Publicar notícia',  desc: 'Escreva e publique uma nova notícia no portal',  href: '/admin/noticias/nova' },
+          { label: 'Páginas do site',   desc: 'Gerencie História, Diretoria, Convênios e Jurídico', href: '/admin/paginas' },
           { label: 'Páginas avulsas',   desc: 'Crie comunicados e páginas com endereço próprio', href: '/admin/avulsas' },
           { label: 'Ver solicitações',  desc: 'Mensagens, denúncias e contatos recebidos',      href: '/admin/solicitacoes' },
           { label: 'Upload de jornal',  desc: 'Adicione uma nova edição do jornal O Químico',   href: '/admin/jornais' },
@@ -72,7 +73,7 @@ export default async function AdminPage() {
           borderRadius: '0 4px 4px 0',
         }}
       >
-        <strong>Módulos de Notícias e Páginas Avulsas disponíveis.</strong> Acesse o menu lateral para criar e gerenciar notícias e páginas independentes. Os demais módulos serão ativados progressivamente.
+        <strong>Módulos de Notícias, Páginas do Site e Páginas Avulsas disponíveis.</strong> Acesse o menu lateral para gerenciar conteúdos institucionais e editoriais. Os demais módulos serão ativados progressivamente.
       </div>
     </AdminLayout>
   )
