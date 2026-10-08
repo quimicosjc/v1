@@ -169,7 +169,7 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
               href={`/noticias/${materiaDestaque.slug}`}
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gridTemplateColumns: '58% 42%',
                 background: '#ffffff',
                 border: '1px solid #ebdbe0',
                 borderRadius: '8px',
@@ -179,12 +179,12 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
                 boxShadow: '0 4px 14px rgba(48,37,42,0.05)',
                 transition: 'transform 0.15s ease, box-shadow 0.15s ease',
               }}
-              className="news-card-hover"
+              className="news-card-hover super-destaque-grid"
             >
               <div
                 style={{
-                  aspectRatio: '16 / 10',
-                  minHeight: '260px',
+                  width: '100%',
+                  aspectRatio: '3 / 2',
                   background: '#24141A',
                   overflow: 'hidden',
                   position: 'relative',
@@ -516,6 +516,14 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
           </button>
         </div>
       )}
+
+      <style>{`
+        @media (max-width: 820px) {
+          .super-destaque-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

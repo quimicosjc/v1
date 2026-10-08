@@ -499,11 +499,11 @@ export default function JornaisGerenciador({
                   transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                 }}
               >
-                {/* Capa com Proporção de Jornal/A4 (1:1.41) */}
+                {/* Capa com Proporção Física de Jornal (1:1.42) */}
                 <div
                   style={{
                     width: '100%',
-                    aspectRatio: '1 / 1.35',
+                    aspectRatio: '1 / 1.42',
                     background: '#2b1b22',
                     position: 'relative',
                     overflow: 'hidden',

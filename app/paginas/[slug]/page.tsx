@@ -12,6 +12,7 @@ import FooterPublico from '@/components/publico/FooterPublico'
 import ColoniaNav from '@/components/publico/ColoniaNav'
 import ListaNoticiasPublica, { type NoticiaItemPublico } from '@/components/publico/ListaNoticiasPublica'
 import { CONTAINER_STYLE } from '@/lib/design'
+import { sanitizarHtml } from '@/lib/security'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -132,10 +133,11 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
     }
   }
 
-  // Recupera tags de iframe reais caso tenham sido salvas como texto escapado
-  const corpoFormatado = (pagina.corpo || '')
+  // Recupera tags de iframe reais caso tenham sido salvas como texto escapado e sanitiza HTML
+  const corpoBruto = (pagina.corpo || '')
     .replace(/&lt;iframe([\s\S]*?)&gt;&lt;\/iframe&gt;/gi, '<iframe$1></iframe>')
     .replace(/&lt;iframe([\s\S]*?)\/&gt;/gi, '<iframe$1></iframe>')
+  const corpoFormatado = sanitizarHtml(corpoBruto)
 
   const records = dadosEstruturados?.records || []
   const tipoPagina = dadosEstruturados?.tipoPagina || ''

@@ -8,6 +8,7 @@ import CarrosselNoticia from '@/components/publico/CarrosselNoticia'
 import BarraCompartilhamento from '@/components/publico/BarraCompartilhamento'
 import { formatarDataHoraNoticia } from '@/lib/data-formatada'
 import { CONTAINER_STYLE } from '@/lib/design'
+import { sanitizarHtml } from '@/lib/security'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -115,10 +116,11 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
     }
   }
 
-  // Recupera tags de iframe reais caso tenham sido salvas como texto escapado
-  const corpoFormatado = (noticia.corpo || '')
+  // Recupera tags de iframe reais caso tenham sido salvas como texto escapado e sanitiza HTML
+  const corpoBruto = (noticia.corpo || '')
     .replace(/&lt;iframe([\s\S]*?)&gt;&lt;\/iframe&gt;/gi, '<iframe$1></iframe>')
     .replace(/&lt;iframe([\s\S]*?)\/&gt;/gi, '<iframe$1></iframe>')
+  const corpoFormatado = sanitizarHtml(corpoBruto)
 
   const dataExibicao = formatarDataHoraNoticia(noticia.publicado_em || noticia.criado_em)
 
@@ -541,7 +543,7 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
                     <div
                       style={{
                         width: '100%',
-                        aspectRatio: '16 / 10',
+                        aspectRatio: '3 / 2',
                         background: '#24141A',
                         overflow: 'hidden',
                         position: 'relative',

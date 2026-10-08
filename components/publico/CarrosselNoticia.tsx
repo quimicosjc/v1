@@ -17,6 +17,7 @@ interface CarrosselNoticiaProps {
 export default function CarrosselNoticia({ fotos, titulo }: CarrosselNoticiaProps) {
   const [indice, setIndice] = useState(0)
   const [modalAberto, setModalAberto] = useState(false)
+  const [ehVertical, setEhVertical] = useState(false)
 
   const total = fotos.length
   if (total === 0) return null
@@ -26,10 +27,12 @@ export default function CarrosselNoticia({ fotos, titulo }: CarrosselNoticiaProp
 
   const proxima = useCallback(() => {
     setIndice((prev) => (prev + 1) % total)
+    setEhVertical(false)
   }, [total])
 
   const anterior = useCallback(() => {
     setIndice((prev) => (prev - 1 + total) % total)
+    setEhVertical(false)
   }, [total])
 
   // Navegação por teclado
@@ -52,27 +55,39 @@ export default function CarrosselNoticia({ fotos, titulo }: CarrosselNoticiaProp
 
   return (
     <figure style={{ margin: '0 0 32px 0' }}>
-      {/* ── CONTAINER PRINCIPAL 3:2 COM FOCO EDITORIAL ── */}
+      {/* ── CONTAINER PRINCIPAL: 3:2 PARA HORIZONTAIS OU MOLDURA NEUTRA PARA VERTICAIS ── */}
       <div
         style={{
           width: '100%',
-          aspectRatio: '3 / 2',
+          aspectRatio: ehVertical ? undefined : '3 / 2',
+          maxHeight: ehVertical ? '560px' : undefined,
           borderRadius: '8px',
           overflow: 'hidden',
-          background: '#f5f0f2',
+          background: ehVertical ? '#1a0e13' : '#f5f0f2',
           border: '1px solid #e4dce0',
           position: 'relative',
           boxShadow: '0 2px 8px rgba(48,37,42,0.04)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
         <img
           src={fotoAtual.url}
           alt={fotoAtual.legenda || `${titulo} - Foto ${indice + 1}`}
+          onLoad={(e) => {
+            const img = e.currentTarget
+            if (img.naturalHeight > img.naturalWidth * 1.05) {
+              setEhVertical(true)
+            } else {
+              setEhVertical(false)
+            }
+          }}
           style={{
             width: '100%',
             height: '100%',
-            objectFit: 'cover',
-            objectPosition: `50% ${focoY}%`,
+            objectFit: ehVertical ? 'contain' : 'cover',
+            objectPosition: ehVertical ? 'center' : `50% ${focoY}%`,
             display: 'block',
             transition: 'opacity 0.2s ease',
           }}
