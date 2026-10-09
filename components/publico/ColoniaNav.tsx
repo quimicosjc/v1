@@ -90,6 +90,7 @@ export default function ColoniaNav({ slugAtual }: ColoniaNavProps) {
 
   return (
     <div
+      className="colonia-nav-container"
       style={{
         background: '#ffffff',
         border: '1px solid #e4dce0',
@@ -100,6 +101,7 @@ export default function ColoniaNav({ slugAtual }: ColoniaNavProps) {
       }}
     >
       <div
+        className="colonia-nav-header"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -128,6 +130,7 @@ export default function ColoniaNav({ slugAtual }: ColoniaNavProps) {
       </div>
 
       <div
+        className="colonia-nav-abas"
         style={{
           display: 'flex',
           flexWrap: 'wrap',
@@ -145,15 +148,17 @@ export default function ColoniaNav({ slugAtual }: ColoniaNavProps) {
                 color: ativa ? '#ffffff' : '#30252a',
                 border: ativa ? '1px solid #861e32' : '1px solid #cbd7de',
                 borderRadius: '6px',
-                padding: '8px 14px',
+                padding: '9px 14px',
                 fontSize: '13px',
                 fontWeight: ativa ? 700 : 500,
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px',
+                whiteSpace: 'nowrap',
                 boxShadow: ativa ? '0 2px 6px rgba(134,30,50,0.25)' : 'none',
                 transition: 'all 0.15s ease',
+                flexShrink: 0,
               }}
               className="colonia-tab"
             >
@@ -169,6 +174,30 @@ export default function ColoniaNav({ slugAtual }: ColoniaNavProps) {
           background: #f0e6e8 !important;
           color: #861e32 !important;
           border-color: #861e32 !important;
+        }
+        @media (max-width: 768px) {
+          .colonia-nav-container {
+            padding: 12px 14px !important;
+            margin: 16px 0 24px 0 !important;
+          }
+          .colonia-nav-header {
+            margin-bottom: 8px !important;
+            padding-bottom: 8px !important;
+          }
+          .colonia-nav-abas {
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding-bottom: 6px !important;
+            scrollbar-width: thin;
+          }
+          .colonia-nav-abas::-webkit-scrollbar {
+            height: 4px;
+          }
+          .colonia-nav-abas::-webkit-scrollbar-thumb {
+            background: #cbd7de;
+            border-radius: 4px;
+          }
         }
       `}</style>
     </div>

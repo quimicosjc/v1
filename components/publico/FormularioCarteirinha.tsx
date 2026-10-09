@@ -136,7 +136,7 @@ export default function FormularioCarteirinha() {
     padding: '11px 12px',
     border: '1px solid #cbd7de',
     borderRadius: '5px',
-    fontSize: '14px',
+    fontSize: '16px',
     color: '#30252a',
     background: '#ffffff',
     outline: 'none',

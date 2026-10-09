@@ -776,20 +776,46 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
           display: block !important;
         }
         .noticia-corpo table {
+          display: block !important;
           width: 100% !important;
+          max-width: 100% !important;
+          overflow-x: auto !important;
+          -webkit-overflow-scrolling: touch !important;
           border-collapse: collapse !important;
           margin: 28px 0 !important;
           font-size: 14.5px !important;
+          background: #ffffff !important;
         }
         .noticia-corpo th, .noticia-corpo td {
           border: 1px solid #e4dce0 !important;
           padding: 10px 14px !important;
           text-align: left !important;
+          min-width: 120px !important;
         }
-        .noticia-corpo th {
-          background: #f8fafb !important;
-          font-weight: 700 !important;
-          color: #30252a !important;
+        .noticia-corpo table::-webkit-scrollbar {
+          height: 5px;
+        }
+        .noticia-corpo table::-webkit-scrollbar-thumb {
+          background: #cbd7de;
+          border-radius: 4px;
+        }
+        .noticia-corpo .iframe-wrapper {
+          position: relative !important;
+          width: 100% !important;
+          aspect-ratio: 16 / 9 !important;
+          margin: 24px 0 !important;
+          border-radius: 8px !important;
+          overflow: hidden !important;
+          background: #000000 !important;
+        }
+        .noticia-corpo .iframe-wrapper iframe {
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          border: none !important;
+          margin: 0 !important;
         }
         .noticia-corpo iframe {
           max-width: 100% !important;

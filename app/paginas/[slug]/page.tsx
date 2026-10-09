@@ -175,6 +175,7 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
 
       {/* ── FAIXA HERO INSTITUCIONAL COM BREADCRUMB ── */}
       <section
+        className="pagina-hero-section"
         style={{
           background: '#faf8f9',
           borderBottom: '1px solid #ebdbe0',
@@ -182,8 +183,9 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
         }}
       >
         <div style={CONTAINER_STYLE}>
-          {/* Breadcrumb navegável */}
+          {/* Breadcrumb navegável (ocultado no mobile para economia vertical) */}
           <nav
+            className="pagina-breadcrumb"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -208,6 +210,7 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
           {/* Chapéu / Assunto */}
           {pagina.chapeu && (
             <div
+              className="pagina-hero-chapeu"
               style={{
                 color: '#861e32',
                 fontSize: '12px',
@@ -223,6 +226,7 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
 
           {/* Título Principal */}
           <h1
+            className="pagina-hero-titulo"
             style={{
               fontSize: '34px',
               fontWeight: 800,
@@ -238,6 +242,7 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
           {/* Subtítulo / Lead */}
           {pagina.subtitulo && (
             <div
+              className="pagina-hero-subtitulo"
               style={{
                 fontSize: '17px',
                 lineHeight: 1.6,
@@ -254,7 +259,7 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
       </section>
 
       {/* Conteúdo principal fluido */}
-      <main style={{ flex: 1, padding: '36px 0 64px 0' }}>
+      <main className="pagina-main" style={{ flex: 1, padding: '36px 0 64px 0' }}>
         <article
           style={CONTAINER_STYLE}
         >
@@ -840,7 +845,7 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
             </div>
           )}
 
-          {/* Estilos para elementos internos renderizados do RichEditor */}
+          {/* Estilos para elementos internos renderizados do RichEditor e Responsividade */}
           <style>{`
             .pagina-conteudo p { margin: 0 0 18px 0; }
             .pagina-conteudo h2 { font-size: 24px; font-weight: 800; color: #30252a; margin: 32px 0 14px 0; border-bottom: 1px solid #f0e8ea; padding-bottom: 6px; }
@@ -850,12 +855,83 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
             .pagina-conteudo li { margin-bottom: 8px; }
             .pagina-conteudo a { color: #861e32; text-decoration: underline; font-weight: 600; }
             .pagina-conteudo img { max-width: 100%; height: auto; display: block; margin: 20px auto; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-            .pagina-conteudo table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 14.5px; }
-            .pagina-conteudo th, .pagina-conteudo td { border: 1px solid #cbd7de; padding: 12px 16px; text-align: left; }
-            .pagina-conteudo th { background: #f8fafb; font-weight: 700; color: #30252a; }
+            
+            /* Tabelas responsivas com rolagem horizontal touch-friendly */
+            .pagina-conteudo table {
+              display: block;
+              width: 100%;
+              max-width: 100%;
+              overflow-x: auto;
+              -webkit-overflow-scrolling: touch;
+              border-collapse: collapse;
+              margin: 24px 0;
+              font-size: 14.5px;
+              background: #ffffff;
+            }
+            .pagina-conteudo th, .pagina-conteudo td {
+              border: 1px solid #cbd7de;
+              padding: 12px 16px;
+              text-align: left;
+              min-width: 120px;
+            }
+            .pagina-conteudo th {
+              background: #f8fafb;
+              font-weight: 700;
+              color: #30252a;
+            }
+            .pagina-conteudo table::-webkit-scrollbar {
+              height: 5px;
+            }
+            .pagina-conteudo table::-webkit-scrollbar-thumb {
+              background: #cbd7de;
+              border-radius: 4px;
+            }
+
             .pagina-conteudo .iframe-wrapper { position: relative; width: 100%; aspect-ratio: 16 / 9; margin: 24px 0; border-radius: 8px; overflow: hidden; background: #000; }
             .pagina-conteudo .iframe-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
             .breadcrumb-link:hover { text-decoration: underline !important; color: #861e32 !important; }
+
+            /* Adaptação Responsiva Mobile Específica */
+            @media (max-width: 768px) {
+              .pagina-breadcrumb {
+                display: none !important;
+              }
+              .pagina-hero-section {
+                padding: 16px 0 20px 0 !important;
+              }
+              .pagina-hero-titulo {
+                font-size: 26px !important;
+                line-height: 1.18 !important;
+                margin-bottom: 8px !important;
+              }
+              .pagina-hero-subtitulo {
+                font-size: 15px !important;
+                line-height: 1.45 !important;
+                padding-left: 10px !important;
+                margin-top: 10px !important;
+              }
+              .pagina-main {
+                padding: 20px 0 48px 0 !important;
+              }
+              .pagina-conteudo {
+                font-size: 16px !important;
+                line-height: 1.65 !important;
+              }
+              .pagina-conteudo h2 {
+                font-size: 20px !important;
+                line-height: 1.25 !important;
+                margin: 24px 0 10px 0 !important;
+              }
+              .pagina-conteudo h3 {
+                font-size: 17px !important;
+                line-height: 1.3 !important;
+                margin: 20px 0 8px 0 !important;
+              }
+              .pagina-conteudo blockquote {
+                padding: 10px 14px !important;
+                font-size: 14.5px !important;
+              }
+            }
           `}</style>
         </article>
       </main>

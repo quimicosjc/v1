@@ -75,7 +75,7 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
               padding: '12px 16px 12px 42px',
               border: '1px solid #cbd7de',
               borderRadius: '6px',
-              fontSize: '14.5px',
+              fontSize: '16px',
               boxSizing: 'border-box',
               outline: 'none',
               background: '#ffffff',

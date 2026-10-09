@@ -101,6 +101,26 @@ export function sanitizarHtml(htmlBruto: string): string {
     return `<iframe${attrs} loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>`
   })
 
+  // 5. Converte links soltos de YouTube / Shorts em players embutidos responsivos
+  limpo = converterVideosEmEmbed(limpo)
+
   return limpo
+}
+
+/**
+ * Converte links de YouTube (watch, youtu.be, shorts) em players de vídeo embutidos.
+ */
+export function converterVideosEmEmbed(html: string): string {
+  if (!html || typeof html !== 'string') return ''
+
+  // Links soltos em parágrafos ou tags âncora isoladas:
+  // Ex: <p><a href="https://youtu.be/xyz">...</a></p> ou <p>https://youtu.be/xyz</p>
+  const padraoYoutube = /<p>\s*(?:<a[^>]*href=["\'])?(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[^\s<"'\&]*)?(?:["\'][^>]*>.*?<\/a>)?\s*<\/p>/gi
+
+  let processado = html.replace(padraoYoutube, (_match, videoId) => {
+    return `<div class="iframe-wrapper"><iframe src="https://www.youtube.com/embed/${videoId}" title="Vídeo do YouTube" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`
+  })
+
+  return processado
 }
 

@@ -33,6 +33,7 @@ export default async function NoticiasIndexPage() {
 
       {/* ── FAIXA COM BREADCRUMB ALINHADO AO CONTAINER (M9) ── */}
       <section
+        className="noticias-breadcrumb-faixa"
         style={{
           background: '#faf8f9',
           borderBottom: '1px solid #ebdbe0',
@@ -71,6 +72,13 @@ export default async function NoticiasIndexPage() {
       {/* Rodapé institucional oficial */}
       <FooterPublico />
 
+      <style>{`
+        @media (max-width: 768px) {
+          .noticias-breadcrumb-faixa {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }
