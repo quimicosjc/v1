@@ -27,14 +27,14 @@ interface AcervoJornaisPublicoProps {
   publicacoes: PublicacaoItem[]
 }
 
-const ITENS_POR_PAGINA_MOBILE = 20
+const ITENS_POR_PAGINA = 20
 
 export default function AcervoJornaisPublico({ edicoes, publicacoes }: AcervoJornaisPublicoProps) {
   // Encontra id padrão do Boca no Trombone
   const pubBoca = publicacoes.find((p) => p.nome.toLowerCase().includes('boca no trombone'))
   const [pubSelecionadaId, setPubSelecionadaId] = useState<string>(pubBoca?.id || (publicacoes[0]?.id ?? ''))
   const [dropAberto, setDropAberto] = useState(false)
-  const [paginaMobile, setPaginaMobile] = useState(1)
+  const [pagina, setPagina] = useState(1)
   const [edicaoDestaqueId, setEdicaoDestaqueId] = useState<string | null>(null)
   const dropRef = useRef<HTMLDivElement>(null)
 
@@ -86,16 +86,25 @@ export default function AcervoJornaisPublico({ edicoes, publicacoes }: AcervoJor
     return edicoesFiltradas.filter((e) => e.id !== edicaoDestaque.id)
   }, [edicoesFiltradas, edicaoDestaque])
 
-  // Paginação Mobile (20 em 20)
-  const totalPaginasMobile = Math.max(1, Math.ceil(edicoesAnteriores.length / ITENS_POR_PAGINA_MOBILE))
-  const indiceInicio = (paginaMobile - 1) * ITENS_POR_PAGINA_MOBILE
-  const edicoesMobilePagina = edicoesAnteriores.slice(indiceInicio, indiceInicio + ITENS_POR_PAGINA_MOBILE)
+  // Paginação unificada (20 em 20) para Desktop e Mobile
+  const totalPaginas = Math.max(1, Math.ceil(edicoesAnteriores.length / ITENS_POR_PAGINA))
+  const indiceInicio = (pagina - 1) * ITENS_POR_PAGINA
+  const edicoesPagina = edicoesAnteriores.slice(indiceInicio, indiceInicio + ITENS_POR_PAGINA)
+  const totalEdicoes = edicoesAnteriores.length
 
   function trocarPublicacao(id: string) {
     setPubSelecionadaId(id)
     setDropAberto(false)
-    setPaginaMobile(1)
+    setPagina(1)
     setEdicaoDestaqueId(null)
+  }
+
+  function mudarPagina(novaPagina: number) {
+    setPagina(novaPagina)
+    const el = document.getElementById('secao-edicoes-anteriores')
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
   }
 
   return (
@@ -421,130 +430,200 @@ export default function AcervoJornaisPublico({ edicoes, publicacoes }: AcervoJor
           )}
 
           {/* 2. EDIÇÕES ANTERIORES:
-                 - NO DESKTOP: Grid visual de capas
-                 - NO MOBILE: Lista textual de 20 em 20 com botões Início e Fim */}
-          {edicoesAnteriores.length > 0 && (
-            <div>
-              <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ width: '4px', height: '20px', background: '#861e32', display: 'inline-block', borderRadius: '2px' }} />
-                <h2
-                  style={{
-                    fontFamily: 'var(--font-condensed), sans-serif',
-                    fontSize: '22px',
-                    fontWeight: 800,
-                    textTransform: 'uppercase',
-                    color: '#30252a',
-                    margin: 0,
-                    letterSpacing: '0.4px',
-                  }}
-                >
-                  Edições Anteriores
-                </h2>
+                 - EM LISTA DE 20 EM 20 (DESKTOP E MOBILE) COM BOTÕES INÍCIO E FIM */}
+          {totalEdicoes > 0 && (
+            <div id="secao-edicoes-anteriores">
+              <div style={{ marginBottom: '18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ width: '4px', height: '22px', background: '#861e32', display: 'inline-block', borderRadius: '2px' }} />
+                  <h2
+                    style={{
+                      fontFamily: 'var(--font-condensed), sans-serif',
+                      fontSize: '24px',
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      color: '#30252a',
+                      margin: 0,
+                      letterSpacing: '0.4px',
+                    }}
+                  >
+                    Edições Anteriores
+                  </h2>
+                </div>
+
+                <div style={{ fontSize: '12.5px', color: '#71636a' }}>
+                  Mostrando <strong>{indiceInicio + 1}</strong> a <strong>{Math.min(totalEdicoes, indiceInicio + ITENS_POR_PAGINA)}</strong> de <strong>{totalEdicoes}</strong> edições
+                </div>
               </div>
 
-              {/* ── VISUALIZAÇÃO DESKTOP: GRID COM CAPAS ── */}
-              <div className="jornais-desktop-grid">
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
-                  {edicoesAnteriores.map((ed) => {
+              {/* ── VISUALIZAÇÃO DESKTOP: LISTA ADAPTADA COM LINHAS ESPAÇOSAS E MINIATURAS ── */}
+              <div className="jornais-desktop-list">
+                <div
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1px solid #e4dce0',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+                  }}
+                >
+                  {/* Cabeçalho da Lista Desktop */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '70px 140px 1fr 180px 240px',
+                      alignItems: 'center',
+                      gap: '16px',
+                      padding: '12px 20px',
+                      background: '#f8fafb',
+                      borderBottom: '1px solid #e4dce0',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      color: '#71636a',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}
+                  >
+                    <div>Capa</div>
+                    <div>Edição</div>
+                    <div>Período / Mês</div>
+                    <div>Publicação</div>
+                    <div style={{ textAlign: 'right' }}>Ações</div>
+                  </div>
+
+                  {/* Linhas da Lista Desktop */}
+                  {edicoesPagina.map((ed, index) => {
                     const pubNome = ed.publicacoes_jornal?.nome || tituloPagina
+                    const isUltimo = index === edicoesPagina.length - 1
+
                     return (
                       <div
                         key={ed.id}
                         style={{
-                          background: '#ffffff',
-                          border: '1px solid #e4dce0',
-                          borderRadius: '8px',
-                          overflow: 'hidden',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
-                          display: 'flex',
-                          flexDirection: 'column',
+                          display: 'grid',
+                          gridTemplateColumns: '70px 140px 1fr 180px 240px',
+                          alignItems: 'center',
+                          gap: '16px',
+                          padding: '12px 20px',
+                          borderBottom: isUltimo ? 'none' : '1px solid #f0e8eb',
+                          transition: 'background 0.15s ease',
                         }}
+                        className="linha-edicao-desktop"
                       >
-                        {/* Capa */}
-                        <div style={{ aspectRatio: '1 / 1.42', background: '#24141A', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
+                        {/* Miniatura Capa */}
+                        <div
+                          style={{
+                            width: '44px',
+                            height: '62px',
+                            background: '#24141A',
+                            borderRadius: '4px',
+                            overflow: 'hidden',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                            flexShrink: 0,
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => {
+                            setEdicaoDestaqueId(ed.id)
+                            window.scrollTo({ top: 120, behavior: 'smooth' })
+                          }}
+                          title="Clique para ver no topo"
+                        >
                           {ed.capa_url ? (
-                            <img src={ed.capa_url} alt={`Capa ${pubNome} nº ${ed.numero}`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            <img src={ed.capa_url} alt={`Capa ${ed.numero}`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                           ) : (
-                            <div style={{ textAlign: 'center', color: '#ffffff', padding: '16px' }}>
-                              <strong style={{ fontSize: '12px', textTransform: 'uppercase' }}>{pubNome}</strong>
-                            </div>
+                            <span style={{ color: '#fff', fontSize: '9px', fontWeight: 700 }}>PDF</span>
                           )}
+                        </div>
+
+                        {/* Edição Nº */}
+                        <div>
                           <span
                             style={{
-                              position: 'absolute',
-                              top: '10px',
-                              left: '10px',
                               background: '#861e32',
                               color: '#ffffff',
-                              fontSize: '10.5px',
+                              fontSize: '12px',
                               fontWeight: 700,
-                              padding: '3px 7px',
-                              borderRadius: '3px',
-                              textTransform: 'uppercase',
+                              padding: '4px 9px',
+                              borderRadius: '4px',
+                              display: 'inline-block',
+                              letterSpacing: '0.3px',
                             }}
                           >
                             Nº {ed.numero}
                           </span>
                         </div>
 
-                        {/* Dados e Botão */}
-                        <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                          <div>
-                            <div style={{ fontSize: '11.5px', color: '#71636a', marginBottom: '4px' }}>
-                              {ed.mes_ano || 'Edição Regular'}
-                            </div>
-                            <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#30252a', margin: '0 0 6px 0' }}>
-                              {pubNome} — Edição nº {ed.numero}
-                            </h3>
+                        {/* Período / Mês */}
+                        <div>
+                          <div style={{ fontSize: '14.5px', fontWeight: 600, color: '#30252a' }}>
+                            {ed.mes_ano || 'Edição Regular'}
                           </div>
+                          {ed.data_publicacao && (
+                            <div style={{ fontSize: '11.5px', color: '#71636a', marginTop: '2px' }}>
+                              Publicado em {new Date(ed.data_publicacao).toLocaleDateString('pt-BR')}
+                            </div>
+                          )}
+                        </div>
 
-                          <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
-                            {ed.pdf_url ? (
-                              <a
-                                href={ed.pdf_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                  background: '#861e32',
-                                  color: '#ffffff',
-                                  padding: '8px 14px',
-                                  borderRadius: '4px',
-                                  fontSize: '12px',
-                                  fontWeight: 700,
-                                  textDecoration: 'none',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '6px',
-                                  flex: 1,
-                                  justifyContent: 'center',
-                                }}
-                              >
-                                Abrir PDF ↗
-                              </a>
-                            ) : (
-                              <span style={{ fontSize: '11.5px', color: '#71636a' }}>Sem PDF</span>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEdicaoDestaqueId(ed.id)
-                                window.scrollTo({ top: 120, behavior: 'smooth' })
-                              }}
+                        {/* Nome da Publicação */}
+                        <div style={{ fontSize: '13px', color: '#554950', fontWeight: 500 }}>
+                          {pubNome}
+                        </div>
+
+                        {/* Botões de Ação */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEdicaoDestaqueId(ed.id)
+                              window.scrollTo({ top: 120, behavior: 'smooth' })
+                            }}
+                            style={{
+                              background: '#FFFFFF',
+                              border: '1px solid #cbd7de',
+                              color: '#30252a',
+                              padding: '7px 12px',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                            }}
+                            className="btn-destacar-desktop"
+                            title="Visualizar detalhes no topo"
+                          >
+                            Ver no topo
+                          </button>
+
+                          {ed.pdf_url ? (
+                            <a
+                              href={ed.pdf_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
                               style={{
-                                background: '#f8f2f4',
-                                border: '1px solid #ebdbe0',
-                                color: '#861e32',
-                                padding: '8px 10px',
+                                background: '#861e32',
+                                color: '#ffffff',
+                                padding: '7px 14px',
                                 borderRadius: '4px',
                                 fontSize: '12px',
-                                fontWeight: 600,
-                                cursor: 'pointer',
+                                fontWeight: 700,
+                                textDecoration: 'none',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                transition: 'background 0.15s ease',
                               }}
-                              title="Destacar esta edição no topo"
+                              className="btn-pdf-desktop"
                             >
-                              Destacar
-                            </button>
-                          </div>
+                              <span>Ler PDF</span>
+                              <span>↗</span>
+                            </a>
+                          ) : (
+                            <span style={{ fontSize: '12px', color: '#a0a0a0' }}>Sem PDF</span>
+                          )}
                         </div>
                       </div>
                     )
@@ -552,7 +631,7 @@ export default function AcervoJornaisPublico({ edicoes, publicacoes }: AcervoJor
                 </div>
               </div>
 
-              {/* ── VISUALIZAÇÃO MOBILE (ITEM 10): LISTA DE TEXTO COM PAGINAÇÃO 20 EM 20 ── */}
+              {/* ── VISUALIZAÇÃO MOBILE: LISTA DE CARDS COMPACTOS ── */}
               <div className="jornais-mobile-list">
                 <div
                   style={{
@@ -563,9 +642,9 @@ export default function AcervoJornaisPublico({ edicoes, publicacoes }: AcervoJor
                     boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
                   }}
                 >
-                  {edicoesMobilePagina.map((ed, index) => {
+                  {edicoesPagina.map((ed, index) => {
                     const pubNome = ed.publicacoes_jornal?.nome || tituloPagina
-                    const isUltimo = index === edicoesMobilePagina.length - 1
+                    const isUltimo = index === edicoesPagina.length - 1
 
                     return (
                       <div
@@ -636,103 +715,156 @@ export default function AcervoJornaisPublico({ edicoes, publicacoes }: AcervoJor
                     )
                   })}
                 </div>
-
-                {/* Controles de Paginação Mobile (Início / Anterior / Próxima / Fim) */}
-                {totalPaginasMobile > 1 && (
-                  <div
-                    style={{
-                      marginTop: '16px',
-                      padding: '12px',
-                      background: '#FFFFFF',
-                      border: '1px solid #e4dce0',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '8px',
-                      fontSize: '12.5px',
-                    }}
-                  >
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <button
-                        type="button"
-                        onClick={() => setPaginaMobile(1)}
-                        disabled={paginaMobile === 1}
-                        style={{
-                          background: paginaMobile === 1 ? '#f5f5f5' : '#FFFFFF',
-                          color: paginaMobile === 1 ? '#a0a0a0' : '#30252a',
-                          border: '1px solid #cbd7de',
-                          borderRadius: '4px',
-                          padding: '6px 10px',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          cursor: paginaMobile === 1 ? 'not-allowed' : 'pointer',
-                        }}
-                      >
-                        « Início
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPaginaMobile((p) => Math.max(1, p - 1))}
-                        disabled={paginaMobile === 1}
-                        style={{
-                          background: paginaMobile === 1 ? '#f5f5f5' : '#FFFFFF',
-                          color: paginaMobile === 1 ? '#a0a0a0' : '#30252a',
-                          border: '1px solid #cbd7de',
-                          borderRadius: '4px',
-                          padding: '6px 10px',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          cursor: paginaMobile === 1 ? 'not-allowed' : 'pointer',
-                        }}
-                      >
-                        ‹
-                      </button>
-                    </div>
-
-                    <div style={{ fontWeight: 600, color: '#52434a', fontSize: '12px' }}>
-                      Pág. {paginaMobile} de {totalPaginasMobile}
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <button
-                        type="button"
-                        onClick={() => setPaginaMobile((p) => Math.min(totalPaginasMobile, p + 1))}
-                        disabled={paginaMobile === totalPaginasMobile}
-                        style={{
-                          background: paginaMobile === totalPaginasMobile ? '#f5f5f5' : '#FFFFFF',
-                          color: paginaMobile === totalPaginasMobile ? '#a0a0a0' : '#30252a',
-                          border: '1px solid #cbd7de',
-                          borderRadius: '4px',
-                          padding: '6px 10px',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          cursor: paginaMobile === totalPaginasMobile ? 'not-allowed' : 'pointer',
-                        }}
-                      >
-                        ›
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPaginaMobile(totalPaginasMobile)}
-                        disabled={paginaMobile === totalPaginasMobile}
-                        style={{
-                          background: paginaMobile === totalPaginasMobile ? '#f5f5f5' : '#FFFFFF',
-                          color: paginaMobile === totalPaginasMobile ? '#a0a0a0' : '#30252a',
-                          border: '1px solid #cbd7de',
-                          borderRadius: '4px',
-                          padding: '6px 10px',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          cursor: paginaMobile === totalPaginasMobile ? 'not-allowed' : 'pointer',
-                        }}
-                      >
-                        Fim »
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
+
+              {/* ── BARRA DE PAGINAÇÃO COMPLETA (DESKTOP E MOBILE) COM INÍCIO E FIM ── */}
+              {totalPaginas > 1 && (
+                <div
+                  style={{
+                    marginTop: '20px',
+                    padding: '14px 20px',
+                    background: '#FFFFFF',
+                    border: '1px solid #e4dce0',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '12px',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+                  }}
+                >
+                  {/* Botões Início e Anterior */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => mudarPagina(1)}
+                      disabled={pagina === 1}
+                      style={{
+                        background: pagina === 1 ? '#f5f5f5' : '#FFFFFF',
+                        color: pagina === 1 ? '#a0a0a0' : '#30252a',
+                        border: '1px solid #cbd7de',
+                        borderRadius: '5px',
+                        padding: '7px 12px',
+                        fontSize: '12.5px',
+                        fontWeight: 600,
+                        cursor: pagina === 1 ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                      className="btn-paginacao"
+                    >
+                      « Início
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => mudarPagina(Math.max(1, pagina - 1))}
+                      disabled={pagina === 1}
+                      style={{
+                        background: pagina === 1 ? '#f5f5f5' : '#FFFFFF',
+                        color: pagina === 1 ? '#a0a0a0' : '#30252a',
+                        border: '1px solid #cbd7de',
+                        borderRadius: '5px',
+                        padding: '7px 12px',
+                        fontSize: '12.5px',
+                        fontWeight: 600,
+                        cursor: pagina === 1 ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                      className="btn-paginacao"
+                    >
+                      ‹ Anterior
+                    </button>
+                  </div>
+
+                  {/* Números das Páginas (Visível no Desktop) */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }} className="paginacao-numeros-container">
+                    {Array.from({ length: totalPaginas }, (_, i) => i + 1)
+                      .filter((p) => {
+                        // Mostra primeira, última e até 2 páginas ao redor da atual
+                        return p === 1 || p === totalPaginas || Math.abs(p - pagina) <= 2
+                      })
+                      .map((p, idx, array) => {
+                        const anteriorNum = array[idx - 1]
+                        const temSalto = anteriorNum && p - anteriorNum > 1
+
+                        return (
+                          <React.Fragment key={p}>
+                            {temSalto && (
+                              <span style={{ padding: '0 4px', color: '#a0a0a0', fontSize: '13px' }}>…</span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => mudarPagina(p)}
+                              style={{
+                                background: p === pagina ? '#861e32' : '#FFFFFF',
+                                color: p === pagina ? '#ffffff' : '#30252a',
+                                border: p === pagina ? '1px solid #861e32' : '1px solid #cbd7de',
+                                borderRadius: '5px',
+                                minWidth: '34px',
+                                height: '34px',
+                                padding: '0 8px',
+                                fontSize: '13px',
+                                fontWeight: p === pagina ? 700 : 500,
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease',
+                              }}
+                              className="btn-paginacao-num"
+                            >
+                              {p}
+                            </button>
+                          </React.Fragment>
+                        )
+                      })}
+                  </div>
+
+                  {/* Mostrador Mobile Simples */}
+                  <div className="paginacao-texto-mobile" style={{ fontSize: '12px', fontWeight: 600, color: '#52434a' }}>
+                    Pág. {pagina} de {totalPaginas}
+                  </div>
+
+                  {/* Botões Próxima e Fim */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => mudarPagina(Math.min(totalPaginas, pagina + 1))}
+                      disabled={pagina === totalPaginas}
+                      style={{
+                        background: pagina === totalPaginas ? '#f5f5f5' : '#FFFFFF',
+                        color: pagina === totalPaginas ? '#a0a0a0' : '#30252a',
+                        border: '1px solid #cbd7de',
+                        borderRadius: '5px',
+                        padding: '7px 12px',
+                        fontSize: '12.5px',
+                        fontWeight: 600,
+                        cursor: pagina === totalPaginas ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                      className="btn-paginacao"
+                    >
+                      Próxima ›
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => mudarPagina(totalPaginas)}
+                      disabled={pagina === totalPaginas}
+                      style={{
+                        background: pagina === totalPaginas ? '#f5f5f5' : '#FFFFFF',
+                        color: pagina === totalPaginas ? '#a0a0a0' : '#30252a',
+                        border: '1px solid #cbd7de',
+                        borderRadius: '5px',
+                        padding: '7px 12px',
+                        fontSize: '12.5px',
+                        fontWeight: 600,
+                        cursor: pagina === totalPaginas ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                      className="btn-paginacao"
+                    >
+                      Fim »
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -748,16 +880,40 @@ export default function AcervoJornaisPublico({ edicoes, publicacoes }: AcervoJor
           background: #f8f4f5 !important;
           color: #861e32 !important;
         }
-        /* Por padrão desktop */
-        .jornais-desktop-grid {
+        .linha-edicao-desktop:hover {
+          background: #faf8f9 !important;
+        }
+        .btn-destacar-desktop:hover {
+          border-color: #861e32 !important;
+          color: #861e32 !important;
+          background: #f8f2f4 !important;
+        }
+        .btn-pdf-desktop:hover {
+          background: #9c243c !important;
+          transform: translateY(-1px);
+        }
+        .btn-paginacao:hover:not(:disabled) {
+          border-color: #861e32 !important;
+          color: #861e32 !important;
+          background: #f8f2f4 !important;
+        }
+
+        /* Exibição padrão Desktop */
+        .jornais-desktop-list {
           display: block;
         }
         .jornais-mobile-list {
           display: none;
         }
+        .paginacao-numeros-container {
+          display: flex;
+        }
+        .paginacao-texto-mobile {
+          display: none;
+        }
 
         /* Regras responsivas no mobile */
-        @media (max-width: 680px) {
+        @media (max-width: 768px) {
           .menu-drop-jornal {
             left: 0 !important;
             right: auto !important;
@@ -777,10 +933,16 @@ export default function AcervoJornaisPublico({ edicoes, publicacoes }: AcervoJor
           .jornal-destaque-titulo {
             font-size: 22px !important;
           }
-          .jornais-desktop-grid {
+          .jornais-desktop-list {
             display: none !important;
           }
           .jornais-mobile-list {
+            display: block !important;
+          }
+          .paginacao-numeros-container {
+            display: none !important;
+          }
+          .paginacao-texto-mobile {
             display: block !important;
           }
         }

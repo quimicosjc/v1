@@ -316,8 +316,8 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           <div
             style={{
               ...CONTAINER_STYLE,
-              paddingTop: '12px',
-              paddingBottom: '12px',
+              paddingTop: '6px',
+              paddingBottom: '6px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -825,6 +825,16 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           }
           .header-mobile-toggle {
             display: none !important;
+          }
+          .header-logo-container {
+            width: 256px !important;
+            height: 104px !important;
+            overflow: visible !important;
+          }
+          .header-logo-img {
+            height: 104px !important;
+            transform: scale(1.5) !important;
+            transform-origin: left center !important;
           }
         }
         @media (max-width: 600px) {
