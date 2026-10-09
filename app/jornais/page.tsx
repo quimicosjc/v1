@@ -47,7 +47,18 @@ export default async function JornaisPublicosPage() {
     .order('data_publicacao', { ascending: false })
     .order('numero', { ascending: false })
 
-  const edicoes: EdicaoItem[] = (edicoesData as any[]) || []
+  const edicoesRaw: EdicaoItem[] = (edicoesData as any[]) || []
+  const edicoes = [...edicoesRaw].sort((a, b) => {
+    const nomeA = a.publicacoes_jornal?.nome?.toLowerCase() || ''
+    const nomeB = b.publicacoes_jornal?.nome?.toLowerCase() || ''
+    const isBocaA = nomeA.includes('boca no trombone') || !nomeA
+    const isBocaB = nomeB.includes('boca no trombone') || !nomeB
+    if (isBocaA && !isBocaB) return -1
+    if (!isBocaA && isBocaB) return 1
+    const numA = parseInt(String(a.numero).replace(/\D/g, '')) || 0
+    const numB = parseInt(String(b.numero).replace(/\D/g, '')) || 0
+    return numB - numA
+  })
   const edicaoDestaque = edicoes[0] || null
   const edicoesAnteriores = edicoes.slice(1)
 
@@ -189,7 +200,7 @@ export default async function JornaisPublicosPage() {
                     lineHeight: 1.15,
                   }}
                 >
-                  Boca no Trombone — Edição nº {edicaoDestaque.numero}
+                  {edicaoDestaque.publicacoes_jornal?.nome || 'Boca no Trombone'} — Edição nº {edicaoDestaque.numero}
                 </h2>
 
                 <div style={{ fontSize: '14px', color: '#71636a', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>

@@ -694,7 +694,7 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
         }
         .noticia-corpo p {
           margin: 0 0 24px 0 !important;
-          line-height: 1.8 !important;
+          line-height: 1.55 !important;
         }
         .noticia-corpo h2 {
           font-size: 24px !important;
@@ -719,7 +719,7 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
         .noticia-corpo ul, .noticia-corpo ol {
           margin: 0 0 24px 0 !important;
           padding-left: 28px !important;
-          line-height: 1.75 !important;
+          line-height: 1.55 !important;
         }
         .noticia-corpo li {
           margin-bottom: 8px !important;

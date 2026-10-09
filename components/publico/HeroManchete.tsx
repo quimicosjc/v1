@@ -196,7 +196,7 @@ export default function HeroManchete({
             {titulo}
           </h2>
 
-          {/* Resumo curto opcional */}
+          {/* Resumo garantindo exibição completa até 250 caracteres */}
           {resumo && (
             <p
               style={{
@@ -204,11 +204,7 @@ export default function HeroManchete({
                 fontSize: '14.5px',
                 lineHeight: 1.45,
                 color: '#F6E7EC',
-                opacity: 0.9,
-                display: '-webkit-box',
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
+                opacity: 0.92,
               }}
               className="hero-manchete-resumo"
             >

@@ -335,19 +335,18 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                   textDecoration: 'none',
                   color: 'inherit',
                   flexShrink: 0,
+                  marginRight: '6px',
                 }}
                 title="Sindicato dos Químicos de São José dos Campos e Região"
               >
-                <div style={{ height: '104px', display: 'flex', alignItems: 'center', overflow: 'visible' }}>
+                <div style={{ height: '96px', display: 'flex', alignItems: 'center' }}>
                   <img
                     src="/logo-sindicato.svg"
                     alt="Sindicato dos Químicos de São José dos Campos e Região"
                     style={{
-                      height: '104px',
+                      height: '92px',
                       width: 'auto',
                       display: 'block',
-                      transform: 'scale(1.25)',
-                      transformOrigin: 'left center',
                     }}
                     className="header-logo-img"
                   />
@@ -358,19 +357,20 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
               <div
                 style={{
                   width: '1px',
-                  height: '42px',
-                  background: 'rgba(255,255,255,0.2)',
+                  height: '36px',
+                  background: 'rgba(255,255,255,0.25)',
                   flexShrink: 0,
+                  margin: '0 4px',
                 }}
                 className="header-affiliation-sep"
               />
 
-              {/* Logos de Filiação integrados lado a lado, com o dobro do tamanho (M11-H) */}
+              {/* Logos de Filiação integrados com proporção refinada e alto contraste */}
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '12px',
+                  gap: '8px',
                   flexShrink: 0,
                 }}
                 className="header-affiliation-group"
@@ -382,8 +382,11 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    opacity: 0.95,
-                    transition: 'opacity 0.15s ease',
+                    background: '#FFFFFF',
+                    borderRadius: '4px',
+                    padding: '3px 6px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
+                    transition: 'transform 0.15s ease',
                   }}
                   title="CSP-Conlutas — Central Sindical e Popular"
                   className="header-affiliation-link"
@@ -391,7 +394,7 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                   <img
                     src="/logo-csp-conlutas.png"
                     alt="CSP-Conlutas"
-                    style={{ height: '36px', width: 'auto', display: 'block', filter: 'brightness(1.1)' }}
+                    style={{ height: '24px', width: 'auto', display: 'block' }}
                   />
                 </a>
 
@@ -402,8 +405,11 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    opacity: 0.95,
-                    transition: 'opacity 0.15s ease',
+                    background: '#FFFFFF',
+                    borderRadius: '4px',
+                    padding: '3px 6px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
+                    transition: 'transform 0.15s ease',
                   }}
                   title="Unidos pra Lutar"
                   className="header-affiliation-link"
@@ -411,7 +417,7 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                   <img
                     src="/logo-unidos-pra-lutar.png"
                     alt="Unidos pra Lutar"
-                    style={{ height: '36px', width: 'auto', display: 'block' }}
+                    style={{ height: '24px', width: 'auto', display: 'block' }}
                   />
                 </a>
               </div>

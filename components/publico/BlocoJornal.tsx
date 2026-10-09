@@ -147,7 +147,7 @@ export default function BlocoJornal({ edicoes, outrosJornais }: BlocoJornalProps
                   marginBottom: '8px',
                 }}
               >
-                Edição nº {edicaoMaisRecente.numero} • {edicaoMaisRecente.mes_ano}
+                Edição nº {edicaoMaisRecente.numero}
               </div>
               <p
                 style={{
@@ -220,7 +220,7 @@ export default function BlocoJornal({ edicoes, outrosJornais }: BlocoJornalProps
           </div>
 
           {/* ── COLUNA 2: EDIÇÕES ANTERIORES E ACERVO ── */}
-          <div className="bloco-jornal-col2" style={{ minWidth: 0 }}>
+          <div className="bloco-jornal-col2" style={{ minWidth: 0, paddingRight: '8px' }}>
             <div
               style={{
                 display: 'flex',
@@ -228,6 +228,7 @@ export default function BlocoJornal({ edicoes, outrosJornais }: BlocoJornalProps
                 justifyContent: 'space-between',
                 marginBottom: '16px',
                 gap: '8px',
+                paddingRight: '16px',
                 flexWrap: 'wrap',
               }}
             >
@@ -362,12 +363,13 @@ export default function BlocoJornal({ edicoes, outrosJornais }: BlocoJornalProps
               </div>
             </div>
 
-            {/* Grid com as miniaturas das 4 edições anteriores com respiro balanceado */}
+            {/* Grid com as miniaturas das 4 edições anteriores com respiro balanceado e sem colar na borda */}
             <div
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
                 gap: '14px',
+                paddingRight: '16px',
               }}
               className="grid-edicoes-anteriores"
             >
@@ -386,7 +388,7 @@ export default function BlocoJornal({ edicoes, outrosJornais }: BlocoJornalProps
                     minWidth: 0,
                   }}
                   className="card-edicao-mini"
-                  title={`Edição nº ${ed.numero} (${ed.mes_ano})`}
+                  title={`Edição nº ${ed.numero}`}
                 >
                   <div
                     style={{
@@ -397,7 +399,6 @@ export default function BlocoJornal({ edicoes, outrosJornais }: BlocoJornalProps
                       border: `1px solid ${CORES.line}`,
                       boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
                       background: '#F8F4F5',
-                      marginBottom: '4px',
                     }}
                   >
                     <img
@@ -410,21 +411,6 @@ export default function BlocoJornal({ edicoes, outrosJornais }: BlocoJornalProps
                         display: 'block',
                       }}
                     />
-                  </div>
-                  {/* Sem repetição do número da edição, exibindo apenas o mês/ano com elegância */}
-                  <div
-                    style={{
-                      fontSize: '11.5px',
-                      fontWeight: 600,
-                      color: CORES.muted,
-                      textAlign: 'center',
-                      lineHeight: 1.25,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {ed.mes_ano}
                   </div>
                 </a>
               ))}

@@ -19,6 +19,7 @@ interface NoticiaItem {
   slug: string
   chapeu?: string | null
   resumo?: string | null
+  corpo?: string | null
   banner_url?: string | null
   imagem_y?: number | null
   publicado_em?: string | null
@@ -163,7 +164,7 @@ export default async function HomePage() {
   // 3. Busca notícias publicadas no Supabase
   const { data: dbNews } = await supabase
     .from('conteudos')
-    .select('id, titulo, slug, chapeu, resumo, banner_url, imagem_y, publicado_em, fotos_json, destaque, url_referencia')
+    .select('id, titulo, slug, chapeu, resumo, corpo, banner_url, imagem_y, publicado_em, fotos_json, destaque, url_referencia')
     .eq('tipo', 'noticia')
     .eq('status', 'publicado')
     .order('publicado_em', { ascending: false })
@@ -221,20 +222,26 @@ export default async function HomePage() {
     .order('numero', { ascending: false })
 
   const todasEdicoes = (dbEdicoes as any[]) || []
-  // O bloco de display da Home exibe estritamente as edições do Boca no Trombone
-  const edicoesJornal: EdicaoJornalHome[] = todasEdicoes
+  // O bloco de display da Home exibe estritamente as edições do Boca no Trombone (números regulares de 100 a 999)
+  const edicoesBoca = todasEdicoes
     .filter((ed) => {
       const nomePub = ed.publicacoes_jornal?.nome?.toLowerCase() || ''
-      return !nomePub || nomePub.includes('boca no trombone')
+      const num = parseInt(String(ed.numero).replace(/\D/g, '')) || 0
+      return (nomePub.includes('boca no trombone') || !nomePub) && num >= 100 && num < 1000
     })
-    .slice(0, 5)
+  // Ordena estritamente por número decrescente numérico
+  edicoesBoca.sort((a, b) => {
+    const numA = parseInt(String(a.numero).replace(/\D/g, '')) || 0
+    const numB = parseInt(String(b.numero).replace(/\D/g, '')) || 0
+    return numB - numA
+  })
+  const edicoesJornal: EdicaoJornalHome[] = edicoesBoca.slice(0, 5)
 
   // Busca outras publicações ativas (ex: Jornal da Família) para o dropdown
   const { data: dbPublicacoes } = await supabaseAdmin
     .from('publicacoes_jornal')
     .select('id, nome')
-    .eq('ativo', true)
-    .order('ordem', { ascending: true })
+    .order('criado_em', { ascending: true })
 
   const outrosJornais = ((dbPublicacoes as any[]) || []).filter(
     (p: any) => !p.nome?.toLowerCase().includes('boca no trombone')
@@ -254,6 +261,23 @@ export default async function HomePage() {
       } catch {}
     }
     return { url, foco }
+  }
+
+  // Extrai resumo garantindo até 250 caracteres, ou captura os primeiros 250 do corpo sem formatação + ' (...)'
+  function obterResumoManchete(item: NoticiaItem): string | null {
+    if (item.resumo && item.resumo.trim().length > 0) {
+      return item.resumo.trim()
+    }
+    if (!item.corpo) return null
+    // Remove tags HTML, &nbsp; e quebras
+    const textoLimpo = item.corpo
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+    if (!textoLimpo) return null
+    if (textoLimpo.length <= 250) return textoLimpo
+    return textoLimpo.substring(0, 250).trim() + ' (...)'
   }
 
   // Exibição dos atalhos de serviços (se não estiver desativado no painel)
@@ -288,14 +312,14 @@ export default async function HomePage() {
                         </div>
                       )}
 
-                      {/* Manchete Principal */}
+                      {/* Manchete Principal com resumo garantido de 250 caracteres ou captura inteligente */}
                       {principal && (
                         <HeroManchete
                           id={principal.id}
                           titulo={principal.titulo}
                           slug={principal.slug}
                           chapeu={principal.chapeu}
-                          resumo={principal.resumo}
+                          resumo={obterResumoManchete(principal)}
                           fotoUrl={fotoPrincipal.url}
                           fotoFoco={fotoPrincipal.foco}
                           dataIso={principal.publicado_em}
