@@ -376,7 +376,7 @@ export default function JornaisGerenciador({
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <div className="jornais-header-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button type="button" onClick={() => setShowPubModal(true)} style={btnNeutro}>
             ＋ Cadastrar jornal
           </button>
@@ -801,6 +801,7 @@ export default function JornaisGerenciador({
           onClick={() => setShowEdicaoModal(false)}
         >
           <div
+            className="jornais-modal-content"
             style={{
               background: 'white',
               borderRadius: '8px',
@@ -1075,6 +1076,7 @@ export default function JornaisGerenciador({
           onClick={() => setShowPubModal(false)}
         >
           <div
+            className="jornais-modal-content"
             style={{
               background: 'white',
               borderRadius: '8px',
@@ -1229,6 +1231,31 @@ export default function JornaisGerenciador({
           {toast.msg}
         </div>
       )}
+      {/* ── ESTILOS RESPONSIVOS MOBILE DE JORNAIS ── */}
+      <style>{`
+        @media (max-width: 768px) {
+          .jornais-header-actions {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            width: 100% !important;
+          }
+          .jornais-header-actions button {
+            width: 100% !important;
+            justify-content: center !important;
+            padding: 12px 14px !important;
+            font-size: 14px !important;
+            min-height: 44px !important;
+          }
+          .jornais-modal-content {
+            padding: 18px 14px !important;
+            max-height: 94vh !important;
+            border-radius: 8px !important;
+          }
+          input, select, textarea {
+            font-size: 16px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

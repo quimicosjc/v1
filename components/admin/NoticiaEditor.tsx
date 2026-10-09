@@ -218,6 +218,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
   const [isPending, startTransition] = useTransition()
 
   // --- Form state ---
+  const [abaMobile, setAbaMobile] = useState<'redacao' | 'fotos' | 'publicacao'>('redacao')
   const [chapeu, setChapeu] = useState(noticia?.chapeu ?? '')
   const [titulo, setTitulo] = useState(noticia?.titulo ?? '')
   const [subtitulo, setSubtitulo] = useState(noticia?.subtitulo ?? '')
@@ -1009,14 +1010,62 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
         </h1>
       </div>
 
+      {/* ── Abas Táteis Superiores (Exclusivas Mobile) ── */}
+      <div
+        className="noticia-mobile-tabs"
+        style={{
+          display: 'none',
+          gap: '6px',
+          marginBottom: '18px',
+          background: '#ffffff',
+          padding: '6px',
+          borderRadius: '8px',
+          border: '1px solid #e4dce0',
+          position: 'sticky',
+          top: '64px',
+          zIndex: 80,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+        }}
+      >
+        {[
+          { id: 'redacao', label: '📝 Redação' },
+          { id: 'fotos', label: `📸 Fotos (${fotosValidas.length})` },
+          { id: 'publicacao', label: '🚀 Publicar' },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => {
+              setAbaMobile(tab.id as 'redacao' | 'fotos' | 'publicacao')
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
+            style={{
+              flex: 1,
+              padding: '11px 4px',
+              border: 'none',
+              borderRadius: '6px',
+              background: abaMobile === tab.id ? '#861e32' : 'transparent',
+              color: abaMobile === tab.id ? '#ffffff' : '#71636a',
+              fontWeight: abaMobile === tab.id ? 700 : 600,
+              fontSize: '13px',
+              cursor: 'pointer',
+              textAlign: 'center',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {/* ── 2-column grid ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '24px', alignItems: 'start' }}>
+      <div className="noticia-editor-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '24px', alignItems: 'start' }}>
 
         {/* ── Main column ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
           {/* ── ORIGEM DA NOTÍCIA & FAST TRACK (Cenário 4) ── */}
-          <div style={cardStyle}>
+          <div className="noticia-secao-redacao" style={cardStyle}>
             <div style={{ marginBottom: '14px' }}>
               <label style={{ ...labelStyle, fontSize: '14px', marginBottom: '4px' }}>
                 Origem da notícia
@@ -1265,7 +1314,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
           </div>
 
           {/* Chapéu */}
-          <div style={cardStyle}>
+          <div className="noticia-secao-redacao" style={cardStyle}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
               <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="chapeu">
                 Chapéu / assunto{' '}
@@ -1290,7 +1339,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
           </div>
 
           {/* Título */}
-          <div style={cardStyle}>
+          <div className="noticia-secao-redacao" style={cardStyle}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
               <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="titulo">
                 Título <span style={{ color: '#861e32' }}>*</span>
@@ -1314,7 +1363,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
           </div>
 
           {/* Subtítulo */}
-          <div style={cardStyle}>
+          <div className="noticia-secao-redacao" style={cardStyle}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
               <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="subtitulo">
                 Subtítulo{' '}
@@ -1339,7 +1388,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
           </div>
 
           {/* Resumo */}
-          <div style={cardStyle}>
+          <div className="noticia-secao-redacao" style={cardStyle}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
               <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="resumo">
                 Resumo <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
@@ -1363,7 +1412,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
           </div>
 
           {/* Corpo */}
-          <div style={cardStyle}>
+          <div className="noticia-secao-redacao" style={cardStyle}>
             <label style={labelStyle}>
               Texto da notícia{' '}
               {origem === 'youtube' || origem === 'instagram' ? (
@@ -1390,8 +1439,35 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
             />
           </div>
 
+          {/* Botão de avanço mobile da Redação para Fotos */}
+          <div className="noticia-mobile-nav-step" style={{ display: 'none', margin: '4px 0 12px' }}>
+            <button
+              type="button"
+              onClick={() => { setAbaMobile('fotos'); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+              style={{
+                width: '100%',
+                padding: '14px',
+                background: '#861e32',
+                border: 'none',
+                borderRadius: '6px',
+                color: '#ffffff',
+                fontWeight: 700,
+                fontSize: '14px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                boxShadow: '0 2px 8px rgba(134,30,50,0.25)',
+              }}
+            >
+              <span>Próximo: Adicionar Fotos e Mídia</span>
+              <span>📸 →</span>
+            </button>
+          </div>
+
           {/* ── Fotos ── */}
-          <div style={cardStyle}>
+          <div className="noticia-secao-fotos" style={cardStyle}>
             <label style={{ ...labelStyle, marginBottom: '16px' }}>
               Fotos <span style={{ color: '#71636a', fontWeight: 400 }}>(até 5)</span>
             </label>
@@ -1592,7 +1668,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                   id="fotos-upload"
                   type="file"
                   multiple
-                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  accept="image/*"
                   onChange={handleFotosChange}
                   style={{ display: 'none' }}
                 />
@@ -1609,7 +1685,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
           </div>
 
           {/* ── Documentos ── */}
-          <div style={cardStyle}>
+          <div className="noticia-secao-fotos" style={cardStyle}>
             <label style={{ ...labelStyle, marginBottom: '16px' }}>Documentos</label>
 
             {documentos.length > 0 && (
@@ -1681,8 +1757,35 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
             </p>
           </div>
 
+          {/* Botão de avanço mobile de Fotos para Publicação */}
+          <div className="noticia-mobile-nav-step" style={{ display: 'none', margin: '4px 0 12px' }}>
+            <button
+              type="button"
+              onClick={() => { setAbaMobile('publicacao'); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+              style={{
+                width: '100%',
+                padding: '14px',
+                background: '#861e32',
+                border: 'none',
+                borderRadius: '6px',
+                color: '#ffffff',
+                fontWeight: 700,
+                fontSize: '14px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                boxShadow: '0 2px 8px rgba(134,30,50,0.25)',
+              }}
+            >
+              <span>Próximo: Revisar e Publicar</span>
+              <span>🚀 →</span>
+            </button>
+          </div>
+
           {/* ── Tags ── */}
-          <div style={cardStyle}>
+          <div className="noticia-secao-publicacao" style={cardStyle}>
             <label style={labelStyle}>
               Tags{' '}
               <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional, tecle Enter ou vírgula para adicionar)</span>
@@ -1759,7 +1862,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
           </div>
 
           {/* ── Mais opções editoriais ── */}
-          <div style={cardStyle}>
+          <div className="noticia-secao-publicacao" style={cardStyle}>
             <button
               onClick={() => setShowMaisOpcoes((v) => !v)}
               style={{
@@ -1830,7 +1933,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
           </div>
 
           {/* ── Endereço e prévia do link ── */}
-          <div style={cardStyle}>
+          <div className="noticia-secao-publicacao" style={cardStyle}>
             <button
               onClick={() => setShowPrevia((v) => !v)}
               style={{
@@ -1945,7 +2048,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
         </div>
 
         {/* ── Sidebar ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="noticia-sidebar-column noticia-secao-publicacao" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
           {/* Status */}
           <div style={{ ...cardStyle, padding: '20px' }}>
@@ -2034,6 +2137,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
 
       {/* ── Savebar ── */}
       <div
+        className="noticia-savebar"
         style={{
           position: 'sticky',
           bottom: '20px',
@@ -2046,9 +2150,10 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
           justifyContent: 'space-between',
           alignItems: 'center',
           boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
+          zIndex: 100,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flexWrap: 'wrap' }}>
           <a
             href="/admin/noticias"
             style={{ fontSize: '14px', color: '#71636a', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
@@ -2061,7 +2166,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
 
         {status === 'publicado' ? (
           /* Savebar: notícia publicada */
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div className="noticia-savebar-actions" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <button
               onClick={handleLixeira}
               disabled={isPending || !noticiaId}
@@ -2109,7 +2214,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
           </div>
         ) : (
           /* Savebar: rascunho / programado */
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div className="noticia-savebar-actions" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <button
               onClick={handleLixeira}
               disabled={isPending || !noticiaId}
@@ -2284,13 +2389,78 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
             boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
             whiteSpace: 'nowrap',
             maxWidth: '90vw',
-            overflow: 'hidden',
             textOverflow: 'ellipsis',
           }}
         >
           {toast.msg}
         </div>
       )}
+
+      {/* ── ESTILOS RESPONSIVOS MOBILE DO EDITOR ── */}
+      <style>{`
+        @media (max-width: 960px) {
+          .noticia-editor-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+        }
+        @media (max-width: 768px) {
+          .noticia-mobile-tabs {
+            display: flex !important;
+          }
+          .noticia-mobile-nav-step {
+            display: block !important;
+          }
+          ${abaMobile !== 'redacao' ? '.noticia-secao-redacao { display: none !important; }' : ''}
+          ${abaMobile !== 'fotos' ? '.noticia-secao-fotos { display: none !important; }' : ''}
+          ${abaMobile !== 'publicacao' ? '.noticia-secao-publicacao { display: none !important; }' : ''}
+          .noticia-savebar {
+            bottom: 68px !important;
+            padding: 14px 14px !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 12px !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+          }
+          .noticia-savebar-actions {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            width: 100% !important;
+            gap: 8px !important;
+          }
+          .noticia-savebar-actions button,
+          .noticia-savebar-actions a {
+            flex: 1 1 45% !important;
+            text-align: center !important;
+            justify-content: center !important;
+            padding: 12px 14px !important;
+            font-size: 13.5px !important;
+            min-height: 44px !important;
+          }
+          input[type="text"],
+          input[type="url"],
+          input[type="datetime-local"],
+          textarea,
+          select {
+            font-size: 16px !important;
+          }
+        }
+        @media (min-width: 769px) {
+          .noticia-mobile-tabs {
+            display: none !important;
+          }
+          .noticia-mobile-nav-step {
+            display: none !important;
+          }
+          .noticia-secao-redacao,
+          .noticia-secao-fotos,
+          .noticia-secao-publicacao,
+          .noticia-sidebar-column {
+            display: flex !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { getUsuarioLogado } from '@/lib/supabase/auth'
+import { getUsuarioLogado, temPermissao } from '@/lib/supabase/auth'
 
 export interface Noticia {
   id: string
@@ -255,7 +255,10 @@ export async function moverParaLixeira(
   id: string
 ): Promise<{ ok: boolean } | { error: string }> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'noticias', 'excluir')) {
+      return { error: 'Você não tem permissão para mover notícias para a lixeira.' }
+    }
     const supabase = await createClient()
 
     const { error } = await supabase

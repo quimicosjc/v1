@@ -445,6 +445,22 @@ export default function RichEditor({
         .ProseMirror a { color: #791c30; text-decoration: underline; }
         .ProseMirror p { margin: 0 0 8px; }
         .ProseMirror li { margin-bottom: 4px; }
+        @media (max-width: 768px) {
+          .rich-editor-toolbar {
+            overflow-x: auto !important;
+            flex-wrap: nowrap !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding: 8px 6px !important;
+            gap: 4px !important;
+          }
+          .rich-editor-toolbar button {
+            flex-shrink: 0 !important;
+            min-height: 38px !important;
+            min-width: 36px !important;
+            font-size: 14px !important;
+            padding: 6px 10px !important;
+          }
+        }
       `}</style>
 
       {/* ── Editor container ── */}
@@ -452,7 +468,7 @@ export default function RichEditor({
         {/* ── Header fixo (Toolbar + Sub-barras contextuais) ── */}
         <div style={{ position: 'sticky', top: 0, zIndex: 10, background: '#f8fafb', borderTopLeftRadius: '5px', borderTopRightRadius: '5px' }}>
           {/* Toolbar Principal */}
-          <div style={toolbarStyle} role="toolbar" aria-label="Barra de formatação">
+          <div className="rich-editor-toolbar" style={toolbarStyle} role="toolbar" aria-label="Barra de formatação">
 
             {/* Grupo 1: Formatação */}
             <button

@@ -120,7 +120,7 @@ export default function ColoniaNav({ slugAtual }: ColoniaNavProps) {
             letterSpacing: '0.8px',
           }}
         >
-          Guia da Colônia de Férias • Caraguatatuba & São Sebastião
+          Guia da Colônia de Férias • Caraguatatuba e São Sebastião
         </span>
         <span style={{ fontSize: '12px', color: '#71636a' }}>
           Lazer exclusivo para o trabalhador associado

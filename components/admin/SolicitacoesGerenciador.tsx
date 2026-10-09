@@ -212,9 +212,10 @@ export default function SolicitacoesGerenciador({
   }
 
   return (
-    <div style={{ padding: '32px 40px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="solicitacoes-wrapper" style={{ padding: '0 0 32px', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Cabeçalho */}
       <div
+        className="solicitacoes-header"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -377,7 +378,7 @@ export default function SolicitacoesGerenciador({
           })}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="solicitacoes-busca-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <input
             type="text"
             value={busca}
@@ -386,6 +387,7 @@ export default function SolicitacoesGerenciador({
               setPagina(1)
             }}
             placeholder="Buscar por protocolo, nome, empresa…"
+            className="solicitacoes-busca-input"
             style={{
               border: '1px solid #cbd7de',
               borderRadius: '5px',
@@ -652,6 +654,7 @@ export default function SolicitacoesGerenciador({
           onClick={() => setDetalheItem(null)}
         >
           <div
+            className="solicitacao-modal-content"
             style={{
               background: 'white',
               borderRadius: '8px',
@@ -1175,6 +1178,40 @@ export default function SolicitacoesGerenciador({
           {toast.msg}
         </div>
       )}
+
+      {/* ── ESTILOS RESPONSIVOS MOBILE DE SOLICITAÇÕES ── */}
+      <style>{`
+        @media (max-width: 768px) {
+          .solicitacoes-wrapper {
+            padding: 0 0 20px !important;
+          }
+          .solicitacoes-header {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 14px !important;
+          }
+          .solicitacoes-header button {
+            width: 100% !important;
+            justify-content: center !important;
+            text-align: center !important;
+            min-height: 44px !important;
+          }
+          .solicitacoes-busca-container {
+            width: 100% !important;
+          }
+          .solicitacoes-busca-input {
+            width: 100% !important;
+            flex: 1 1 auto !important;
+          }
+          .solicitacao-modal-content {
+            padding: 0 !important;
+            max-height: 94vh !important;
+          }
+          input, select, textarea {
+            font-size: 16px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

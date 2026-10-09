@@ -289,7 +289,7 @@ export default function HomepageGerenciador({ configInicial, usuarioLogado }: Pr
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div className="homepage-header-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <a href="/" target="_blank" rel="noopener noreferrer" style={btnNeutro}>
             Ver homepage ↗
           </a>
@@ -304,7 +304,7 @@ export default function HomepageGerenciador({ configInicial, usuarioLogado }: Pr
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'start' }}>
+      <div className="homepage-manager-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'start' }}>
         {/* ── Bloco 1: Estrutura da Página ───────────────────────────────── */}
         <div style={cardStyle}>
           <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#30252a', margin: '0 0 4px 0' }}>
@@ -1242,6 +1242,32 @@ export default function HomepageGerenciador({ configInicial, usuarioLogado }: Pr
           {toast.msg}
         </div>
       )}
+      {/* ── ESTILOS RESPONSIVOS MOBILE DA HOMEPAGE ── */}
+      <style>{`
+        @media (max-width: 860px) {
+          .homepage-manager-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+          .homepage-header-actions {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            width: 100% !important;
+          }
+          .homepage-header-actions button,
+          .homepage-header-actions a {
+            width: 100% !important;
+            text-align: center !important;
+            justify-content: center !important;
+            padding: 12px 14px !important;
+            font-size: 14px !important;
+            min-height: 44px !important;
+          }
+          input, select, textarea {
+            font-size: 16px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

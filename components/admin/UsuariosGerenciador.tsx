@@ -97,10 +97,6 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
   }
 
   function togglePermissao(area: string, acao: string) {
-    if (acao === 'excluir') {
-      showFeedback('A permissão de exclusão é restrita exclusivamente ao Administrador.', 'erro')
-      return
-    }
     setPermissoesLocais((prev) => {
       const atuais = prev[area] || []
       const existe = atuais.includes(acao)
@@ -113,17 +109,11 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
   function handleSalvarAlteracoes() {
     if (!usuarioSelecionado) return
     startTransition(async () => {
-      // Garante que a permissão de exclusão jamais seja delegada
-      const permissoesSeguras: Record<string, string[]> = {}
-      for (const [area, acoes] of Object.entries(permissoesLocais)) {
-        permissoesSeguras[area] = acoes.filter((a) => a !== 'excluir')
-      }
-
       const res = await atualizarUsuario(usuarioSelecionado.id, {
         ativo: ativoLocal,
         papel: papelLocal,
         pode_denuncias: podeDenunciasLocal,
-        permissoes_json: JSON.stringify(permissoesSeguras),
+        permissoes_json: JSON.stringify(permissoesLocais),
       })
 
       if ('error' in res) {
@@ -137,7 +127,7 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
                   ativo: ativoLocal,
                   papel: papelLocal,
                   pode_denuncias: podeDenunciasLocal,
-                  permissoes_json: JSON.stringify(permissoesSeguras),
+                  permissoes_json: JSON.stringify(permissoesLocais),
                 }
               : u
           )
@@ -286,6 +276,7 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
     <div style={{ maxWidth: '1120px', margin: '0 auto', paddingBottom: '60px' }}>
       {/* ── Topo do módulo ──────────────────────────────────────────────── */}
       <div
+        className="usuarios-header"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -322,7 +313,7 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
       </div>
 
       {/* ── Grid Principal: 2 Colunas ───────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: '24px', alignItems: 'start' }}>
+      <div className="usuarios-grid" style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: '24px', alignItems: 'start' }}>
         
         {/* Coluna Esquerda: Lista de Usuários */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -544,20 +535,6 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
                             }}
                           >
                             <div>{acao.label}</div>
-                            {acao.id === 'excluir' && (
-                              <div
-                                style={{
-                                  fontSize: '10px',
-                                  fontWeight: 700,
-                                  color: '#861e32',
-                                  marginTop: '2px',
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.4px',
-                                }}
-                              >
-                                🔒 Exclusivo Admin
-                              </div>
-                            )}
                           </th>
                         ))}
                       </tr>
@@ -575,30 +552,6 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
                             {area.label}
                           </td>
                           {ACOES.map((acao) => {
-                            if (acao.id === 'excluir') {
-                              return (
-                                <td key={acao.id} style={{ padding: '14px 12px' }}>
-                                  <span
-                                    title="Exclusão de conteúdos é prerrogativa restrita exclusivamente ao Administrador"
-                                    style={{
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: '4px',
-                                      fontSize: '11px',
-                                      fontWeight: 600,
-                                      color: '#71636a',
-                                      background: '#f4eff1',
-                                      border: '1px solid #e5d9dc',
-                                      padding: '3px 8px',
-                                      borderRadius: '4px',
-                                      userSelect: 'none',
-                                    }}
-                                  >
-                                    🔒 Restrito
-                                  </span>
-                                </td>
-                              )
-                            }
                             const isChecked = (permissoesLocais[area.id] || []).includes(acao.id)
                             return (
                               <td key={acao.id} style={{ padding: '14px 12px' }}>
@@ -607,7 +560,12 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
                                   checked={isChecked}
                                   onChange={() => togglePermissao(area.id, acao.id)}
                                   aria-label={`${acao.label} em ${area.label}`}
-                                  style={{ width: '16px', height: '16px', accentColor: '#861e32', cursor: 'pointer' }}
+                                  style={{
+                                    width: '16px',
+                                    height: '16px',
+                                    accentColor: '#861e32',
+                                    cursor: 'pointer',
+                                  }}
                                 />
                               </td>
                             )
@@ -905,6 +863,30 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
           {toast.msg}
         </div>
       )}
+
+      {/* ── ESTILOS RESPONSIVOS MOBILE DE USUÁRIOS ── */}
+      <style>{`
+        @media (max-width: 860px) {
+          .usuarios-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+          .usuarios-header {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 16px !important;
+          }
+          .usuarios-header button {
+            width: 100% !important;
+            justify-content: center !important;
+            text-align: center !important;
+            min-height: 44px !important;
+          }
+          input, select {
+            font-size: 16px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

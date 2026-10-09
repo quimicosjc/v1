@@ -8,6 +8,23 @@ export interface UsuarioPerfil {
   email: string
   papel: 'operador' | 'gestor' | 'admin_ti'
   ativo: boolean
+  permissoes_json?: string | null
+}
+
+/**
+ * Verifica se um usuário possui permissão para determinada ação em uma área do sistema.
+ * Administradores (admin_ti) têm permissão total irrestrita.
+ * Outros papéis dependem das permissões configuradas na matriz de permissões.
+ */
+export function temPermissao(usuario: UsuarioPerfil, area: string, acao: string): boolean {
+  if (usuario.papel === 'admin_ti') return true
+  if (!usuario.permissoes_json) return false
+  try {
+    const permissoes = JSON.parse(usuario.permissoes_json) as Record<string, string[]>
+    return Array.isArray(permissoes[area]) && permissoes[area].includes(acao)
+  } catch {
+    return false
+  }
 }
 
 /**

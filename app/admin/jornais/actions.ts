@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { getUsuarioLogado } from '@/lib/supabase/auth'
+import { getUsuarioLogado, temPermissao } from '@/lib/supabase/auth'
 
 export interface PublicacaoJornal {
   id: string
@@ -319,8 +319,8 @@ export async function atualizarEdicao(
 export async function excluirEdicao(id: string): Promise<{ ok: boolean } | { error: string }> {
   try {
     const usuario = await getUsuarioLogado()
-    if (usuario.papel !== 'admin_ti') {
-      return { error: 'Apenas Administradores podem excluir edições do acervo.' }
+    if (!temPermissao(usuario, 'jornais', 'excluir')) {
+      return { error: 'Você não tem permissão para excluir edições do acervo.' }
     }
 
     const supabaseAdmin = getSupabaseAdmin()

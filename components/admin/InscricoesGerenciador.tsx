@@ -137,9 +137,10 @@ export default function InscricoesGerenciador({
   }
 
   return (
-    <div style={{ padding: '32px 40px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="inscricoes-wrapper" style={{ padding: '0 0 32px', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Cabeçalho */}
       <div
+        className="inscricoes-header"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -161,7 +162,7 @@ export default function InscricoesGerenciador({
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div className="inscricoes-header-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           {/* Botão de Cópia Rápida para CCO (Sugestão 4) */}
           <button
             type="button"
@@ -272,7 +273,7 @@ export default function InscricoesGerenciador({
           })}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="inscricoes-busca-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <input
             type="text"
             value={busca}
@@ -281,6 +282,7 @@ export default function InscricoesGerenciador({
               setPagina(1)
             }}
             placeholder="Buscar por nome ou e-mail…"
+            className="inscricoes-busca-input"
             style={{
               border: '1px solid #cbd7de',
               borderRadius: '5px',
@@ -567,6 +569,40 @@ export default function InscricoesGerenciador({
           {toast.msg}
         </div>
       )}
+
+      {/* ── ESTILOS RESPONSIVOS MOBILE DE INSCRIÇÕES ── */}
+      <style>{`
+        @media (max-width: 768px) {
+          .inscricoes-wrapper {
+            padding: 0 0 20px !important;
+          }
+          .inscricoes-header {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 14px !important;
+          }
+          .inscricoes-header-actions {
+            flex-direction: column !important;
+            width: 100% !important;
+          }
+          .inscricoes-header-actions button {
+            width: 100% !important;
+            justify-content: center !important;
+            text-align: center !important;
+            min-height: 44px !important;
+          }
+          .inscricoes-busca-container {
+            width: 100% !important;
+          }
+          .inscricoes-busca-input {
+            width: 100% !important;
+            flex: 1 1 auto !important;
+          }
+          input, select {
+            font-size: 16px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

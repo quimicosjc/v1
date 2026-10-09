@@ -410,7 +410,7 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
   return (
     <div>
       {/* Cabeçalho da seção */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '24px' }}>
+      <div className="noticia-lista-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '24px' }}>
         <div>
           <p style={{ fontSize: '12px', letterSpacing: '1.7px', color: '#861e32', fontWeight: 700, margin: '0 0 4px' }}>
             NOTÍCIAS
@@ -419,7 +419,7 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
             Gerenciar notícias
           </h1>
         </div>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <div className="noticia-lista-header-actions" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <button
             type="button"
             onClick={() => setShowDestaquesModal(true)}
@@ -570,6 +570,7 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
               placeholder="Buscar por título…"
               value={busca}
               onChange={(e) => mudarBusca(e.target.value)}
+              className="noticia-busca-input"
               style={{
                 border: '1px solid #cbd7de',
                 borderRadius: '5px',
@@ -898,6 +899,7 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
           onClick={() => setShowDestaquesModal(false)}
         >
           <div
+            className="noticia-destaques-modal-content"
             style={{
               background: 'white',
               borderRadius: '8px',
@@ -1191,6 +1193,40 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
           {toastFeedback}
         </div>
       )}
+
+      {/* ── ESTILOS RESPONSIVOS MOBILE DA LISTA ── */}
+      <style>{`
+        @media (max-width: 680px) {
+          .noticia-lista-header {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 16px !important;
+          }
+          .noticia-lista-header-actions {
+            flex-direction: column !important;
+            width: 100% !important;
+          }
+          .noticia-lista-header-actions button,
+          .noticia-lista-header-actions a {
+            width: 100% !important;
+            justify-content: center !important;
+            text-align: center !important;
+            min-height: 44px !important;
+            font-size: 14px !important;
+          }
+          .noticia-busca-input {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+          }
+          .noticia-destaques-modal-content {
+            padding: 18px 14px !important;
+            max-height: 94vh !important;
+          }
+          input, select {
+            font-size: 16px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

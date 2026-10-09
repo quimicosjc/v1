@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { getUsuarioLogado } from '@/lib/supabase/auth'
+import { getUsuarioLogado, temPermissao } from '@/lib/supabase/auth'
 
 export interface InscricaoItem {
   id: string
@@ -95,8 +95,8 @@ export async function excluirInscricao(
 ): Promise<{ ok: boolean } | { error: string }> {
   try {
     const usuario = await getUsuarioLogado()
-    if (usuario.papel !== 'admin_ti') {
-      return { error: 'Apenas Administradores podem excluir cadastros de notícias.' }
+    if (!temPermissao(usuario, 'inscricoes', 'excluir')) {
+      return { error: 'Você não tem permissão para excluir cadastros de notícias.' }
     }
 
     const supabaseAdmin = getSupabaseAdmin()

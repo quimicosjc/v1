@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { getUsuarioLogado } from '@/lib/supabase/auth'
+import { getUsuarioLogado, temPermissao } from '@/lib/supabase/auth'
 
 export interface SolicitacaoItem {
   id: string
@@ -295,8 +295,8 @@ export async function reenviarAvisoEmail(
 export async function excluirSolicitacao(id: string): Promise<{ ok: boolean } | { error: string }> {
   try {
     const usuario = await getUsuarioLogado()
-    if (usuario.papel !== 'admin_ti') {
-      return { error: 'Apenas Administradores podem excluir solicitações recebidas.' }
+    if (!temPermissao(usuario, 'solicitacoes', 'excluir')) {
+      return { error: 'Você não tem permissão para excluir solicitações recebidas.' }
     }
 
     const supabaseAdmin = getSupabaseAdmin()
