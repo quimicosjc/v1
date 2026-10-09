@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       title: noticia.titulo,
       description: noticia.resumo || undefined,
-      images: noticia.banner_url ? [noticia.banner_url] : [],
+      images: noticia.banner_url ? [noticia.banner_url] : ['/noticia-padrao.png'],
     },
   }
 }
@@ -180,11 +180,11 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
             </div>
           )}
 
-          {/* Título Principal (+2 pontos: 40px) */}
+          {/* Título Principal (+2 pontos: 42px) */}
           <h1
             style={{
               fontFamily: 'var(--font-condensed), sans-serif',
-              fontSize: '40px',
+              fontSize: '42px',
               fontWeight: 800,
               lineHeight: 1.12,
               color: '#1a1417',
@@ -613,8 +613,8 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
                             src="/logo-sindicato.png"
                             alt="Sindicato"
                             style={{
-                              maxWidth: '42%',
-                              maxHeight: '42%',
+                              maxWidth: '65%',
+                              maxHeight: '65%',
                               objectFit: 'contain',
                               filter: 'brightness(1.1) drop-shadow(0 2px 8px rgba(0,0,0,0.3))',
                             }}
@@ -688,7 +688,7 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
         }
         @media (max-width: 640px) {
           .noticia-titulo-h1 {
-            font-size: 26px !important;
+            font-size: 28px !important;
             line-height: 1.3 !important;
           }
         }

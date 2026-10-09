@@ -335,16 +335,15 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                   textDecoration: 'none',
                   color: 'inherit',
                   flexShrink: 0,
-                  marginRight: '6px',
                 }}
                 title="Sindicato dos Químicos de São José dos Campos e Região"
               >
-                <div style={{ height: '96px', display: 'flex', alignItems: 'center' }}>
+                <div style={{ height: '104px', display: 'flex', alignItems: 'center' }}>
                   <img
                     src="/logo-sindicato.svg"
                     alt="Sindicato dos Químicos de São José dos Campos e Região"
                     style={{
-                      height: '92px',
+                      height: '104px',
                       width: 'auto',
                       display: 'block',
                     }}
@@ -352,75 +351,6 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                   />
                 </div>
               </Link>
-
-              {/* Separador vertical sutil */}
-              <div
-                style={{
-                  width: '1px',
-                  height: '36px',
-                  background: 'rgba(255,255,255,0.25)',
-                  flexShrink: 0,
-                  margin: '0 4px',
-                }}
-                className="header-affiliation-sep"
-              />
-
-              {/* Logos de Filiação integrados com proporção refinada e alto contraste */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  flexShrink: 0,
-                }}
-                className="header-affiliation-group"
-              >
-                <a
-                  href="https://www.cspconlutas.org.br"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    background: '#FFFFFF',
-                    borderRadius: '4px',
-                    padding: '3px 6px',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
-                    transition: 'transform 0.15s ease',
-                  }}
-                  title="CSP-Conlutas — Central Sindical e Popular"
-                  className="header-affiliation-link"
-                >
-                  <img
-                    src="/logo-csp-conlutas.png"
-                    alt="CSP-Conlutas"
-                    style={{ height: '24px', width: 'auto', display: 'block' }}
-                  />
-                </a>
-
-                <a
-                  href="https://www.instagram.com/unidospralutar/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    background: '#FFFFFF',
-                    borderRadius: '4px',
-                    padding: '3px 6px',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
-                    transition: 'transform 0.15s ease',
-                  }}
-                  title="Unidos pra Lutar"
-                  className="header-affiliation-link"
-                >
-                  <img
-                    src="/logo-unidos-pra-lutar.png"
-                    alt="Unidos pra Lutar"
-                    style={{ height: '24px', width: 'auto', display: 'block' }}
-                  />
-                </a>
-              </div>
             </div>
 
 
@@ -650,7 +580,85 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
         </div>
       </div>
 
+      {/* ── 2. SUB-BARRA COM AS CENTRAIS (ABAIXO DO MENU PRINCIPAL) ── */}
+      <div
+        style={{
+          background: '#48101e',
+          borderBottom: '3px solid #861e32',
+          padding: '12px 0',
+        }}
+        className="header-sub-bar"
+      >
+        <div
+          style={{
+            ...CONTAINER_STYLE,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '18px',
+            flexWrap: 'wrap',
+          }}
+          className="header-sub-bar-container"
+        >
+          <a
+            href="https://www.cspconlutas.org.br"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              opacity: 0.95,
+              transition: 'opacity 0.15s ease, transform 0.15s ease',
+            }}
+            title="CSP-Conlutas — Central Sindical e Popular"
+            className="header-affiliation-link"
+          >
+            <img
+              src="/logo-csp-conlutas-limpo.png"
+              alt="CSP-Conlutas"
+              style={{
+                height: '34px',
+                width: 'auto',
+                display: 'block',
+                borderRadius: '3px',
+              }}
+            />
+          </a>
 
+          <span
+            style={{
+              color: 'rgba(255,255,255,0.35)',
+              fontSize: '14px',
+              userSelect: 'none',
+            }}
+          >
+            •
+          </span>
+
+          <a
+            href="https://www.instagram.com/unidospralutar/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              opacity: 0.95,
+              transition: 'opacity 0.15s ease, transform 0.15s ease',
+            }}
+            title="Unidos pra Lutar"
+            className="header-affiliation-link"
+          >
+            <img
+              src="/logo-unidos-pra-lutar-claro.png"
+              alt="Unidos pra Lutar"
+              style={{
+                height: '36px',
+                width: 'auto',
+                display: 'block',
+              }}
+            />
+          </a>
+        </div>
+      </div>
 
       {/* ── 3. MENU MOBILE DRAWER ── */}
       {mobileMenuAberto && (
@@ -770,6 +778,47 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
               >
                 Sindicalize-se Agora
               </Link>
+
+              {/* Logos de filiação também acessíveis no rodapé do menu mobile */}
+              <div
+                style={{
+                  marginTop: '18px',
+                  paddingTop: '16px',
+                  borderTop: '1px solid rgba(255,255,255,0.12)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '16px',
+                }}
+              >
+                <a
+                  href="https://www.cspconlutas.org.br"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="CSP-Conlutas — Central Sindical e Popular"
+                  style={{ display: 'inline-flex', alignItems: 'center' }}
+                >
+                  <img
+                    src="/logo-csp-conlutas-limpo.png"
+                    alt="CSP-Conlutas"
+                    style={{ height: '28px', width: 'auto', display: 'block', borderRadius: '3px' }}
+                  />
+                </a>
+                <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '14px' }}>•</span>
+                <a
+                  href="https://www.instagram.com/unidospralutar/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Unidos pra Lutar"
+                  style={{ display: 'inline-flex', alignItems: 'center' }}
+                >
+                  <img
+                    src="/logo-unidos-pra-lutar-claro.png"
+                    alt="Unidos pra Lutar"
+                    style={{ height: '30px', width: 'auto', display: 'block' }}
+                  />
+                </a>
+              </div>
             </div>
           </div>
         )}
@@ -796,6 +845,9 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           .header-mobile-toggle {
             flex-shrink: 0 !important;
           }
+          .header-sub-bar-container {
+            justify-content: center !important;
+          }
         }
         .dropdown-item:hover {
           background: #f8f4f5 !important;
@@ -804,14 +856,9 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           background: #9c243c !important;
           transform: translateY(-1px);
         }
-        @media (max-width: 680px) {
-          .header-affiliation-sep,
-          .header-affiliation-group {
-            display: none !important;
-          }
-        }
         .header-affiliation-link:hover {
           opacity: 1 !important;
+          transform: translateY(-1px);
         }
       `}</style>
     </>

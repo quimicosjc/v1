@@ -86,8 +86,8 @@ export default function CardDestaque({
                 src="/logo-sindicato.png"
                 alt="Sindicato dos Químicos"
                 style={{
-                  maxWidth: '42%',
-                  maxHeight: '42%',
+                  maxWidth: '65%',
+                  maxHeight: '65%',
                   objectFit: 'contain',
                   filter: 'brightness(1.1) drop-shadow(0 2px 8px rgba(0,0,0,0.3))',
                 }}

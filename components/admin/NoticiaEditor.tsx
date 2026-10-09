@@ -1344,21 +1344,21 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
               <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="resumo">
                 Resumo <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
               </label>
-              <span style={{ fontSize: '12px', color: resumo.length > 235 ? '#861e32' : '#71636a' }}>
-                {resumo.length}/250
+              <span style={{ fontSize: '12px', color: resumo.length > 285 ? '#861e32' : '#71636a' }}>
+                {resumo.length}/300
               </span>
             </div>
             <textarea
               id="resumo"
               value={resumo}
-              onChange={(e) => { if (e.target.value.length <= 250) { setResumo(e.target.value); markAlterado() } }}
+              onChange={(e) => { if (e.target.value.length <= 300) { setResumo(e.target.value); markAlterado() } }}
               placeholder="Breve descrição exibida nos cartões e nas redes sociais…"
               rows={3}
-              maxLength={250}
+              maxLength={300}
               style={{ ...inputStyle, resize: 'vertical' }}
             />
             <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
-              Máximo 250 caracteres. Usado nos cartões de listagem e no compartilhamento.
+              Máximo 300 caracteres. Usado nos cartões de listagem e no compartilhamento.
             </p>
           </div>
 

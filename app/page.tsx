@@ -263,7 +263,7 @@ export default async function HomePage() {
     return { url, foco }
   }
 
-  // Extrai resumo garantindo até 250 caracteres, ou captura os primeiros 250 do corpo sem formatação + ' (...)'
+  // Extrai resumo garantindo até 300 caracteres, ou captura os primeiros 300 do corpo sem formatação + ' (...)'
   function obterResumoManchete(item: NoticiaItem): string | null {
     if (item.resumo && item.resumo.trim().length > 0) {
       return item.resumo.trim()
@@ -276,8 +276,8 @@ export default async function HomePage() {
       .replace(/\s+/g, ' ')
       .trim()
     if (!textoLimpo) return null
-    if (textoLimpo.length <= 250) return textoLimpo
-    return textoLimpo.substring(0, 250).trim() + ' (...)'
+    if (textoLimpo.length <= 300) return textoLimpo
+    return textoLimpo.substring(0, 300).trim() + ' (...)'
   }
 
   // Exibição dos atalhos de serviços (se não estiver desativado no painel)
@@ -312,7 +312,7 @@ export default async function HomePage() {
                         </div>
                       )}
 
-                      {/* Manchete Principal com resumo garantido de 250 caracteres ou captura inteligente */}
+                      {/* Manchete Principal com resumo garantido de 300 caracteres ou captura inteligente */}
                       {principal && (
                         <HeroManchete
                           id={principal.id}
