@@ -219,6 +219,7 @@ export default function AcervoJornaisPublico({ edicoes, publicacoes }: AcervoJor
                       minWidth: '240px',
                       zIndex: 30,
                     }}
+                    className="menu-drop-jornal"
                   >
                     <div style={{ fontSize: '11px', fontWeight: 800, color: '#71636a', textTransform: 'uppercase', padding: '6px 10px', letterSpacing: '0.5px' }}>
                       Escolha a publicação:
@@ -757,6 +758,12 @@ export default function AcervoJornaisPublico({ edicoes, publicacoes }: AcervoJor
 
         /* Regras responsivas no mobile */
         @media (max-width: 680px) {
+          .menu-drop-jornal {
+            left: 0 !important;
+            right: auto !important;
+            min-width: 250px !important;
+            max-width: calc(100vw - 32px) !important;
+          }
           .jornais-breadcrumb {
             display: none !important;
           }
