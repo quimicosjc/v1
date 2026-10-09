@@ -594,11 +594,35 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
             ...CONTAINER_STYLE,
             display: 'flex',
             alignItems: 'center',
-            gap: '18px',
+            gap: '24px',
             flexWrap: 'wrap',
           }}
           className="header-sub-bar-container"
         >
+          <a
+            href="https://www.instagram.com/unidospralutar/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              opacity: 0.95,
+              transition: 'opacity 0.15s ease, transform 0.15s ease',
+            }}
+            title="Unidos pra Lutar"
+            className="header-affiliation-link"
+          >
+            <img
+              src="/logo-unidos-pra-lutar-horizontal.png"
+              alt="Unidos pra Lutar"
+              style={{
+                height: '32px',
+                width: 'auto',
+                display: 'block',
+              }}
+            />
+          </a>
+
           <a
             href="https://www.cspconlutas.org.br"
             target="_blank"
@@ -616,44 +640,10 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
               src="/logo-csp-conlutas-limpo.png"
               alt="CSP-Conlutas"
               style={{
-                height: '34px',
+                height: '30px',
                 width: 'auto',
                 display: 'block',
                 borderRadius: '3px',
-              }}
-            />
-          </a>
-
-          <span
-            style={{
-              color: 'rgba(255,255,255,0.35)',
-              fontSize: '14px',
-              userSelect: 'none',
-            }}
-          >
-            •
-          </span>
-
-          <a
-            href="https://www.instagram.com/unidospralutar/"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              opacity: 0.95,
-              transition: 'opacity 0.15s ease, transform 0.15s ease',
-            }}
-            title="Unidos pra Lutar"
-            className="header-affiliation-link"
-          >
-            <img
-              src="/logo-unidos-pra-lutar-claro.png"
-              alt="Unidos pra Lutar"
-              style={{
-                height: '36px',
-                width: 'auto',
-                display: 'block',
               }}
             />
           </a>
@@ -788,9 +778,22 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '16px',
+                  gap: '20px',
                 }}
               >
+                <a
+                  href="https://www.instagram.com/unidospralutar/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Unidos pra Lutar"
+                  style={{ display: 'inline-flex', alignItems: 'center' }}
+                >
+                  <img
+                    src="/logo-unidos-pra-lutar-horizontal.png"
+                    alt="Unidos pra Lutar"
+                    style={{ height: '28px', width: 'auto', display: 'block' }}
+                  />
+                </a>
                 <a
                   href="https://www.cspconlutas.org.br"
                   target="_blank"
@@ -801,21 +804,7 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                   <img
                     src="/logo-csp-conlutas-limpo.png"
                     alt="CSP-Conlutas"
-                    style={{ height: '28px', width: 'auto', display: 'block', borderRadius: '3px' }}
-                  />
-                </a>
-                <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '14px' }}>•</span>
-                <a
-                  href="https://www.instagram.com/unidospralutar/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="Unidos pra Lutar"
-                  style={{ display: 'inline-flex', alignItems: 'center' }}
-                >
-                  <img
-                    src="/logo-unidos-pra-lutar-claro.png"
-                    alt="Unidos pra Lutar"
-                    style={{ height: '30px', width: 'auto', display: 'block' }}
+                    style={{ height: '26px', width: 'auto', display: 'block', borderRadius: '3px' }}
                   />
                 </a>
               </div>
