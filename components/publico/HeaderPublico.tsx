@@ -827,13 +827,13 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
             display: none !important;
           }
           .header-logo-container {
-            width: 256px !important;
+            width: 225px !important;
             height: 104px !important;
             overflow: visible !important;
           }
           .header-logo-img {
             height: 104px !important;
-            transform: scale(1.5) !important;
+            transform: scale(1.32) !important;
             transform-origin: left center !important;
           }
         }
