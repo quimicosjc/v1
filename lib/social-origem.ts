@@ -34,5 +34,5 @@ export function gerarIframeYoutube(videoId: string): string {
 }
 
 export function gerarIframeInstagram(postId: string): string {
-  return `<iframe src="https://www.instagram.com/p/${postId}/embed/" width="100%" height="480" title="Publicação do Instagram" frameborder="0" allowfullscreen></iframe>`
+  return `<iframe src="https://www.instagram.com/p/${postId}/embed/" width="100%" height="680" style="border:none; overflow:hidden; min-height:680px; max-width:540px; margin:0 auto; display:block;" title="Publicação do Instagram" frameborder="0" scrolling="no" allowtransparency="true" allowfullscreen></iframe>`
 }

@@ -45,14 +45,18 @@ const ATALHOS_CONFIG: Record<string, AtalhoItem> = {
     descricao: 'Caraguatatuba e São Sebastião',
     href: '/paginas/colonia',
     icone: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="5"/>
-        <line x1="12" y1="1" x2="12" y2="3"/>
-        <line x1="12" y1="21" x2="12" y2="23"/>
-        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-        <line x1="1" y1="12" x2="3" y2="12"/>
-        <line x1="21" y1="12" x2="23" y2="12"/>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="4.8"/>
+        {/* Raios ortogonais (topo, baixo, esquerda, direita) */}
+        <line x1="12" y1="1.5" x2="12" y2="3.8"/>
+        <line x1="12" y1="20.2" x2="12" y2="22.5"/>
+        <line x1="1.5" y1="12" x2="3.8" y2="12"/>
+        <line x1="20.2" y1="12" x2="22.5" y2="12"/>
+        {/* Raios diagonais (360° em todos os lados do círculo) */}
+        <line x1="4.6" y1="4.6" x2="6.3" y2="6.3"/>
+        <line x1="17.7" y1="17.7" x2="19.4" y2="19.4"/>
+        <line x1="19.4" y1="4.6" x2="17.7" y2="6.3"/>
+        <line x1="4.6" y1="19.4" x2="6.3" y2="17.7"/>
       </svg>
     ),
   },
@@ -132,7 +136,7 @@ export default function AtalhosServicos({ ordem }: AtalhosServicosProps) {
               <div
                 style={{
                   fontFamily: 'var(--font-condensed), sans-serif',
-                  fontSize: '18px',
+                  fontSize: '20px',
                   fontWeight: 700,
                   textTransform: 'uppercase',
                   letterSpacing: '0.4px',
@@ -141,19 +145,6 @@ export default function AtalhosServicos({ ordem }: AtalhosServicosProps) {
                 }}
               >
                 {item.titulo}
-              </div>
-              <div
-                style={{
-                  fontSize: '12px',
-                  color: CORES.muted,
-                  marginTop: '2px',
-                  lineHeight: 1.3,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {item.descricao}
               </div>
             </div>
           </Link>

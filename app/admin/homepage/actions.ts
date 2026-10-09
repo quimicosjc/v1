@@ -19,6 +19,7 @@ export interface HomepageConfig {
   hidden: string[]
   shortcuts: string[]
   model: 'A' | 'B'
+  posicaoServicos?: 'entre' | 'acima' | 'abaixo'
   banners: BannerItem[]
   footer: string
 }
@@ -35,6 +36,7 @@ const CONFIG_PADRAO: HomepageConfig = {
   hidden: [],
   shortcuts: ['fique-socio', 'denuncia', 'colonia', 'juridico'],
   model: 'B',
+  posicaoServicos: 'entre',
   banners: [
     {
       id: 'b1',
@@ -93,6 +95,7 @@ export async function obterConfigHomepage(): Promise<HomepageConfig> {
       hidden: valor.hidden || CONFIG_PADRAO.hidden,
       shortcuts: valor.shortcuts || CONFIG_PADRAO.shortcuts,
       model: valor.model || CONFIG_PADRAO.model,
+      posicaoServicos: valor.posicaoServicos || 'entre',
       banners: Array.isArray(valor.banners) && valor.banners.length > 0 ? valor.banners : CONFIG_PADRAO.banners,
       footer: valor.footer || CONFIG_PADRAO.footer,
     }

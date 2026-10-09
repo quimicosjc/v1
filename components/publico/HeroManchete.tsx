@@ -78,13 +78,19 @@ export default function HeroManchete({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'linear-gradient(135deg, #3d0d19 0%, #65172a 100%)',
+                background: '#2b2628',
+                padding: '24px',
               }}
             >
               <img
-                src="/logo-sindicato.svg"
+                src="/logo-sindicato.png"
                 alt="Sindicato dos Químicos"
-                style={{ height: '70px', opacity: 0.2 }}
+                style={{
+                  maxWidth: '42%',
+                  maxHeight: '42%',
+                  objectFit: 'contain',
+                  filter: 'brightness(1.1) drop-shadow(0 4px 12px rgba(0,0,0,0.35))',
+                }}
               />
             </div>
           )}

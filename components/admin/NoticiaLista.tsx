@@ -274,6 +274,19 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
     }
   }
 
+  const [draggedSlotIdx, setDraggedSlotIdx] = useState<number | null>(null)
+
+  function handleDropDestaque(targetIdx: number) {
+    if (draggedSlotIdx === null || draggedSlotIdx === targetIdx) return
+    const novo = [...destaquesSlots]
+    const itemArrastado = novo[draggedSlotIdx]
+    if (!itemArrastado) return
+    novo.splice(draggedSlotIdx, 1)
+    novo.splice(targetIdx, 0, itemArrastado)
+    setDestaquesSlots(novo)
+    setDraggedSlotIdx(null)
+  }
+
   async function handleToggleDestaqueRapido(noticiaId: string) {
     const jaEhDestaque = destaquesSlots.includes(noticiaId)
     if (jaEhDestaque) {
@@ -283,16 +296,17 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
       await salvarOrdemDestaques(novosSlots)
       showToast('Notícia retirada dos destaques.')
     } else {
-      if (destaquesSlots.length >= 4) {
-        setShowDestaquesModal(true)
-        showToast('Limite de 4 destaques atingido. Organize as posições no modal.')
-        return
-      }
-      const novosSlots = [...destaquesSlots, noticiaId]
+      // Entra como 1º destaque e desloca o último se exceder 5 posições
+      const novosSlots = [noticiaId, ...destaquesSlots.filter((id) => id !== noticiaId)].slice(0, 5)
       setDestaquesSlots(novosSlots)
-      setLista((prev) => prev.map((n) => (n.id === noticiaId ? { ...n, destaque: true } : n)))
+      setLista((prev) =>
+        prev.map((n) => ({
+          ...n,
+          destaque: novosSlots.includes(n.id),
+        }))
+      )
       await salvarOrdemDestaques(novosSlots)
-      showToast(`Notícia adicionada como ${novosSlots.length}º destaque!`)
+      showToast('Notícia adicionada como 1º destaque da Homepage!')
     }
   }
 
@@ -902,7 +916,7 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
                   ★ Organizar destaques da Homepage
                 </h2>
                 <p style={{ margin: 0, fontSize: '13px', color: '#71636a' }}>
-                  Defina as até 5 notícias em destaque e sua ordem exata de exibição (1 manchete principal + até 4 secundárias no Modelo B, ou 4 em grade no Modelo A).
+                  Arraste os cards para reordenar ou use as setas ↑ ↓. As alterações serão salvas na Homepage.
                 </p>
               </div>
               <button
@@ -919,20 +933,43 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
               {[0, 1, 2, 3, 4].map((slotIdx) => {
                 const idNaVaga = destaquesSlots[slotIdx]
                 const noticia = idNaVaga ? lista.find((n) => n.id === idNaVaga) : null
+                const isDragging = draggedSlotIdx === slotIdx
 
                 return (
                   <div
                     key={slotIdx}
+                    draggable={Boolean(noticia)}
+                    onDragStart={() => setDraggedSlotIdx(slotIdx)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => handleDropDestaque(slotIdx)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: '12px',
-                      background: noticia ? '#fcfbfa' : '#f9fafb',
-                      border: noticia ? '1px solid #e4dce0' : '1px dashed #ced9df',
+                      background: isDragging ? '#fdf2f4' : noticia ? '#fcfbfa' : '#f9fafb',
+                      border: isDragging ? '2px dashed #861e32' : noticia ? '1px solid #e4dce0' : '1px dashed #ced9df',
                       borderRadius: '6px',
                       padding: '12px 14px',
+                      cursor: noticia ? 'grab' : 'default',
+                      transition: 'background 0.15s ease, border-color 0.15s ease',
+                      opacity: isDragging ? 0.6 : 1,
                     }}
                   >
+                    {/* Drag Handle */}
+                    {noticia && (
+                      <span
+                        title="Arraste para reordenar"
+                        style={{
+                          color: '#a89ba1',
+                          fontSize: '18px',
+                          cursor: 'grab',
+                          userSelect: 'none',
+                          lineHeight: 1,
+                        }}
+                      >
+                        ⠿
+                      </span>
+                    )}
                     <div
                       style={{
                         width: '28px',

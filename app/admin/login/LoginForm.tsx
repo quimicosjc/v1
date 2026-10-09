@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import { loginAction } from './actions'
 
 interface LoginFormProps {
@@ -8,6 +8,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ redirectTo }: LoginFormProps) {
+  const [mostrarSenha, setMostrarSenha] = useState(false)
   const [state, formAction, isPending] = useActionState(
     async (_prev: { error?: string } | null, formData: FormData) => {
       const res = await loginAction(formData)
@@ -63,24 +64,56 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         <span style={{ display: 'block', fontWeight: 600, fontSize: '14px', marginBottom: '8px', color: '#30252a' }}>
           Senha
         </span>
-        <input
-          name="password"
-          type="password"
-          required
-          autoComplete="current-password"
-          placeholder="••••••••"
-          style={{
-            display: 'block',
-            width: '100%',
-            padding: '11px 12px',
-            border: '1px solid #cbd7de',
-            borderRadius: '5px',
-            fontSize: '16px',
-            color: '#30252a',
-            background: 'white',
-            boxSizing: 'border-box',
-          }}
-        />
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <input
+            name="password"
+            type={mostrarSenha ? 'text' : 'password'}
+            required
+            autoComplete="current-password"
+            placeholder="••••••••"
+            style={{
+              display: 'block',
+              width: '100%',
+              padding: '11px 44px 11px 12px',
+              border: '1px solid #cbd7de',
+              borderRadius: '5px',
+              fontSize: '16px',
+              color: '#30252a',
+              background: 'white',
+              boxSizing: 'border-box',
+              outline: 'none',
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => setMostrarSenha((v) => !v)}
+            title={mostrarSenha ? 'Ocultar senha' : 'Ver senha digitada'}
+            style={{
+              position: 'absolute',
+              right: '10px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#71636a',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '6px',
+            }}
+          >
+            {mostrarSenha ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            )}
+          </button>
+        </div>
       </label>
 
       <button

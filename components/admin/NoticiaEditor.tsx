@@ -12,6 +12,7 @@ import {
   retirarDoAr,
   uploadMidia,
   uploadDocumento,
+  buscarThumbnailInstagram,
 } from '@/app/admin/noticias/actions'
 import {
   OrigemNoticia,
@@ -246,6 +247,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
   // Origem e Fast Track (Site | YouTube | Instagram)
   const [origem, setOrigem] = useState<OrigemNoticia>(() => detectarOrigem(noticia?.url_referencia))
   const [socialInput, setSocialInput] = useState(() => noticia?.url_referencia ?? '')
+  const [buscandoThumbInsta, setBuscandoThumbInsta] = useState(false)
 
   // Mais opções editoriais
   const [showMaisOpcoes, setShowMaisOpcoes] = useState(false)
@@ -429,6 +431,37 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
     showToast('Publicação do Instagram inserida no texto da notícia!', 'sucesso')
   }
 
+  async function handleBuscarThumbInstagram() {
+    if (!socialInput.trim()) {
+      showToast('Informe o link do post do Instagram primeiro.', 'erro')
+      return
+    }
+    setBuscandoThumbInsta(true)
+    showToast('Buscando imagem da publicação no Instagram...')
+    const res = await buscarThumbnailInstagram(socialInput)
+    setBuscandoThumbInsta(false)
+    if ('error' in res) {
+      showToast(res.error, 'erro')
+    } else {
+      const novaFoto: FotoItem = {
+        url: res.url,
+        preview: res.url,
+        foco: 50,
+        legenda: 'Publicação do Instagram',
+        credito: 'Instagram',
+        enviando: false,
+        erro: null,
+      }
+      setFotos((prev) => {
+        if (prev.length === 0) return [novaFoto]
+        if (prev.length < 5) return [novaFoto, ...prev]
+        return [novaFoto, ...prev.slice(0, 4)]
+      })
+      markAlterado()
+      showToast('Foto do post capturada e definida como capa com sucesso!', 'sucesso')
+    }
+  }
+
   function buildFormData(): NoticiaFormData {
     const fotosParaSalvar = fotos
       .filter((f) => f.url)
@@ -550,6 +583,75 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
   useEffect(() => {
     noticiaIdRef.current = noticiaId
   }, [noticiaId])
+
+  // Suporte a Cmd+V / Ctrl+V para colar imagens da área de transferência
+  useEffect(() => {
+    async function handlePaste(e: ClipboardEvent) {
+      const items = e.clipboardData?.items
+      if (!items) return
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith('image/')) {
+          const file = items[i].getAsFile()
+          if (file) {
+            e.preventDefault()
+            const vagas = 5 - fotos.filter((f) => !f.enviando && f.url).length
+            if (vagas <= 0) {
+              showToast('Limite máximo de 5 fotos atingido.', 'erro')
+              return
+            }
+            showToast('Processando foto colada da área de transferência…')
+            const preview = URL.createObjectURL(file)
+            const novoIndex = fotos.length
+            setFotos((prev) => [
+              ...prev,
+              {
+                url: '',
+                preview,
+                foco: 50,
+                legenda: '',
+                credito: '',
+                enviando: true,
+                erro: null,
+              },
+            ])
+            try {
+              const compressed = await comprimirImagem(file)
+              const formData = new FormData()
+              formData.append('arquivo', compressed)
+              const result = await uploadMidia(formData)
+              if ('error' in result) {
+                setFotos((prev) =>
+                  prev.map((f, fi) =>
+                    fi === novoIndex ? { ...f, enviando: false, erro: result.error } : f,
+                  ),
+                )
+                showToast(result.error, 'erro')
+              } else {
+                setFotos((prev) =>
+                  prev.map((f, fi) =>
+                    fi === novoIndex
+                      ? { ...f, url: result.url, preview: result.url, enviando: false, erro: null }
+                      : f,
+                  ),
+                )
+                markAlterado()
+                showToast('Foto da área de transferência adicionada com sucesso!')
+              }
+            } catch {
+              setFotos((prev) =>
+                prev.map((f, fi) =>
+                  fi === novoIndex ? { ...f, enviando: false, erro: 'Falha ao processar' } : f,
+                ),
+              )
+            }
+            break
+          }
+        }
+      }
+    }
+    window.addEventListener('paste', handlePaste)
+    return () => window.removeEventListener('paste', handlePaste)
+  }, [fotos])
 
   // ── Tags handling ─────────────────────────────────────────────────────────
 
@@ -768,8 +870,12 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
 
   function handlePublicar() {
     if (!titulo.trim()) { showToast('O título é obrigatório para publicar.', 'erro'); return }
+    const temConteudoEmbutido = origem === 'youtube' || origem === 'instagram' || corpo.includes('<iframe') || Boolean(urlReferencia)
     const corpoTexto = corpo.replace(/<[^>]*>/g, '').trim()
-    if (!corpoTexto) { showToast('O texto da notícia é obrigatório para publicar.', 'erro'); return }
+    if (!temConteudoEmbutido && !corpoTexto) {
+      showToast('O texto da notícia é obrigatório para matérias de texto do site.', 'erro')
+      return
+    }
     setShowConfirm(true)
   }
 
@@ -1097,34 +1203,61 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
 
                 {/* Ações automáticas quando URL válida */}
                 {extrairInstagramId(socialInput) ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', paddingTop: '4px' }}>
-                    <button
-                      type="button"
-                      onClick={handleInserirEmbedInstagram}
-                      style={{
-                        background: '#ad1457',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '8px 13px',
-                        fontSize: '12.5px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        fontFamily: 'inherit',
-                      }}
-                    >
-                      <span>📷</span> Inserir post do Instagram no texto da matéria
-                    </button>
-                    <span style={{ fontSize: '12px', color: '#2e7d32', fontWeight: 600 }}>
-                      ✓ Link válido do Instagram
-                    </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={handleInserirEmbedInstagram}
+                        style={{
+                          background: '#ad1457',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '4px',
+                          padding: '8px 13px',
+                          fontSize: '12.5px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        <span>📷</span> Inserir post do Instagram no texto da matéria
+                      </button>
+                      <button
+                        type="button"
+                        disabled={buscandoThumbInsta}
+                        onClick={handleBuscarThumbInstagram}
+                        style={{
+                          background: '#861e32',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '4px',
+                          padding: '8px 13px',
+                          fontSize: '12.5px',
+                          fontWeight: 600,
+                          cursor: buscandoThumbInsta ? 'wait' : 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontFamily: 'inherit',
+                          opacity: buscandoThumbInsta ? 0.7 : 1,
+                        }}
+                      >
+                        <span>🖼</span> {buscandoThumbInsta ? 'Buscando foto...' : 'Buscar foto da capa do post (1 clique)'}
+                      </button>
+                      <span style={{ fontSize: '12px', color: '#2e7d32', fontWeight: 600 }}>
+                        ✓ Link válido do Instagram
+                      </span>
+                    </div>
+                    <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
+                      💡 Dica rápida: Você também pode copiar qualquer imagem no Instagram e colar direto nesta tela pressionando <strong>Cmd+V</strong> (Mac) ou <strong>Ctrl+V</strong> (Windows).
+                    </p>
                   </div>
                 ) : (
                   <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
-                    Cole o link do post ou reel para habilitar a incorporação oficial.
+                    Cole o link do post ou reel para habilitar a incorporação oficial e captura de imagem.
                   </p>
                 )}
               </div>
@@ -1211,28 +1344,33 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
               <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="resumo">
                 Resumo <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
               </label>
-              <span style={{ fontSize: '12px', color: resumo.length > 135 ? '#861e32' : '#71636a' }}>
-                {resumo.length}/150
+              <span style={{ fontSize: '12px', color: resumo.length > 235 ? '#861e32' : '#71636a' }}>
+                {resumo.length}/250
               </span>
             </div>
             <textarea
               id="resumo"
               value={resumo}
-              onChange={(e) => { if (e.target.value.length <= 150) { setResumo(e.target.value); markAlterado() } }}
+              onChange={(e) => { if (e.target.value.length <= 250) { setResumo(e.target.value); markAlterado() } }}
               placeholder="Breve descrição exibida nos cartões e nas redes sociais…"
               rows={3}
-              maxLength={150}
+              maxLength={250}
               style={{ ...inputStyle, resize: 'vertical' }}
             />
             <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
-              Máximo 150 caracteres. Usado nos cartões de listagem e no compartilhamento.
+              Máximo 250 caracteres. Usado nos cartões de listagem e no compartilhamento.
             </p>
           </div>
 
           {/* Corpo */}
           <div style={cardStyle}>
             <label style={labelStyle}>
-              Texto da notícia <span style={{ color: '#861e32' }}>*</span>
+              Texto da notícia{' '}
+              {origem === 'youtube' || origem === 'instagram' ? (
+                <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional — publicação embutida)</span>
+              ) : (
+                <span style={{ color: '#861e32' }}>*</span>
+              )}
             </label>
             <RichEditor
               content={corpo}

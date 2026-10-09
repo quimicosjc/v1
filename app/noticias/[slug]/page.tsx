@@ -163,51 +163,13 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
       <main style={{ flex: 1, padding: '40px 20px 64px 20px' }}>
         <article style={{ maxWidth: '780px', margin: '0 auto' }}>
           
-          {/* Chapéu e Selo de Origem */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
-            {origem === 'youtube' && (
-              <span
-                style={{
-                  background: '#fee2e2',
-                  color: '#b91c1c',
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  padding: '3px 8px',
-                  borderRadius: '4px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.6px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                🎥 VÍDEO OFICIAL
-              </span>
-            )}
-            {origem === 'instagram' && (
-              <span
-                style={{
-                  background: '#fce7f3',
-                  color: '#be185d',
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  padding: '3px 8px',
-                  borderRadius: '4px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.6px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                📷 POST DO INSTAGRAM
-              </span>
-            )}
-            {noticia.chapeu && (
+          {/* Chapéu (sem selos redundantes prévios conforme M6-A e M8-A) */}
+          {noticia.chapeu && (
+            <div style={{ marginBottom: '12px' }}>
               <div
                 style={{
                   color: '#861e32',
-                  fontSize: '12.5px',
+                  fontSize: '14.5px',
                   fontWeight: 800,
                   textTransform: 'uppercase',
                   letterSpacing: '1px',
@@ -215,14 +177,14 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
               >
                 {noticia.chapeu}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Título Principal (H1 forte, peso 800, entrelinha precisa) */}
+          {/* Título Principal (+2 pontos: 40px) */}
           <h1
             style={{
               fontFamily: 'var(--font-condensed), sans-serif',
-              fontSize: '38px',
+              fontSize: '40px',
               fontWeight: 800,
               lineHeight: 1.12,
               color: '#1a1417',
@@ -234,11 +196,11 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
             {noticia.titulo}
           </h1>
 
-          {/* Subtítulo / Lead (Fluido, cinza equilibrado, sem caixa) */}
+          {/* Subtítulo / Lead (+2 pontos: 20px) */}
           {noticia.subtitulo && (
             <p
               style={{
-                fontSize: '18px',
+                fontSize: '20px',
                 lineHeight: 1.55,
                 color: '#554950',
                 margin: '0 0 20px 0',
@@ -248,10 +210,10 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
             </p>
           )}
 
-          {/* Linha de Metadados (Estilo G1: Data com vírgula e sem zero na hora) */}
+          {/* Linha de Metadados (+2 pontos: 15px) */}
           <div
             style={{
-              fontSize: '13px',
+              fontSize: '15px',
               color: '#71636a',
               padding: '6px 0 10px 0',
               display: 'flex',
@@ -271,17 +233,17 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
             )}
           </div>
 
-          {/* Barra de Compartilhamento no Topo (WhatsApp, Facebook, Copiar link e Tamanho de Fonte) */}
+          {/* Barra de Compartilhamento no Topo */}
           <BarraCompartilhamento titulo={noticia.titulo} modo="topo" />
 
-          {/* Carrossel Editorial de Fotos (Documento Mestre § 3.4 com proporção 3:2 e botão de foto completa) */}
-          <CarrosselNoticia fotos={fotos} titulo={noticia.titulo} />
+          {/* Carrossel Editorial de Fotos (M8-B: Não exibir foto se origem YouTube — apenas o vídeo basta) */}
+          {origem !== 'youtube' && <CarrosselNoticia fotos={fotos} titulo={noticia.titulo} />}
 
-          {/* Corpo da Notícia com Leitura Confortável (Estilo G1: 18px, entrelinha 1.8, respiro) */}
+          {/* Corpo da Notícia (+2 pontos: 20px) */}
           <div
             className="noticia-corpo"
             style={{
-              fontSize: '18px',
+              fontSize: '20px',
               lineHeight: 1.8,
               color: '#2b2327',
               wordBreak: 'break-word',
@@ -292,55 +254,102 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
           {/* Barra de Compartilhamento no Rodapé do Artigo */}
           <BarraCompartilhamento titulo={noticia.titulo} modo="rodape" />
 
-          {/* URL de Referência / Conteúdo Original */}
+          {/* Caixa inferior para redes sociais e fontes (M6-C e M8-C) */}
           {noticia.url_referencia && (
             <div
               style={{
                 marginTop: '32px',
-                padding: '16px 20px',
+                padding: '20px 24px',
                 background: origem === 'youtube' ? '#fff5f5' : origem === 'instagram' ? '#fdf2f8' : '#f8fafb',
-                borderLeft: `4px solid ${origem === 'youtube' ? '#b91c1c' : origem === 'instagram' ? '#be185d' : '#861e32'}`,
-                borderRadius: '0 6px 6px 0',
-                fontSize: '14px',
-                color: '#30252a',
+                border: `1px solid ${origem === 'youtube' ? '#fecaca' : origem === 'instagram' ? '#fbcfe8' : '#e4dce0'}`,
+                borderRadius: '8px',
                 display: 'flex',
+                flexDirection: (origem === 'instagram' || origem === 'youtube') ? 'column' : 'row',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '12px',
+                justifyContent: 'center',
+                textAlign: 'center',
+                gap: '14px',
               }}
             >
-              <div>
-                <strong>
-                  {origem === 'youtube'
-                    ? '🎥 Conteúdo publicado em nosso canal do YouTube'
-                    : origem === 'instagram'
-                    ? '📷 Publicação original em nosso Instagram oficial'
-                    : 'Mais informações / Fonte:'}
-                </strong>
-                <div style={{ fontSize: '12px', color: '#71636a', marginTop: '3px', wordBreak: 'break-all' }}>
-                  {noticia.url_referencia}
+              {origem === 'instagram' ? (
+                <>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#ad1457' }}>
+                    Publicação do Instagram
+                  </div>
+                  <a
+                    href={noticia.url_referencia}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      background: '#ad1457',
+                      color: 'white',
+                      padding: '9px 18px',
+                      borderRadius: '5px',
+                      textDecoration: 'none',
+                      fontWeight: 600,
+                      fontSize: '13.5px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <span>Ver no Instagram ↗</span>
+                  </a>
+                </>
+              ) : origem === 'youtube' ? (
+                <>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#b91c1c' }}>
+                    Publicação do Youtube
+                  </div>
+                  <a
+                    href={noticia.url_referencia}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      background: '#b91c1c',
+                      color: 'white',
+                      padding: '9px 18px',
+                      borderRadius: '5px',
+                      textDecoration: 'none',
+                      fontWeight: 600,
+                      fontSize: '13.5px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <span>Assistir no YouTube ↗</span>
+                  </a>
+                </>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', flexWrap: 'wrap', gap: '12px', textAlign: 'left' }}>
+                  <div>
+                    <strong style={{ fontSize: '14px', color: '#30252a' }}>Mais informações / Fonte:</strong>
+                    <div style={{ fontSize: '12.5px', color: '#71636a', marginTop: '3px', wordBreak: 'break-all' }}>
+                      {noticia.url_referencia}
+                    </div>
+                  </div>
+                  <a
+                    href={noticia.url_referencia}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      background: '#861e32',
+                      color: 'white',
+                      padding: '8px 14px',
+                      borderRadius: '5px',
+                      textDecoration: 'none',
+                      fontWeight: 600,
+                      fontSize: '13px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    Acessar link ↗
+                  </a>
                 </div>
-              </div>
-              <a
-                href={noticia.url_referencia}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  background: origem === 'youtube' ? '#b91c1c' : origem === 'instagram' ? '#be185d' : '#861e32',
-                  color: 'white',
-                  padding: '8px 14px',
-                  borderRadius: '5px',
-                  textDecoration: 'none',
-                  fontWeight: 600,
-                  fontSize: '13px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
-              >
-                {origem === 'youtube' ? 'Assistir no YouTube ↗' : origem === 'instagram' ? 'Ver no Instagram ↗' : 'Acessar link ↗'}
-              </a>
+              )}
             </div>
           )}
 
@@ -466,48 +475,7 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
             </div>
           )}
 
-          {/* Rodapé da Matéria com Navegação Limpa */}
-          <div
-            style={{
-              marginTop: '48px',
-              borderTop: '1px solid #e4dce0',
-              paddingTop: '28px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '16px',
-            }}
-          >
-            <Link
-              href="/noticias"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                color: '#861e32',
-                fontSize: '14.5px',
-                fontWeight: 700,
-                textDecoration: 'none',
-              }}
-              className="breadcrumb-link"
-            >
-              <span>←</span>
-              <span>Voltar para todas as notícias</span>
-            </Link>
 
-            <Link
-              href="/"
-              style={{
-                fontSize: '13px',
-                color: '#71636a',
-                textDecoration: 'none',
-              }}
-              className="breadcrumb-link"
-            >
-              Página inicial
-            </Link>
-          </div>
 
         </article>
 
@@ -637,13 +605,19 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            background: '#f8f2f4',
+                            background: '#2b2628',
+                            padding: '12px',
                           }}
                         >
                           <img
                             src="/logo-sindicato.png"
                             alt="Sindicato"
-                            style={{ maxHeight: '48px', opacity: 0.8 }}
+                            style={{
+                              maxWidth: '42%',
+                              maxHeight: '42%',
+                              objectFit: 'contain',
+                              filter: 'brightness(1.1) drop-shadow(0 2px 8px rgba(0,0,0,0.3))',
+                            }}
                           />
                         </div>
                       )}
@@ -784,12 +758,21 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
         }
         .noticia-corpo iframe {
           max-width: 100% !important;
-          width: 100% !important;
-          aspect-ratio: 16 / 9 !important;
           border: none !important;
           border-radius: 6px !important;
-          margin: 24px 0 !important;
+          margin: 24px auto !important;
           display: block !important;
+        }
+        .noticia-corpo iframe:not([src*="instagram"]) {
+          width: 100% !important;
+          aspect-ratio: 16 / 9 !important;
+        }
+        .noticia-corpo iframe[src*="instagram"] {
+          width: 100% !important;
+          max-width: 540px !important;
+          min-height: 680px !important;
+          height: 680px !important;
+          overflow: hidden !important;
         }
       `}</style>
     </div>

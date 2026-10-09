@@ -1,4 +1,6 @@
-import React from 'react'
+'use client'
+
+import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { CORES } from '@/lib/design'
 
@@ -11,11 +13,34 @@ export interface EdicaoJornalHome {
   data_publicacao?: string | null
 }
 
-interface BlocoJornalProps {
-  edicoes: EdicaoJornalHome[]
+export interface OutroJornalItem {
+  id: string
+  nome: string
 }
 
-export default function BlocoJornal({ edicoes }: BlocoJornalProps) {
+interface BlocoJornalProps {
+  edicoes: EdicaoJornalHome[]
+  outrosJornais?: OutroJornalItem[]
+}
+
+export default function BlocoJornal({ edicoes, outrosJornais }: BlocoJornalProps) {
+  const [dropAberto, setDropAberto] = useState(false)
+  const dropRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickFora(e: MouseEvent) {
+      if (dropRef.current && !dropRef.current.contains(e.target as Node)) {
+        setDropAberto(false)
+      }
+    }
+    if (dropAberto) {
+      document.addEventListener('mousedown', handleClickFora)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickFora)
+    }
+  }, [dropAberto])
+
   if (!edicoes || edicoes.length === 0) return null
 
   const edicaoMaisRecente = edicoes[0]
@@ -29,7 +54,7 @@ export default function BlocoJornal({ edicoes }: BlocoJornalProps) {
           border: `1px solid ${CORES.line}`,
           borderTop: `4px solid ${CORES.action}`,
           borderRadius: '4px',
-          padding: '32px 36px',
+          padding: '28px 32px',
           boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
         }}
         className="bloco-jornal-box"
@@ -37,13 +62,13 @@ export default function BlocoJornal({ edicoes }: BlocoJornalProps) {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '50% 50%',
-            gap: '36px',
+            gridTemplateColumns: '48% 52%',
+            gap: '32px',
             alignItems: 'center',
           }}
           className="bloco-jornal-grid"
         >
-          {/* ── COLUNA 1: EDIÇÃO ATUAL EM DESTAQUE ── */}
+          {/* ── COLUNA 1: EDIÇÃO ATUAL EM DESTAQUE (BOCA NO TROMBONE) ── */}
           <div
             style={{
               display: 'flex',
@@ -62,7 +87,7 @@ export default function BlocoJornal({ edicoes }: BlocoJornalProps) {
               style={{
                 display: 'block',
                 flexShrink: 0,
-                width: '150px',
+                width: '145px',
                 aspectRatio: '1 / 1.42',
                 borderRadius: '4px',
                 overflow: 'hidden',
@@ -99,7 +124,7 @@ export default function BlocoJornal({ edicoes }: BlocoJornalProps) {
                   marginBottom: '4px',
                 }}
               >
-                Jornal Oficial da Categoria
+                Jornal
               </div>
               <h3
                 style={{
@@ -127,12 +152,12 @@ export default function BlocoJornal({ edicoes }: BlocoJornalProps) {
               <p
                 style={{
                   margin: '0 0 16px 0',
-                  fontSize: '12.5px',
+                  fontSize: '13px',
                   lineHeight: 1.45,
                   color: CORES.muted,
                 }}
               >
-                Informativo oficial com as principais denúncias das fábricas, assembleias e mobilizações da categoria química e farmacêutica.
+                Informativo oficial do Sindicato dos Químicos de São José dos Campos e Região
               </p>
 
               {/* Ações da Edição Principal */}
@@ -195,19 +220,21 @@ export default function BlocoJornal({ edicoes }: BlocoJornalProps) {
           </div>
 
           {/* ── COLUNA 2: EDIÇÕES ANTERIORES E ACERVO ── */}
-          <div className="bloco-jornal-col2">
+          <div className="bloco-jornal-col2" style={{ minWidth: 0 }}>
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 marginBottom: '16px',
+                gap: '8px',
+                flexWrap: 'wrap',
               }}
             >
               <div
                 style={{
                   fontFamily: 'var(--font-condensed), sans-serif',
-                  fontSize: '18px',
+                  fontSize: '17px',
                   fontWeight: 700,
                   textTransform: 'uppercase',
                   color: CORES.primary,
@@ -216,30 +243,131 @@ export default function BlocoJornal({ edicoes }: BlocoJornalProps) {
               >
                 Edições Anteriores
               </div>
-              <Link
-                href="/jornais"
-                style={{
-                  fontSize: '12.5px',
-                  fontWeight: 700,
-                  color: CORES.action,
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-                className="link-acervo-todas"
-              >
-                <span>Ver acervo completo</span>
-                <span>→</span>
-              </Link>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {/* Drop / Link de Outros Jornais */}
+                <div ref={dropRef} style={{ position: 'relative' }}>
+                  <button
+                    type="button"
+                    onClick={() => setDropAberto(!dropAberto)}
+                    style={{
+                      background: '#F8F4F5',
+                      border: `1px solid ${CORES.line}`,
+                      borderRadius: '4px',
+                      padding: '5px 9px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: CORES.primary,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      transition: 'background 0.15s ease',
+                    }}
+                    className="btn-drop-outros-jornais"
+                    aria-expanded={dropAberto}
+                    title="Acessar outros jornais e publicações da entidade"
+                  >
+                    <span>Outros jornais</span>
+                    <span style={{ fontSize: '9px', opacity: 0.7 }}>{dropAberto ? '▲' : '▼'}</span>
+                  </button>
+
+                  {dropAberto && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        right: 0,
+                        marginTop: '6px',
+                        background: '#FFFFFF',
+                        border: `1px solid ${CORES.line}`,
+                        borderRadius: '6px',
+                        boxShadow: '0 6px 18px rgba(0,0,0,0.12)',
+                        padding: '6px 0',
+                        minWidth: '200px',
+                        zIndex: 20,
+                      }}
+                    >
+                      {outrosJornais && outrosJornais.length > 0 ? (
+                        outrosJornais.map((pub) => (
+                          <Link
+                            key={pub.id}
+                            href={`/jornais?pub=${pub.id}`}
+                            onClick={() => setDropAberto(false)}
+                            style={{
+                              display: 'block',
+                              padding: '8px 14px',
+                              fontSize: '12.5px',
+                              color: CORES.ink,
+                              textDecoration: 'none',
+                              transition: 'background 0.12s',
+                            }}
+                            className="drop-item-jornal"
+                          >
+                            📰 {pub.nome}
+                          </Link>
+                        ))
+                      ) : (
+                        <Link
+                          href="/jornais"
+                          onClick={() => setDropAberto(false)}
+                          style={{
+                            display: 'block',
+                            padding: '8px 14px',
+                            fontSize: '12.5px',
+                            color: CORES.ink,
+                            textDecoration: 'none',
+                          }}
+                          className="drop-item-jornal"
+                        >
+                          📰 Jornal da Família
+                        </Link>
+                      )}
+                      <div style={{ height: '1px', background: CORES.lineLight, margin: '4px 0' }} />
+                      <Link
+                        href="/jornais"
+                        onClick={() => setDropAberto(false)}
+                        style={{
+                          display: 'block',
+                          padding: '8px 14px',
+                          fontSize: '12px',
+                          color: CORES.action,
+                          fontWeight: 700,
+                          textDecoration: 'none',
+                        }}
+                        className="drop-item-jornal"
+                      >
+                        📂 Ver acervo completo de jornais →
+                      </Link>
+                    </div>
+                  )}
+                </div>
+
+                <Link
+                  href="/jornais"
+                  style={{
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    color: CORES.action,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                  className="link-acervo-todas"
+                >
+                  <span>Ver acervo</span>
+                  <span>→</span>
+                </Link>
+              </div>
             </div>
 
-            {/* Grid com as miniaturas das edições anteriores */}
+            {/* Grid com as miniaturas das 4 edições anteriores com respiro balanceado */}
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: '12px',
+                gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+                gap: '14px',
               }}
               className="grid-edicoes-anteriores"
             >
@@ -255,6 +383,7 @@ export default function BlocoJornal({ edicoes }: BlocoJornalProps) {
                     textDecoration: 'none',
                     color: CORES.ink,
                     transition: 'transform 0.15s ease',
+                    minWidth: 0,
                   }}
                   className="card-edicao-mini"
                   title={`Edição nº ${ed.numero} (${ed.mes_ano})`}
@@ -268,7 +397,7 @@ export default function BlocoJornal({ edicoes }: BlocoJornalProps) {
                       border: `1px solid ${CORES.line}`,
                       boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
                       background: '#F8F4F5',
-                      marginBottom: '6px',
+                      marginBottom: '4px',
                     }}
                   >
                     <img
@@ -282,18 +411,19 @@ export default function BlocoJornal({ edicoes }: BlocoJornalProps) {
                       }}
                     />
                   </div>
+                  {/* Sem repetição do número da edição, exibindo apenas o mês/ano com elegância */}
                   <div
                     style={{
-                      fontFamily: 'var(--font-condensed), sans-serif',
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      color: CORES.primary,
-                      lineHeight: 1.15,
+                      fontSize: '11.5px',
+                      fontWeight: 600,
+                      color: CORES.muted,
+                      textAlign: 'center',
+                      lineHeight: 1.25,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
                     }}
                   >
-                    Nº {ed.numero}
-                  </div>
-                  <div style={{ fontSize: '11px', color: CORES.muted, marginTop: '2px' }}>
                     {ed.mes_ano}
                   </div>
                 </a>
@@ -317,6 +447,13 @@ export default function BlocoJornal({ edicoes }: BlocoJornalProps) {
         }
         .card-edicao-mini:hover {
           transform: translateY(-2px);
+        }
+        .drop-item-jornal:hover {
+          background: #F8F2F4 !important;
+          color: ${CORES.action} !important;
+        }
+        .btn-drop-outros-jornais:hover {
+          background: #EFE6E9 !important;
         }
         @media (max-width: 960px) {
           .bloco-jornal-grid {

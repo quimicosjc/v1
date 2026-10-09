@@ -78,13 +78,19 @@ export default function CardDestaque({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'linear-gradient(135deg, #F0E8EA 0%, #E4DCE0 100%)',
+                background: '#2b2628',
+                padding: '16px',
               }}
             >
               <img
-                src="/logo-sindicato-escuro.svg"
+                src="/logo-sindicato.png"
                 alt="Sindicato dos Químicos"
-                style={{ height: '40px', opacity: 0.25 }}
+                style={{
+                  maxWidth: '42%',
+                  maxHeight: '42%',
+                  objectFit: 'contain',
+                  filter: 'brightness(1.1) drop-shadow(0 2px 8px rgba(0,0,0,0.3))',
+                }}
               />
             </div>
           )}

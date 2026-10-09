@@ -621,6 +621,174 @@ export default function HomepageGerenciador({ configInicial, usuarioLogado }: Pr
           </div>
         </div>
 
+        {/* ── Posicionamento do Bloco de Serviços ── */}
+        <div
+          style={{
+            marginTop: '20px',
+            marginBottom: '16px',
+            paddingTop: '18px',
+            borderTop: '1px solid #e4dce0',
+          }}
+        >
+          <div style={{ marginBottom: '12px' }}>
+            <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#30252a', margin: '0 0 4px 0' }}>
+              Posição do Bloco de Serviços (Fique Sócio, Denúncia, Colônia e Jurídico)
+            </h3>
+            <p style={{ margin: 0, fontSize: '13px', color: '#71636a' }}>
+              Escolha a posição dos atalhos em relação ao bloco de notícias em destaque na homepage.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: config.model === 'B' ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)',
+              gap: '12px',
+            }}
+          >
+            {config.model === 'B' ? (
+              <>
+                <label
+                  onClick={() => setConfig((prev) => ({ ...prev, posicaoServicos: 'entre' }))}
+                  style={{
+                    border: (config.posicaoServicos || 'entre') === 'entre' ? '2px solid #861e32' : '1px solid #e4dce0',
+                    background: (config.posicaoServicos || 'entre') === 'entre' ? '#fdf8f9' : 'white',
+                    borderRadius: '6px',
+                    padding: '12px 14px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="posicaoServicos"
+                    checked={(config.posicaoServicos || 'entre') === 'entre'}
+                    onChange={() => setConfig((prev) => ({ ...prev, posicaoServicos: 'entre' }))}
+                    style={{ accentColor: '#861e32' }}
+                  />
+                  <div>
+                    <strong style={{ display: 'block', fontSize: '13px', color: '#30252a' }}>Entre Manchete e Secundárias</strong>
+                    <span style={{ fontSize: '11.5px', color: '#71636a' }}>No meio da tela (Padrão)</span>
+                  </div>
+                </label>
+
+                <label
+                  onClick={() => setConfig((prev) => ({ ...prev, posicaoServicos: 'acima' }))}
+                  style={{
+                    border: config.posicaoServicos === 'acima' ? '2px solid #861e32' : '1px solid #e4dce0',
+                    background: config.posicaoServicos === 'acima' ? '#fdf8f9' : 'white',
+                    borderRadius: '6px',
+                    padding: '12px 14px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="posicaoServicos"
+                    checked={config.posicaoServicos === 'acima'}
+                    onChange={() => setConfig((prev) => ({ ...prev, posicaoServicos: 'acima' }))}
+                    style={{ accentColor: '#861e32' }}
+                  />
+                  <div>
+                    <strong style={{ display: 'block', fontSize: '13px', color: '#30252a' }}>Acima da Manchete</strong>
+                    <span style={{ fontSize: '11.5px', color: '#71636a' }}>No topo antes das notícias</span>
+                  </div>
+                </label>
+
+                <label
+                  onClick={() => setConfig((prev) => ({ ...prev, posicaoServicos: 'abaixo' }))}
+                  style={{
+                    border: config.posicaoServicos === 'abaixo' ? '2px solid #861e32' : '1px solid #e4dce0',
+                    background: config.posicaoServicos === 'abaixo' ? '#fdf8f9' : 'white',
+                    borderRadius: '6px',
+                    padding: '12px 14px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="posicaoServicos"
+                    checked={config.posicaoServicos === 'abaixo'}
+                    onChange={() => setConfig((prev) => ({ ...prev, posicaoServicos: 'abaixo' }))}
+                    style={{ accentColor: '#861e32' }}
+                  />
+                  <div>
+                    <strong style={{ display: 'block', fontSize: '13px', color: '#30252a' }}>Abaixo das Secundárias</strong>
+                    <span style={{ fontSize: '11.5px', color: '#71636a' }}>Logo após as 4 notícias</span>
+                  </div>
+                </label>
+              </>
+            ) : (
+              <>
+                <label
+                  onClick={() => setConfig((prev) => ({ ...prev, posicaoServicos: 'acima' }))}
+                  style={{
+                    border: (config.posicaoServicos === 'acima' || config.posicaoServicos === 'entre' || !config.posicaoServicos) ? '2px solid #861e32' : '1px solid #e4dce0',
+                    background: (config.posicaoServicos === 'acima' || config.posicaoServicos === 'entre' || !config.posicaoServicos) ? '#fdf8f9' : 'white',
+                    borderRadius: '6px',
+                    padding: '12px 14px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="posicaoServicos"
+                    checked={config.posicaoServicos === 'acima' || config.posicaoServicos === 'entre' || !config.posicaoServicos}
+                    onChange={() => setConfig((prev) => ({ ...prev, posicaoServicos: 'acima' }))}
+                    style={{ accentColor: '#861e32' }}
+                  />
+                  <div>
+                    <strong style={{ display: 'block', fontSize: '13px', color: '#30252a' }}>Acima da Grade 2×2</strong>
+                    <span style={{ fontSize: '11.5px', color: '#71636a' }}>No topo antes das 4 notícias</span>
+                  </div>
+                </label>
+
+                <label
+                  onClick={() => setConfig((prev) => ({ ...prev, posicaoServicos: 'abaixo' }))}
+                  style={{
+                    border: config.posicaoServicos === 'abaixo' ? '2px solid #861e32' : '1px solid #e4dce0',
+                    background: config.posicaoServicos === 'abaixo' ? '#fdf8f9' : 'white',
+                    borderRadius: '6px',
+                    padding: '12px 14px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="posicaoServicos"
+                    checked={config.posicaoServicos === 'abaixo'}
+                    onChange={() => setConfig((prev) => ({ ...prev, posicaoServicos: 'abaixo' }))}
+                    style={{ accentColor: '#861e32' }}
+                  />
+                  <div>
+                    <strong style={{ display: 'block', fontSize: '13px', color: '#30252a' }}>Abaixo da Grade 2×2</strong>
+                    <span style={{ fontSize: '11.5px', color: '#71636a' }}>Logo após as 4 notícias</span>
+                  </div>
+                </label>
+              </>
+            )}
+          </div>
+        </div>
+
         {/* Aviso de Destaques alinhado ao pedido do usuário */}
         <div
           style={{

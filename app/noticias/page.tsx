@@ -31,12 +31,12 @@ export default async function NoticiasIndexPage() {
       {/* Topo institucional unificado */}
       <HeaderPublico slugAtivo="noticias" />
 
-      {/* ── FAIXA HERO INSTITUCIONAL COM BREADCRUMB ALINHADO AO CONTAINER ── */}
+      {/* ── FAIXA COM BREADCRUMB ALINHADO AO CONTAINER (M9) ── */}
       <section
         style={{
           background: '#faf8f9',
           borderBottom: '1px solid #ebdbe0',
-          padding: '24px 0 28px 0',
+          padding: '14px 0',
         }}
       >
         <div style={CONTAINER_STYLE}>
@@ -48,7 +48,6 @@ export default async function NoticiasIndexPage() {
               gap: '8px',
               fontSize: '12.5px',
               color: '#71636a',
-              marginBottom: '16px',
               flexWrap: 'wrap',
             }}
           >
@@ -58,26 +57,6 @@ export default async function NoticiasIndexPage() {
             <span style={{ opacity: 0.4 }}>›</span>
             <span style={{ color: '#861e32', fontWeight: 600 }}>Notícias</span>
           </nav>
-
-          {/* Título Principal Direto */}
-          <h1
-            style={{
-              fontFamily: 'var(--font-condensed), sans-serif',
-              fontSize: '38px',
-              fontWeight: 800,
-              lineHeight: 1.05,
-              textTransform: 'uppercase',
-              color: '#30252a',
-              margin: '0 0 10px 0',
-              letterSpacing: '0.4px',
-            }}
-          >
-            Notícias da Categoria
-          </h1>
-
-          <p style={{ fontSize: '15.5px', color: '#65575e', lineHeight: 1.6, margin: 0, maxWidth: '820px' }}>
-            Acompanhe as assembleias, negociações da Convenção Coletiva, acordos salariais e ações do Sindicato em defesa dos trabalhadores químicos de São José dos Campos, Jacareí, Caçapava e Taubaté.
-          </p>
         </div>
       </section>
 

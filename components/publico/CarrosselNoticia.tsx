@@ -106,24 +106,23 @@ export default function CarrosselNoticia({ fotos, titulo }: CarrosselNoticiaProp
             color: '#ffffff',
             border: 'none',
             borderRadius: '6px',
-            padding: '6px 10px',
-            fontSize: '12px',
-            fontWeight: 600,
+            width: '32px',
+            height: '32px',
+            padding: 0,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
+            justifyContent: 'center',
             backdropFilter: 'blur(4px)',
             transition: 'background 0.15s ease',
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 3 21 3 21 9" />
             <polyline points="9 21 3 21 3 15" />
             <line x1="21" y1="3" x2="14" y2="10" />
             <line x1="3" y1="21" x2="10" y2="14" />
           </svg>
-          <span>Ver foto completa</span>
         </button>
 
         {/* Setas flutuantes sobre a imagem se houver mais de uma foto */}

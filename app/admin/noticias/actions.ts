@@ -131,6 +131,10 @@ export async function criarNoticia(
       return { error: `Erro ao salvar (${error.code}): ${error.message}` }
     }
 
+    if (data.destaque) {
+      await adicionarDestaqueSlots(novaNoticia.id)
+    }
+
     return { id: novaNoticia.id }
   } catch (err) {
     console.error('Erro inesperado ao criar notícia:', err)
@@ -178,6 +182,12 @@ export async function atualizarNoticia(
     if (error) {
       console.error('Erro ao atualizar notícia:', error)
       return { error: `Erro ao salvar (${error.code}): ${error.message}` }
+    }
+
+    if (data.destaque === true) {
+      await adicionarDestaqueSlots(id)
+    } else if (data.destaque === false) {
+      await removerDestaqueSlots(id)
     }
 
     return { ok: true }
@@ -486,6 +496,92 @@ export async function salvarOrdemDestaques(
     return { ok: true }
   } catch (err) {
     return { error: `Erro ao salvar destaques: ${err instanceof Error ? err.message : String(err)}` }
+  }
+}
+
+/**
+ * Adiciona uma notícia ao topo dos slots de destaque (deslocando o último se exceder 5)
+ */
+export async function adicionarDestaqueSlots(id: string): Promise<void> {
+  try {
+    const slotsAtuais = await obterOrdemDestaques()
+    const novosSlots = [id, ...slotsAtuais.filter((s) => s !== id)].slice(0, 5)
+    await salvarOrdemDestaques(novosSlots)
+  } catch (err) {
+    console.error('Erro ao adicionar destaque aos slots:', err)
+  }
+}
+
+/**
+ * Remove uma notícia dos slots de destaque da Homepage
+ */
+export async function removerDestaqueSlots(id: string): Promise<void> {
+  try {
+    const slotsAtuais = await obterOrdemDestaques()
+    const novosSlots = slotsAtuais.filter((s) => s !== id)
+    await salvarOrdemDestaques(novosSlots)
+  } catch (err) {
+    console.error('Erro ao remover destaque dos slots:', err)
+  }
+}
+
+/**
+ * Tenta obter a imagem pública de capa de uma postagem do Instagram via OpenGraph e salva no Storage.
+ */
+export async function buscarThumbnailInstagram(url: string): Promise<{ url: string } | { error: string }> {
+  try {
+    await getUsuarioLogado()
+    const cleanUrl = url.trim()
+    if (!cleanUrl.includes('instagram.com')) {
+      return { error: 'Link do Instagram inválido.' }
+    }
+
+    const apiUrl = `https://api.microlink.io?url=${encodeURIComponent(cleanUrl)}`
+    const res = await fetch(apiUrl, { next: { revalidate: 0 } })
+    if (!res.ok) {
+      return { error: 'Não foi possível extrair a foto automaticamente. Copie a imagem no Instagram e cole aqui com Cmd+V.' }
+    }
+    const json = await res.json()
+    const imageUrl = json?.data?.image?.url
+
+    if (!imageUrl) {
+      return { error: 'O Instagram não disponibilizou imagem pública direta. Copie a imagem e cole aqui com Cmd+V.' }
+    }
+
+    const imgRes = await fetch(imageUrl)
+    if (!imgRes.ok) {
+      return { error: 'Falha ao baixar imagem do Instagram.' }
+    }
+    const buffer = Buffer.from(await imgRes.arrayBuffer())
+
+    const supabaseAdmin = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    )
+
+    const timestamp = Date.now()
+    const aleatorio = Math.random().toString(36).slice(2, 8)
+    const caminho = `noticias/fotos/${timestamp}-${aleatorio}.jpg`
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from('midias')
+      .upload(caminho, buffer, {
+        contentType: 'image/jpeg',
+        upsert: false,
+      })
+
+    if (uploadError) {
+      return { error: 'Erro ao salvar a foto no Storage.' }
+    }
+
+    const { data: urlData } = supabaseAdmin.storage
+      .from('midias')
+      .getPublicUrl(caminho)
+
+    return { url: urlData.publicUrl }
+  } catch (err) {
+    console.error('Erro em buscarThumbnailInstagram:', err)
+    return { error: 'Erro ao buscar imagem. Recomendamos copiar a imagem e colar aqui (Cmd+V).' }
   }
 }
 

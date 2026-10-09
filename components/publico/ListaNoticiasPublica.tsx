@@ -27,34 +27,19 @@ const ITENS_POR_PAGINA = 20
 
 export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticiasPublicaProps) {
   const [busca, setBusca] = useState('')
-  const [chapeuSelecionado, setChapeuSelecionado] = useState<string>('todos')
   const [pagina, setPagina] = useState(1)
 
-  // Extrai lista única de assuntos / chapéus
-  const chapeusDisponiveis = useMemo(() => {
-    const set = new Set<string>()
-    noticiasIniciais.forEach((n) => {
-      if (n.chapeu && n.chapeu.trim()) set.add(n.chapeu.trim())
-    })
-    return Array.from(set).sort()
-  }, [noticiasIniciais])
-
-  // Filtra as matérias
+  // Filtra as matérias apenas pelo campo de busca textual (conforme M9)
   const filtradas = useMemo(() => {
+    if (!busca.trim()) return noticiasIniciais
+    const termo = busca.toLowerCase()
     return noticiasIniciais.filter((n) => {
-      if (chapeuSelecionado !== 'todos' && n.chapeu !== chapeuSelecionado) {
-        return false
-      }
-      if (busca.trim()) {
-        const termo = busca.toLowerCase()
-        const noTitulo = n.titulo.toLowerCase().includes(termo)
-        const noResumo = n.resumo?.toLowerCase().includes(termo) ?? false
-        const noChapeu = n.chapeu?.toLowerCase().includes(termo) ?? false
-        if (!noTitulo && !noResumo && !noChapeu) return false
-      }
-      return true
+      const noTitulo = n.titulo.toLowerCase().includes(termo)
+      const noResumo = n.resumo?.toLowerCase().includes(termo) ?? false
+      const noChapeu = n.chapeu?.toLowerCase().includes(termo) ?? false
+      return noTitulo || noResumo || noChapeu
     })
-  }, [noticiasIniciais, busca, chapeuSelecionado])
+  }, [noticiasIniciais, busca])
 
   const totalPaginas = Math.ceil(filtradas.length / ITENS_POR_PAGINA) || 1
   const itensPagina = useMemo(() => {
@@ -62,356 +47,125 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
     return filtradas.slice(inicio, inicio + ITENS_POR_PAGINA)
   }, [filtradas, pagina])
 
-  const temDestaque = busca.trim() === '' && chapeuSelecionado === 'todos' && pagina === 1 && itensPagina.length > 0
-  const materiaDestaque = temDestaque ? itensPagina[0] : null
-  const materiasParaGrade = temDestaque ? itensPagina.slice(1) : itensPagina
-
   function mudarBusca(val: string) {
     setBusca(val)
     setPagina(1)
   }
 
-  function mudarChapeu(val: string) {
-    setChapeuSelecionado(val)
-    setPagina(1)
-  }
-
   return (
     <div>
-      {/* ── BARRA DE BUSCA E FILTROS ── */}
+      {/* ── BARRA DE PESQUISA (M9: Mantém campo de pesquisa, sem filtro por assunto) ── */}
       <div
         style={{
           background: '#faf8f9',
           border: '1px solid #ebdbe0',
-          borderRadius: '6px',
-          padding: '18px 20px',
+          borderRadius: '8px',
+          padding: '16px 20px',
           marginBottom: '28px',
         }}
       >
-        <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ flex: 1, minWidth: '240px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#71636a', marginBottom: '6px', textTransform: 'uppercase' }}>
-              Pesquisar Notícias
-            </label>
-            <input
-              type="text"
-              value={busca}
-              onChange={(e) => mudarBusca(e.target.value)}
-              placeholder="Digite termos como campanha salarial, assembleia, CCT..."
+        <div style={{ position: 'relative' }}>
+          <input
+            type="text"
+            value={busca}
+            onChange={(e) => mudarBusca(e.target.value)}
+            placeholder="Pesquisar por notícias, acordos, comunicados ou palavras-chave…"
+            style={{
+              width: '100%',
+              padding: '12px 16px 12px 42px',
+              border: '1px solid #cbd7de',
+              borderRadius: '6px',
+              fontSize: '14.5px',
+              boxSizing: 'border-box',
+              outline: 'none',
+              background: '#ffffff',
+              color: '#1a1417',
+              fontFamily: 'inherit',
+            }}
+          />
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#71636a"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{
+              position: 'absolute',
+              left: '14px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              pointerEvents: 'none',
+            }}
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          {busca && (
+            <button
+              onClick={() => mudarBusca('')}
+              type="button"
               style={{
-                width: '100%',
-                padding: '11px 14px',
-                border: '1px solid #cbd7de',
-                borderRadius: '5px',
-                fontSize: '14px',
-                boxSizing: 'border-box',
-                outline: 'none',
+                position: 'absolute',
+                right: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                color: '#71636a',
+                fontSize: '18px',
+                cursor: 'pointer',
+                padding: '4px',
               }}
-            />
-          </div>
-
-          {chapeusDisponiveis.length > 0 && (
-            <div style={{ minWidth: '200px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#71636a', marginBottom: '6px', textTransform: 'uppercase' }}>
-                Filtrar por Assunto
-              </label>
-              <select
-                value={chapeuSelecionado}
-                onChange={(e) => mudarChapeu(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '11px 14px',
-                  border: '1px solid #cbd7de',
-                  borderRadius: '5px',
-                  fontSize: '14px',
-                  background: '#ffffff',
-                  boxSizing: 'border-box',
-                  outline: 'none',
-                }}
-              >
-                <option value="todos">Todos os assuntos ({noticiasIniciais.length})</option>
-                {chapeusDisponiveis.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
+              title="Limpar pesquisa"
+            >
+              ×
+            </button>
           )}
         </div>
 
-        <div style={{ marginTop: '12px', fontSize: '13px', color: '#71636a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>Exibindo <strong>{filtradas.length}</strong> {filtradas.length === 1 ? 'matéria encontrada' : 'matérias encontradas'}</span>
-          {(busca || chapeuSelecionado !== 'todos') && (
+        <div style={{ marginTop: '10px', fontSize: '13px', color: '#71636a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>
+            Exibindo <strong>{filtradas.length}</strong> {filtradas.length === 1 ? 'notícia' : 'notícias'}
+          </span>
+          {busca && (
             <button
-              onClick={() => { setBusca(''); setChapeuSelecionado('todos'); setPagina(1) }}
-              style={{ background: 'none', border: 'none', color: '#861e32', fontSize: '12px', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+              onClick={() => mudarBusca('')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#861e32',
+                fontSize: '12.5px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                textDecoration: 'underline',
+              }}
             >
-              Limpar filtros
+              Limpar pesquisa
             </button>
           )}
         </div>
       </div>
 
-      {/* ── SUPER DESTAQUE DA MATÉRIA PRINCIPAL (Quando sem filtro e na 1ª página) ── */}
-      {temDestaque && materiaDestaque && (() => {
-        let fotoUrlDestaque = materiaDestaque.banner_url
-        let focoYDestaque = materiaDestaque.imagem_y ?? 50
-        if (materiaDestaque.fotos_json) {
-          try {
-            const arr = JSON.parse(materiaDestaque.fotos_json)
-            if (arr[0]?.url) {
-              fotoUrlDestaque = arr[0].url
-              focoYDestaque = arr[0].foco ?? focoYDestaque
-            }
-          } catch {}
-        }
-
-        return (
-          <div style={{ marginBottom: '36px' }}>
-            <Link
-              href={`/noticias/${materiaDestaque.slug}`}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '58% 42%',
-                background: '#ffffff',
-                border: '1px solid #ebdbe0',
-                borderRadius: '8px',
-                overflow: 'hidden',
-                textDecoration: 'none',
-                color: 'inherit',
-                boxShadow: '0 4px 14px rgba(48,37,42,0.05)',
-                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-              }}
-              className="news-card-hover super-destaque-grid"
-            >
-              <div
-                style={{
-                  width: '100%',
-                  aspectRatio: '3 / 2',
-                  background: '#24141A',
-                  overflow: 'hidden',
-                  position: 'relative',
-                }}
-              >
-                {fotoUrlDestaque ? (
-                  <img
-                    src={fotoUrlDestaque}
-                    alt={materiaDestaque.titulo}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      objectPosition: `50% ${focoYDestaque}%`,
-                      display: 'block',
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: '#f8f2f4',
-                    }}
-                  >
-                    <img
-                      src="/logo-sindicato.png"
-                      alt="Sindicato"
-                      style={{ maxHeight: '72px', opacity: 0.85 }}
-                    />
-                  </div>
-                )}
-                {materiaDestaque.chapeu && (
-                  <span
-                    style={{
-                      position: 'absolute',
-                      top: '14px',
-                      left: '14px',
-                      background: '#861e32',
-                      color: '#ffffff',
-                      fontSize: '11px',
-                      fontWeight: 800,
-                      padding: '4px 9px',
-                      borderRadius: '3px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                    }}
-                  >
-                    {materiaDestaque.chapeu}
-                  </span>
-                )}
-                {(() => {
-                  const orig = detectarOrigem(materiaDestaque.url_referencia)
-                  if (orig === 'youtube') {
-                    return (
-                      <span
-                        style={{
-                          position: 'absolute',
-                          top: '14px',
-                          right: '14px',
-                          background: '#b91c1c',
-                          color: '#ffffff',
-                          fontSize: '11px',
-                          fontWeight: 800,
-                          padding: '4px 9px',
-                          borderRadius: '3px',
-                          letterSpacing: '0.5px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
-                        }}
-                      >
-                        ▶ VÍDEO
-                      </span>
-                    )
-                  }
-                  if (orig === 'instagram') {
-                    return (
-                      <span
-                        style={{
-                          position: 'absolute',
-                          top: '14px',
-                          right: '14px',
-                          background: '#be185d',
-                          color: '#ffffff',
-                          fontSize: '11px',
-                          fontWeight: 800,
-                          padding: '4px 9px',
-                          borderRadius: '3px',
-                          letterSpacing: '0.5px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
-                        }}
-                      >
-                        📷 INSTAGRAM
-                      </span>
-                    )
-                  }
-                  return null
-                })()}
-              </div>
-
-              <div
-                style={{
-                  padding: '28px 32px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                }}
-              >
-                {materiaDestaque.publicado_em && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      fontSize: '12.5px',
-                      color: '#71636a',
-                      marginBottom: '10px',
-                    }}
-                  >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#71636a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                      <line x1="16" y1="2" x2="16" y2="6" />
-                      <line x1="8" y1="2" x2="8" y2="6" />
-                      <line x1="3" y1="10" x2="21" y2="10" />
-                    </svg>
-                    <span>{formatarDataExtenso(materiaDestaque.publicado_em)}</span>
-                  </div>
-                )}
-                <h2
-                  style={{
-                    fontFamily: 'var(--font-condensed), sans-serif',
-                    fontSize: '28px',
-                    fontWeight: 800,
-                    lineHeight: 1.15,
-                    color: '#1a1417',
-                    margin: '0 0 12px 0',
-                    letterSpacing: '-0.2px',
-                  }}
-                >
-                  {materiaDestaque.titulo}
-                </h2>
-                {materiaDestaque.resumo && (
-                  <p
-                    style={{
-                      fontSize: '15px',
-                      lineHeight: 1.6,
-                      color: '#554950',
-                      margin: '0 0 20px 0',
-                    }}
-                  >
-                    {materiaDestaque.resumo}
-                  </p>
-                )}
-                <div>
-                  <span
-                    style={{
-                      background: '#861e32',
-                      color: '#ffffff',
-                      padding: '9px 18px',
-                      borderRadius: '5px',
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                    }}
-                  >
-                    Ler matéria completa →
-                  </span>
-                </div>
-              </div>
-            </Link>
-
-            {materiasParaGrade.length > 0 && (
-              <div
-                style={{
-                  margin: '36px 0 20px 0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                }}
-              >
-                <span
-                  style={{
-                    width: '4px',
-                    height: '20px',
-                    background: '#861e32',
-                    display: 'inline-block',
-                    borderRadius: '2px',
-                  }}
-                />
-                <h3
-                  style={{
-                    fontFamily: 'var(--font-condensed), sans-serif',
-                    fontSize: '22px',
-                    fontWeight: 800,
-                    textTransform: 'uppercase',
-                    color: '#30252a',
-                    margin: 0,
-                  }}
-                >
-                  Mais Notícias da Categoria
-                </h3>
-              </div>
-            )}
-          </div>
-        )
-      })()}
-
-      {/* ── GRADE DE NOTÍCIAS ── */}
+      {/* ── LISTAGEM DE NOTÍCIAS EM FORMATO LISTA COM FOTO LATERAL (M9) ── */}
       {itensPagina.length === 0 ? (
-        <div style={{ background: '#ffffff', border: '1px solid #e4dce0', borderRadius: '8px', padding: '40px', textAlign: 'center', color: '#71636a' }}>
-          <p style={{ fontSize: '16px', margin: 0 }}>Nenhuma notícia encontrada com os filtros selecionados.</p>
+        <div
+          style={{
+            background: '#ffffff',
+            border: '1px solid #e4dce0',
+            borderRadius: '8px',
+            padding: '48px 24px',
+            textAlign: 'center',
+            color: '#71636a',
+          }}
+        >
+          <p style={{ fontSize: '16px', margin: 0 }}>Nenhuma notícia encontrada para o termo pesquisado.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '22px', marginBottom: '32px' }}>
-          {materiasParaGrade.map((item) => {
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '36px' }}>
+          {itensPagina.map((item) => {
             let fotoUrl = item.banner_url
             let focoY = item.imagem_y ?? 50
             if (item.fotos_json) {
@@ -423,24 +177,40 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
                 }
               } catch {}
             }
+            const orig = detectarOrigem(item.url_referencia)
 
             return (
               <Link
                 key={item.id}
                 href={`/noticias/${item.slug}`}
                 style={{
+                  display: 'flex',
+                  gap: '24px',
                   background: '#ffffff',
                   border: '1px solid #ebdbe0',
-                  borderRadius: '6px',
-                  overflow: 'hidden',
+                  borderRadius: '8px',
+                  padding: '18px 20px',
                   textDecoration: 'none',
                   color: 'inherit',
-                  display: 'flex',
-                  flexDirection: 'column',
+                  transition: 'border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease',
+                  boxShadow: '0 2px 8px rgba(48,37,42,0.03)',
                 }}
-                className="news-card-hover"
+                className="noticia-card-horizontal"
               >
-                <div style={{ width: '100%', aspectRatio: '3 / 2', background: '#eee', overflow: 'hidden', position: 'relative' }}>
+                {/* Foto Lateral 3:2 */}
+                <div
+                  style={{
+                    width: '240px',
+                    minWidth: '240px',
+                    aspectRatio: '3 / 2',
+                    background: '#2b2628',
+                    borderRadius: '6px',
+                    overflow: 'hidden',
+                    position: 'relative',
+                    flexShrink: 0,
+                  }}
+                  className="noticia-thumb-lateral"
+                >
                   {fotoUrl ? (
                     <img
                       src={fotoUrl}
@@ -454,112 +224,134 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
                       }}
                     />
                   ) : (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8f2f4', padding: '20px' }}>
+                    /* Imagem padrão com fundo cinza escuro e logo maior ocupando ~40% (M11-D) */
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: '#2b2628',
+                        padding: '12px',
+                      }}
+                    >
                       <img
                         src="/logo-sindicato.png"
                         alt="Sindicato dos Químicos"
-                        style={{ maxHeight: '72px', maxWidth: '80%', objectFit: 'contain', opacity: 0.85 }}
+                        style={{
+                          maxWidth: '42%',
+                          maxHeight: '42%',
+                          objectFit: 'contain',
+                          filter: 'brightness(1.1) drop-shadow(0 2px 8px rgba(0,0,0,0.3))',
+                        }}
                       />
                     </div>
                   )}
-                  {item.chapeu && (
+
+                  {orig === 'youtube' && (
                     <span
                       style={{
                         position: 'absolute',
-                        top: '12px',
-                        left: '12px',
-                        background: '#861e32',
+                        top: '10px',
+                        right: '10px',
+                        background: '#b91c1c',
                         color: '#ffffff',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        padding: '4px 8px',
+                        fontSize: '10px',
+                        fontWeight: 800,
+                        padding: '3px 7px',
                         borderRadius: '3px',
-                        textTransform: 'uppercase',
+                        letterSpacing: '0.4px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
                       }}
                     >
-                      {item.chapeu}
+                      ▶ VÍDEO
                     </span>
                   )}
-                  {(() => {
-                    const orig = detectarOrigem(item.url_referencia)
-                    if (orig === 'youtube') {
-                      return (
-                        <span
-                          style={{
-                            position: 'absolute',
-                            top: '12px',
-                            right: '12px',
-                            background: '#b91c1c',
-                            color: '#ffffff',
-                            fontSize: '10.5px',
-                            fontWeight: 800,
-                            padding: '3px 7px',
-                            borderRadius: '3px',
-                            letterSpacing: '0.4px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
-                          }}
-                        >
-                          ▶ VÍDEO
-                        </span>
-                      )
-                    }
-                    if (orig === 'instagram') {
-                      return (
-                        <span
-                          style={{
-                            position: 'absolute',
-                            top: '12px',
-                            right: '12px',
-                            background: '#be185d',
-                            color: '#ffffff',
-                            fontSize: '10.5px',
-                            fontWeight: 800,
-                            padding: '3px 7px',
-                            borderRadius: '3px',
-                            letterSpacing: '0.4px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
-                          }}
-                        >
-                          📷 INSTAGRAM
-                        </span>
-                      )
-                    }
-                    return null
-                  })()}
+                  {orig === 'instagram' && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        background: '#be185d',
+                        color: '#ffffff',
+                        fontSize: '10px',
+                        fontWeight: 800,
+                        padding: '3px 7px',
+                        borderRadius: '3px',
+                        letterSpacing: '0.4px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+                      }}
+                    >
+                      📷 INSTAGRAM
+                    </span>
+                  )}
                 </div>
 
-                <div style={{ padding: '18px 20px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    {item.publicado_em && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#71636a', marginBottom: '8px' }}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#71636a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                          <line x1="16" y1="2" x2="16" y2="6" />
-                          <line x1="8" y1="2" x2="8" y2="6" />
-                          <line x1="3" y1="10" x2="21" y2="10" />
-                        </svg>
-                        <span>{formatarDataExtenso(item.publicado_em)}</span>
-                      </div>
+                {/* Conteúdo ao lado */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                    {item.chapeu && (
+                      <span
+                        style={{
+                          color: '#861e32',
+                          fontSize: '12px',
+                          fontWeight: 800,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.6px',
+                        }}
+                      >
+                        {item.chapeu}
+                      </span>
                     )}
-                    <h3 style={{ fontSize: '17px', fontWeight: 700, lineHeight: 1.35, color: '#30252a', margin: '0 0 8px 0' }}>
-                      {item.titulo}
-                    </h3>
-                    {item.resumo && (
-                      <p style={{ fontSize: '13px', lineHeight: 1.5, color: '#71636a', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                        {item.resumo}
-                      </p>
+                    {item.chapeu && item.publicado_em && (
+                      <span style={{ color: '#d0c2c7', fontSize: '12px' }}>•</span>
+                    )}
+                    {item.publicado_em && (
+                      <span style={{ fontSize: '12.5px', color: '#71636a' }}>
+                        {formatarDataExtenso(item.publicado_em)}
+                      </span>
                     )}
                   </div>
 
-                  <div style={{ marginTop: '14px', fontSize: '13px', fontWeight: 700, color: '#861e32' }}>
-                    Ler matéria completa →
-                  </div>
+                  <h2
+                    style={{
+                      fontFamily: 'var(--font-condensed), sans-serif',
+                      fontSize: '22px',
+                      fontWeight: 800,
+                      lineHeight: 1.22,
+                      color: '#1a1417',
+                      margin: '0 0 8px 0',
+                      letterSpacing: '-0.1px',
+                    }}
+                    className="noticia-titulo-hover"
+                  >
+                    {item.titulo}
+                  </h2>
+
+                  {item.resumo && (
+                    <p
+                      style={{
+                        fontSize: '14.5px',
+                        lineHeight: 1.55,
+                        color: '#554950',
+                        margin: 0,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {item.resumo}
+                    </p>
+                  )}
                 </div>
               </Link>
             )
@@ -567,7 +359,7 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
         </div>
       )}
 
-      {/* ── PAGINAÇÃO (CONFORME DOCUMENTO MESTRE § 1.7) ── */}
+      {/* ── PAGINAÇÃO ── */}
       {totalPaginas > 1 && (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '20px' }}>
           <button
@@ -585,7 +377,7 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
           >
             « Início
           </button>
-          
+
           {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((num) => (
             <button
               key={num}
@@ -624,9 +416,22 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
       )}
 
       <style>{`
-        @media (max-width: 820px) {
-          .super-destaque-grid {
-            grid-template-columns: 1fr !important;
+        .noticia-card-horizontal:hover {
+          border-color: #861e32 !important;
+          box-shadow: 0 4px 14px rgba(134, 30, 50, 0.08) !important;
+        }
+        .noticia-card-horizontal:hover .noticia-titulo-hover {
+          color: #861e32 !important;
+        }
+        @media (max-width: 720px) {
+          .noticia-card-horizontal {
+            flex-direction: column !important;
+            gap: 14px !important;
+            padding: 14px !important;
+          }
+          .noticia-thumb-lateral {
+            width: 100% !important;
+            min-width: 100% !important;
           }
         }
       `}</style>

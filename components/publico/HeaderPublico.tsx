@@ -48,14 +48,14 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
     }, 180)
   }
 
-  // Grupos e itens conforme o Organograma do projeto
+  // Grupos e itens conforme o Organograma do projeto (Sentence case e 'e' conforme M11-G)
   const menus: MenuGrupo[] = [
     {
       nome: 'Sindicato',
       items: [
         {
-          titulo: 'Nossa História',
-          subtitulo: 'A trajetória e lutas da categoria química',
+          titulo: 'Nossa história',
+          subtitulo: '',
           href: '/paginas/historia',
           icone: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -65,8 +65,8 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           ),
         },
         {
-          titulo: 'Diretoria Eleita',
-          subtitulo: 'Executiva, colegiada e conselho fiscal',
+          titulo: 'Diretoria eleita',
+          subtitulo: '',
           href: '/paginas/diretoria',
           icone: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -78,8 +78,8 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           ),
         },
         {
-          titulo: 'Filie-se ao Sindicato',
-          subtitulo: 'Sindicalize-se online e fortaleça sua voz',
+          titulo: 'Filie-se ao sindicato',
+          subtitulo: '',
           href: '/paginas/fique-socio',
           icone: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -89,8 +89,8 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           ),
         },
         {
-          titulo: 'Sedes & Atendimento',
-          subtitulo: 'SJC, Taubaté, Jacareí e Caçapava',
+          titulo: 'Sedes e atendimento',
+          subtitulo: '',
           href: '/paginas/fale-conosco',
           icone: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -100,8 +100,8 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           ),
         },
         {
-          titulo: 'Links Úteis',
-          subtitulo: 'Órgãos trabalhistas e centrais sindicais',
+          titulo: 'Links úteis',
+          subtitulo: '',
           href: '/paginas/links-uteis',
           icone: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -111,8 +111,8 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           ),
         },
         {
-          titulo: 'Política de Privacidade',
-          subtitulo: 'Proteção de dados e conformidade LGPD',
+          titulo: 'Política de privacidade',
+          subtitulo: '',
           href: '/paginas/privacidade',
           icone: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -127,8 +127,8 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
       nome: 'Serviços',
       items: [
         {
-          titulo: 'Colônia de Férias',
-          subtitulo: 'Unidades em Caraguatatuba e São Sebastião',
+          titulo: 'Colônia de férias',
+          subtitulo: '',
           href: '/paginas/colonia',
           icone: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -143,8 +143,8 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           ),
         },
         {
-          titulo: 'Guia de Convênios',
-          subtitulo: 'Descontos em saúde, educação e lazer',
+          titulo: 'Guia de convênios',
+          subtitulo: '',
           href: '/paginas/convenios',
           icone: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -154,8 +154,8 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           ),
         },
         {
-          titulo: 'Carteirinha do Associado',
-          subtitulo: 'Solicitação da 1ª e 2ª via digital do sócio',
+          titulo: 'Carteirinha do associado',
+          subtitulo: '',
           href: '/paginas/carteirinha',
           icone: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -168,8 +168,8 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           ),
         },
         {
-          titulo: 'Atualização Cadastral',
-          subtitulo: 'Mantenha seus dados e dependentes em dia',
+          titulo: 'Atualização cadastral',
+          subtitulo: '',
           href: '/paginas/atualizar-cadastro',
           icone: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -185,8 +185,8 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
       nome: 'Jurídico',
       items: [
         {
-          titulo: 'Convenções Coletivas (CCT)',
-          subtitulo: 'Acordos salariais e direitos conquistados',
+          titulo: 'Convenções coletivas (CCT)',
+          subtitulo: '',
           href: '/paginas/cct',
           icone: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -198,8 +198,8 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           ),
         },
         {
-          titulo: 'Atendimento & Plantão',
-          subtitulo: 'Assessoria jurídica para o trabalhador químico',
+          titulo: 'Atendimento e plantão',
+          subtitulo: '',
           href: '/paginas/juridico',
           icone: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -211,8 +211,8 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           ),
         },
         {
-          titulo: 'Processos Coletivos',
-          subtitulo: 'Ações judiciais em defesa da categoria',
+          titulo: 'Processos coletivos',
+          subtitulo: '',
           href: '/paginas/processos',
           icone: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -223,7 +223,7 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
         },
         {
           titulo: 'Homologações',
-          subtitulo: 'Regras, documentos e suporte de rescisão',
+          subtitulo: '',
           href: '/paginas/homologacoes',
           icone: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -233,8 +233,8 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           ),
         },
         {
-          titulo: 'Canal de Denúncias',
-          subtitulo: 'Canal seguro e sigiloso para desvios nas empresas',
+          titulo: 'Canal de denúncias',
+          subtitulo: '',
           href: '/paginas/denuncia',
           icone: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -248,8 +248,8 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
       nome: 'Imprensa',
       items: [
         {
-          titulo: 'Notícias & Coberturas',
-          subtitulo: 'Arquivo completo de matérias e assembleias',
+          titulo: 'Notícias e coberturas',
+          subtitulo: '',
           href: '/noticias',
           icone: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -262,7 +262,7 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
         },
         {
           titulo: 'Jornal Boca no Trombone',
-          subtitulo: 'Acervo digital de edições impressas em PDF',
+          subtitulo: '',
           href: '/jornais',
           icone: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -272,8 +272,8 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           ),
         },
         {
-          titulo: 'Boletim por E-mail',
-          subtitulo: 'Receba informativos diretamente no e-mail',
+          titulo: 'Boletim por e-mail',
+          subtitulo: '',
           href: '/paginas/cadastro-noticias',
           icone: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -325,25 +325,97 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
             }}
             className="header-main-bar"
           >
-            {/* Logo Exclusivo (sem nome por extenso, copiando sindmetalsjc.org.br) */}
-            <Link
-              href="/"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                textDecoration: 'none',
-                color: 'inherit',
-                flexShrink: 0,
-              }}
-              title="Sindicato dos Químicos de São José dos Campos e Região"
-            >
-              <img
-                src="/logo-sindicato.svg"
-                alt="Sindicato dos Químicos de São José dos Campos e Região"
-                style={{ height: '104px', width: 'auto', display: 'block' }}
-                className="header-logo-img"
+            {/* Bloco de Logos: Sindicato + Centrais (CSP-Conlutas e Unidos pra Lutar) integrados no topo conforme M11-H */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
+              <Link
+                href="/"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  flexShrink: 0,
+                }}
+                title="Sindicato dos Químicos de São José dos Campos e Região"
+              >
+                <div style={{ height: '104px', display: 'flex', alignItems: 'center', overflow: 'visible' }}>
+                  <img
+                    src="/logo-sindicato.svg"
+                    alt="Sindicato dos Químicos de São José dos Campos e Região"
+                    style={{
+                      height: '104px',
+                      width: 'auto',
+                      display: 'block',
+                      transform: 'scale(1.25)',
+                      transformOrigin: 'left center',
+                    }}
+                    className="header-logo-img"
+                  />
+                </div>
+              </Link>
+
+              {/* Separador vertical sutil */}
+              <div
+                style={{
+                  width: '1px',
+                  height: '42px',
+                  background: 'rgba(255,255,255,0.2)',
+                  flexShrink: 0,
+                }}
+                className="header-affiliation-sep"
               />
-            </Link>
+
+              {/* Logos de Filiação integrados lado a lado, com o dobro do tamanho (M11-H) */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  flexShrink: 0,
+                }}
+                className="header-affiliation-group"
+              >
+                <a
+                  href="https://www.cspconlutas.org.br"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    opacity: 0.95,
+                    transition: 'opacity 0.15s ease',
+                  }}
+                  title="CSP-Conlutas — Central Sindical e Popular"
+                  className="header-affiliation-link"
+                >
+                  <img
+                    src="/logo-csp-conlutas.png"
+                    alt="CSP-Conlutas"
+                    style={{ height: '36px', width: 'auto', display: 'block', filter: 'brightness(1.1)' }}
+                  />
+                </a>
+
+                <a
+                  href="https://www.instagram.com/unidospralutar/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    opacity: 0.95,
+                    transition: 'opacity 0.15s ease',
+                  }}
+                  title="Unidos pra Lutar"
+                  className="header-affiliation-link"
+                >
+                  <img
+                    src="/logo-unidos-pra-lutar.png"
+                    alt="Unidos pra Lutar"
+                    style={{ height: '36px', width: 'auto', display: 'block' }}
+                  />
+                </a>
+              </div>
+            </div>
 
 
           {/* Navegação Desktop */}
@@ -456,7 +528,7 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                             marginBottom: '4px',
                           }}
                         >
-                          {grupo.nome} • Acesso Rápido
+                          {grupo.nome}
                         </div>
 
                         {grupo.items.map((item) => (
@@ -466,9 +538,9 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                             onClick={() => setDropdownAtivo(null)}
                             style={{
                               display: 'flex',
-                              alignItems: 'flex-start',
+                              alignItems: 'center',
                               gap: '12px',
-                              padding: '10px 12px',
+                              padding: '9px 12px',
                               borderRadius: '6px',
                               textDecoration: 'none',
                               color: '#30252a',
@@ -478,40 +550,27 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                           >
                             <div
                               style={{
-                                width: '32px',
-                                height: '32px',
+                                width: '30px',
+                                height: '30px',
                                 borderRadius: '6px',
                                 background: '#f8f2f4',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 flexShrink: 0,
-                                marginTop: '2px',
                               }}
                             >
                               {item.icone}
                             </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div
-                                style={{
-                                  fontSize: '13.5px',
-                                  fontWeight: 700,
-                                  color: '#30252a',
-                                  lineHeight: 1.3,
-                                }}
-                              >
-                                {item.titulo}
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: '11.5px',
-                                  color: '#71636a',
-                                  lineHeight: 1.35,
-                                  marginTop: '2px',
-                                }}
-                              >
-                                {item.subtitulo}
-                              </div>
+                            <div
+                              style={{
+                                fontSize: '13.5px',
+                                fontWeight: 600,
+                                color: '#30252a',
+                                lineHeight: 1.3,
+                              }}
+                            >
+                              {item.titulo}
                             </div>
                           </Link>
                         ))}
@@ -585,85 +644,7 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
         </div>
       </div>
 
-      {/* ── 2. SUB-BARRA COM AS CENTRAIS (ABAIXO DO MENU PRINCIPAL) ── */}
-      <div
-        style={{
-          background: '#521322',
-          borderBottom: '3px solid #861e32',
-          color: '#f6e7ec',
-          fontSize: '12px',
-          padding: '7px 0',
-        }}
-        className="header-sub-bar"
-      >
-        <div
-          style={{
-            ...CONTAINER_STYLE,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            flexWrap: 'wrap',
-          }}
-        >
-          <span
-            style={{
-              fontSize: '11px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.8px',
-              opacity: 0.7,
-              fontWeight: 700,
-            }}
-          >
-            Filiado à:
-          </span>
-          <a
-            href="https://www.cspconlutas.org.br"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              color: '#f6e7ec',
-              textDecoration: 'none',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              opacity: 0.95,
-              transition: 'opacity 0.15s ease',
-            }}
-            title="CSP-Conlutas — Central Sindical e Popular"
-            className="header-affiliation-link"
-          >
-            <img
-              src="/logo-csp-conlutas.png"
-              alt="CSP-Conlutas"
-              style={{ height: '18px', width: 'auto', display: 'block', filter: 'brightness(1.1)' }}
-            />
-          </a>
-          <span style={{ opacity: 0.35 }}>•</span>
-          <a
-            href="https://www.instagram.com/unidospralutar/"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              color: '#f6e7ec',
-              textDecoration: 'none',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              opacity: 0.95,
-              transition: 'opacity 0.15s ease',
-            }}
-            title="Unidos pra Lutar"
-            className="header-affiliation-link"
-          >
-            <img
-              src="/logo-unidos-pra-lutar.png"
-              alt="Unidos pra Lutar"
-              style={{ height: '19px', width: 'auto', display: 'block' }}
-            />
-            <span style={{ fontSize: '11.5px', fontWeight: 600, letterSpacing: '0.3px' }}>Unidos pra Lutar</span>
-          </a>
-        </div>
-      </div>
+
 
       {/* ── 3. MENU MOBILE DRAWER ── */}
       {mobileMenuAberto && (
@@ -816,6 +797,12 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
         .btn-filie-se:hover {
           background: #9c243c !important;
           transform: translateY(-1px);
+        }
+        @media (max-width: 680px) {
+          .header-affiliation-sep,
+          .header-affiliation-group {
+            display: none !important;
+          }
         }
         .header-affiliation-link:hover {
           opacity: 1 !important;

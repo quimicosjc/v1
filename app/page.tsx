@@ -110,6 +110,7 @@ export default async function HomePage() {
   let hidden: string[] = []
   let shortcuts = ['fique-socio', 'denuncia', 'colonia', 'juridico']
   let model: 'A' | 'B' = 'B' // Padrão B com 1 manchete + 4 secundárias
+  let posicaoServicos: 'entre' | 'acima' | 'abaixo' = 'entre'
   let banners: BannerItemData[] = BANNERS_PADRAO
   let footerTexto: string | null = null
 
@@ -126,6 +127,9 @@ export default async function HomePage() {
       if (Array.isArray(v.hidden)) hidden = v.hidden
       if (Array.isArray(v.shortcuts) && v.shortcuts.length > 0) shortcuts = v.shortcuts
       if (v.model === 'A' || v.model === 'B') model = v.model
+      if (v.posicaoServicos === 'entre' || v.posicaoServicos === 'acima' || v.posicaoServicos === 'abaixo') {
+        posicaoServicos = v.posicaoServicos
+      }
       if (Array.isArray(v.banners) && v.banners.length > 0) {
         banners = v.banners.map((b: any, idx: number) => ({
           id: b.id || `b-${idx}`,
@@ -193,20 +197,48 @@ export default async function HomePage() {
     }
   }
 
-  // 4. Busca edições publicadas do jornal Boca no Trombone
+  // 4. Busca edições publicadas do jornal Boca no Trombone e lista de publicações ativas
   const supabaseAdmin = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
   const { data: dbEdicoes } = await supabaseAdmin
     .from('edicoes_jornal')
-    .select('id, numero, mes_ano, capa_url, pdf_url, data_publicacao')
+    .select(`
+      id,
+      numero,
+      mes_ano,
+      capa_url,
+      pdf_url,
+      data_publicacao,
+      publicacoes_jornal (
+        id,
+        nome
+      )
+    `)
     .eq('status', 'publicado')
     .order('data_publicacao', { ascending: false })
     .order('numero', { ascending: false })
-    .limit(5)
 
-  const edicoesJornal: EdicaoJornalHome[] = (dbEdicoes as any[]) || []
+  const todasEdicoes = (dbEdicoes as any[]) || []
+  // O bloco de display da Home exibe estritamente as edições do Boca no Trombone
+  const edicoesJornal: EdicaoJornalHome[] = todasEdicoes
+    .filter((ed) => {
+      const nomePub = ed.publicacoes_jornal?.nome?.toLowerCase() || ''
+      return !nomePub || nomePub.includes('boca no trombone')
+    })
+    .slice(0, 5)
+
+  // Busca outras publicações ativas (ex: Jornal da Família) para o dropdown
+  const { data: dbPublicacoes } = await supabaseAdmin
+    .from('publicacoes_jornal')
+    .select('id, nome')
+    .eq('ativo', true)
+    .order('ordem', { ascending: true })
+
+  const outrosJornais = ((dbPublicacoes as any[]) || []).filter(
+    (p: any) => !p.nome?.toLowerCase().includes('boca no trombone')
+  )
 
   // Extrai foto e foco vertical para uma notícia
   function getFotoNoticia(item: NoticiaItem) {
@@ -224,8 +256,8 @@ export default async function HomePage() {
     return { url, foco }
   }
 
-  // Define se os atalhos são encaixados entre a manchete e as secundárias no Modelo B
-  const atalhosEncaixados = model === 'B' && !hidden.includes('Atalhos de serviços')
+  // Exibição dos atalhos de serviços (se não estiver desativado no painel)
+  const mostrarServicos = !hidden.includes('Atalhos de serviços')
 
   return (
     <div style={{ minHeight: '100vh', background: CORES.bg, color: CORES.ink, display: 'flex', flexDirection: 'column' }}>
@@ -242,13 +274,20 @@ export default async function HomePage() {
               // ── BLOCO: NOTÍCIAS EM DESTAQUE ──
               if (nomeBloco === 'Notícias em destaque') {
                 if (model === 'B') {
-                  // MODELO B: 1 Manchete Principal + (Atalhos Encaixados) + 4 Secundárias
+                  // MODELO B: 1 Manchete Principal + Atalhos de Serviços + 4 Secundárias
                   const principal = orderedNews[0]
                   const secundarias = orderedNews.slice(1, 5)
                   const fotoPrincipal = principal ? getFotoNoticia(principal) : { url: null, foco: 50 }
 
                   return (
                     <section key={nomeBloco} aria-label="Notícias em destaque">
+                      {/* Atalhos Acima da Manchete */}
+                      {mostrarServicos && posicaoServicos === 'acima' && (
+                        <div style={{ marginBottom: '24px' }}>
+                          <AtalhosServicos ordem={shortcuts} />
+                        </div>
+                      )}
+
                       {/* Manchete Principal */}
                       {principal && (
                         <HeroManchete
@@ -264,8 +303,8 @@ export default async function HomePage() {
                         />
                       )}
 
-                      {/* Atalhos de Serviços Encaixados (Decisão D3 - Opção 2b) */}
-                      {atalhosEncaixados && (
+                      {/* Atalhos Entre Manchete e Secundárias (Padrão) */}
+                      {mostrarServicos && (posicaoServicos === 'entre' || !posicaoServicos) && (
                         <div style={{ margin: '24px 0' }}>
                           <AtalhosServicos ordem={shortcuts} />
                         </div>
@@ -278,7 +317,7 @@ export default async function HomePage() {
                             display: 'grid',
                             gridTemplateColumns: 'repeat(4, 1fr)',
                             gap: '16px',
-                            marginTop: atalhosEncaixados ? '0' : '24px',
+                            marginTop: (mostrarServicos && posicaoServicos === 'entre') ? '0' : '24px',
                           }}
                           className="grade-secundarias-4"
                         >
@@ -299,6 +338,13 @@ export default async function HomePage() {
                               />
                             )
                           })}
+                        </div>
+                      )}
+
+                      {/* Atalhos Abaixo das Secundárias */}
+                      {mostrarServicos && posicaoServicos === 'abaixo' && (
+                        <div style={{ marginTop: '24px' }}>
+                          <AtalhosServicos ordem={shortcuts} />
                         </div>
                       )}
 
@@ -330,6 +376,13 @@ export default async function HomePage() {
 
                 return (
                   <section key={nomeBloco} aria-label="Notícias em destaque">
+                    {/* Atalhos Acima da Grade 2×2 */}
+                    {mostrarServicos && (posicaoServicos === 'acima' || posicaoServicos === 'entre' || !posicaoServicos) && (
+                      <div style={{ marginBottom: '24px' }}>
+                        <AtalhosServicos ordem={shortcuts} />
+                      </div>
+                    )}
+
                     <div
                       style={{
                         display: 'grid',
@@ -357,6 +410,13 @@ export default async function HomePage() {
                       })}
                     </div>
 
+                    {/* Atalhos Abaixo da Grade 2×2 */}
+                    {mostrarServicos && posicaoServicos === 'abaixo' && (
+                      <div style={{ marginTop: '24px' }}>
+                        <AtalhosServicos ordem={shortcuts} />
+                      </div>
+                    )}
+
                     {/* Link Outras notícias */}
                     <div style={{ textAlign: 'right', marginTop: '16px' }}>
                       <Link
@@ -380,15 +440,9 @@ export default async function HomePage() {
                 )
               }
 
-              // ── BLOCO: ATALHOS DE SERVIÇOS (QUANDO NÃO ENCAIXADOS OU NO MODELO A) ──
+              // ── BLOCO: ATALHOS DE SERVIÇOS ──
               if (nomeBloco === 'Atalhos de serviços') {
-                if (atalhosEncaixados) return null // Já renderizado no miolo do Modelo B
-
-                return (
-                  <section key={nomeBloco} aria-label="Atalhos de serviços">
-                    <AtalhosServicos ordem={shortcuts} />
-                  </section>
-                )
+                return null // Integrado no bloco de notícias respeitando a posicaoServicos
               }
 
               // ── BLOCO: BANNERS ROTATIVOS (PROPORÇÃO 9:2) ──
@@ -403,7 +457,7 @@ export default async function HomePage() {
               // ── BLOCO: JORNAIS (2 COLUNAS: DESTAQUE + ANTERIORES) ──
               if (nomeBloco === 'Jornais') {
                 return (
-                  <BlocoJornal key={nomeBloco} edicoes={edicoesJornal} />
+                  <BlocoJornal key={nomeBloco} edicoes={edicoesJornal} outrosJornais={outrosJornais} />
                 )
               }
 
