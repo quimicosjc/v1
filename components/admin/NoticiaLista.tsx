@@ -9,6 +9,7 @@ import {
   obterOrdemDestaques,
   salvarOrdemDestaques,
 } from '@/app/admin/noticias/actions'
+import { detectarOrigem, OrigemNoticia } from '@/lib/social-origem'
 
 type Tab = 'todos' | 'rascunho' | 'publicado' | 'programado'
 
@@ -50,6 +51,67 @@ function BadgeStatus({ status }: { status: string }) {
       }}
     >
       {s.label}
+    </span>
+  )
+}
+
+function BadgeOrigem({ origem }: { origem: OrigemNoticia }) {
+  if (origem === 'youtube') {
+    return (
+      <span
+        style={{
+          background: '#fee2e2',
+          color: '#b91c1c',
+          borderRadius: '4px',
+          padding: '3px 8px',
+          fontSize: '11px',
+          fontWeight: 700,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        🎥 YouTube
+      </span>
+    )
+  }
+  if (origem === 'instagram') {
+    return (
+      <span
+        style={{
+          background: '#fce7f3',
+          color: '#be185d',
+          borderRadius: '4px',
+          padding: '3px 8px',
+          fontSize: '11px',
+          fontWeight: 700,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        📷 Instagram
+      </span>
+    )
+  }
+  return (
+    <span
+      style={{
+        background: '#f1f5f9',
+        color: '#475569',
+        borderRadius: '4px',
+        padding: '3px 8px',
+        fontSize: '11px',
+        fontWeight: 600,
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '4px',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      🌐 Site
     </span>
   )
 }
@@ -140,6 +202,7 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
   const [tab, setTab] = useState<Tab>('todos')
   const [busca, setBusca] = useState('')
   const [soDestaques, setSoDestaques] = useState(false)
+  const [filtroOrigem, setFiltroOrigem] = useState<'todas' | OrigemNoticia>('todas')
   const [pagina, setPagina] = useState(1)
   const [lista, setLista] = useState<Noticia[]>(noticiasProp)
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; titulo: string } | null>(null)
@@ -252,7 +315,8 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
       const matchTab = tab === 'todos' || n.status === tab
       const matchBusca = busca === '' || n.titulo.toLowerCase().includes(busca.toLowerCase())
       const matchDestaque = !soDestaques || n.destaque
-      return matchTab && matchBusca && matchDestaque
+      const matchOrigem = filtroOrigem === 'todas' || detectarOrigem(n.url_referencia) === filtroOrigem
+      return matchTab && matchBusca && matchDestaque && matchOrigem
     })
 
     // Ordenação por aba
@@ -269,7 +333,7 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
     })
 
     return resultado
-  }, [lista, tab, busca, soDestaques])
+  }, [lista, tab, busca, soDestaques, filtroOrigem])
 
   const totalPaginas = Math.ceil(filtradas.length / ITENS_POR_PAGINA)
   const inicio = (pagina - 1) * ITENS_POR_PAGINA
@@ -462,22 +526,48 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
             </label>
           </div>
 
-          <input
-            type="text"
-            placeholder="Buscar por título…"
-            value={busca}
-            onChange={(e) => mudarBusca(e.target.value)}
-            style={{
-              border: '1px solid #cbd7de',
-              borderRadius: '5px',
-              padding: '8px 12px',
-              fontSize: '14px',
-              width: '220px',
-              fontFamily: 'inherit',
-              color: '#30252a',
-              outline: 'none',
-            }}
-          />
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <select
+              value={filtroOrigem}
+              onChange={(e) => {
+                setFiltroOrigem(e.target.value as 'todas' | OrigemNoticia)
+                setPagina(1)
+              }}
+              style={{
+                border: '1px solid #cbd7de',
+                borderRadius: '5px',
+                padding: '8px 10px',
+                fontSize: '13px',
+                color: '#30252a',
+                background: 'white',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                outline: 'none',
+              }}
+            >
+              <option value="todas">Todas as origens</option>
+              <option value="site">🌐 Matéria do Site</option>
+              <option value="youtube">🎥 Vídeo YouTube</option>
+              <option value="instagram">📷 Post Instagram</option>
+            </select>
+
+            <input
+              type="text"
+              placeholder="Buscar por título…"
+              value={busca}
+              onChange={(e) => mudarBusca(e.target.value)}
+              style={{
+                border: '1px solid #cbd7de',
+                borderRadius: '5px',
+                padding: '8px 12px',
+                fontSize: '14px',
+                width: '200px',
+                fontFamily: 'inherit',
+                color: '#30252a',
+                outline: 'none',
+              }}
+            />
+          </div>
         </div>
 
         {/* Info de ordenação + contagem */}
@@ -505,7 +595,7 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
           <thead>
             <tr>
-              {['NOTÍCIA', 'DESTAQUE', 'SITUAÇÃO', 'DATA', 'AÇÃO'].map((col) => (
+              {['NOTÍCIA', 'ORIGEM', 'DESTAQUE', 'SITUAÇÃO', 'DATA', 'AÇÃO'].map((col) => (
                 <th
                   key={col}
                   style={{
@@ -528,7 +618,7 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
             {paginaAtual.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   style={{
                     padding: '48px 24px',
                     textAlign: 'center',
@@ -575,6 +665,9 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
                         {noticia.resumo}
                       </div>
                     )}
+                  </td>
+                  <td style={{ padding: '19px 24px', borderBottom: '1px solid #e8eef1' }}>
+                    <BadgeOrigem origem={detectarOrigem(noticia.url_referencia)} />
                   </td>
                   <td style={{ padding: '19px 24px', borderBottom: '1px solid #e8eef1' }}>
                     {(() => {

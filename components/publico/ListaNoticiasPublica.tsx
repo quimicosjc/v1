@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
 
 import { formatarDataExtenso } from '@/lib/data-formatada'
+import { detectarOrigem } from '@/lib/social-origem'
 
 export interface NoticiaItemPublico {
   id: string
@@ -15,6 +16,7 @@ export interface NoticiaItemPublico {
   imagem_y?: number | null
   publicado_em?: string | null
   fotos_json?: string | null
+  url_referencia?: string | null
 }
 
 interface ListaNoticiasPublicaProps {
@@ -239,6 +241,58 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
                     {materiaDestaque.chapeu}
                   </span>
                 )}
+                {(() => {
+                  const orig = detectarOrigem(materiaDestaque.url_referencia)
+                  if (orig === 'youtube') {
+                    return (
+                      <span
+                        style={{
+                          position: 'absolute',
+                          top: '14px',
+                          right: '14px',
+                          background: '#b91c1c',
+                          color: '#ffffff',
+                          fontSize: '11px',
+                          fontWeight: 800,
+                          padding: '4px 9px',
+                          borderRadius: '3px',
+                          letterSpacing: '0.5px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+                        }}
+                      >
+                        ▶ VÍDEO
+                      </span>
+                    )
+                  }
+                  if (orig === 'instagram') {
+                    return (
+                      <span
+                        style={{
+                          position: 'absolute',
+                          top: '14px',
+                          right: '14px',
+                          background: '#be185d',
+                          color: '#ffffff',
+                          fontSize: '11px',
+                          fontWeight: 800,
+                          padding: '4px 9px',
+                          borderRadius: '3px',
+                          letterSpacing: '0.5px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+                        }}
+                      >
+                        📷 INSTAGRAM
+                      </span>
+                    )
+                  }
+                  return null
+                })()}
               </div>
 
               <div
@@ -426,6 +480,58 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
                       {item.chapeu}
                     </span>
                   )}
+                  {(() => {
+                    const orig = detectarOrigem(item.url_referencia)
+                    if (orig === 'youtube') {
+                      return (
+                        <span
+                          style={{
+                            position: 'absolute',
+                            top: '12px',
+                            right: '12px',
+                            background: '#b91c1c',
+                            color: '#ffffff',
+                            fontSize: '10.5px',
+                            fontWeight: 800,
+                            padding: '3px 7px',
+                            borderRadius: '3px',
+                            letterSpacing: '0.4px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+                          }}
+                        >
+                          ▶ VÍDEO
+                        </span>
+                      )
+                    }
+                    if (orig === 'instagram') {
+                      return (
+                        <span
+                          style={{
+                            position: 'absolute',
+                            top: '12px',
+                            right: '12px',
+                            background: '#be185d',
+                            color: '#ffffff',
+                            fontSize: '10.5px',
+                            fontWeight: 800,
+                            padding: '3px 7px',
+                            borderRadius: '3px',
+                            letterSpacing: '0.4px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+                          }}
+                        >
+                          📷 INSTAGRAM
+                        </span>
+                      )
+                    }
+                    return null
+                  })()}
                 </div>
 
                 <div style={{ padding: '18px 20px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>

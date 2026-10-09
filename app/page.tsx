@@ -23,6 +23,7 @@ interface NoticiaItem {
   imagem_y?: number | null
   publicado_em?: string | null
   fotos_json?: string | null
+  url_referencia?: string | null
 }
 
 const NOTICIAS_DEMO: NoticiaItem[] = [
@@ -158,7 +159,7 @@ export default async function HomePage() {
   // 3. Busca notícias publicadas no Supabase
   const { data: dbNews } = await supabase
     .from('conteudos')
-    .select('id, titulo, slug, chapeu, resumo, banner_url, imagem_y, publicado_em, fotos_json, destaque')
+    .select('id, titulo, slug, chapeu, resumo, banner_url, imagem_y, publicado_em, fotos_json, destaque, url_referencia')
     .eq('tipo', 'noticia')
     .eq('status', 'publicado')
     .order('publicado_em', { ascending: false })
@@ -259,6 +260,7 @@ export default async function HomePage() {
                           fotoUrl={fotoPrincipal.url}
                           fotoFoco={fotoPrincipal.foco}
                           dataIso={principal.publicado_em}
+                          urlReferencia={principal.url_referencia}
                         />
                       )}
 
@@ -293,6 +295,7 @@ export default async function HomePage() {
                                 fotoFoco={foto.foco}
                                 dataIso={item.publicado_em}
                                 layout="coluna"
+                                urlReferencia={item.url_referencia}
                               />
                             )
                           })}
@@ -348,6 +351,7 @@ export default async function HomePage() {
                             fotoFoco={foto.foco}
                             dataIso={item.publicado_em}
                             layout="grande"
+                            urlReferencia={item.url_referencia}
                           />
                         )
                       })}

@@ -13,6 +13,15 @@ import {
   uploadMidia,
   uploadDocumento,
 } from '@/app/admin/noticias/actions'
+import {
+  OrigemNoticia,
+  detectarOrigem,
+  extrairYoutubeId,
+  extrairInstagramId,
+  obterYoutubeThumb,
+  gerarIframeYoutube,
+  gerarIframeInstagram,
+} from '@/lib/social-origem'
 
 const RichEditor = dynamic(() => import('@/components/admin/RichEditor'), {
   ssr: false,
@@ -234,6 +243,10 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
   const [alterado, setAlterado] = useState(false)
   const noticiaIdRef = useRef<string | null>(noticia?.id ?? null)
 
+  // Origem e Fast Track (Site | YouTube | Instagram)
+  const [origem, setOrigem] = useState<OrigemNoticia>(() => detectarOrigem(noticia?.url_referencia))
+  const [socialInput, setSocialInput] = useState(() => noticia?.url_referencia ?? '')
+
   // Mais opções editoriais
   const [showMaisOpcoes, setShowMaisOpcoes] = useState(false)
   const [urlReferencia, setUrlReferencia] = useState(noticia?.url_referencia ?? '')
@@ -339,6 +352,81 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
 
   function markAlterado() {
     setAlterado(true)
+  }
+
+  function handleTrocarOrigem(novaOrigem: OrigemNoticia) {
+    setOrigem(novaOrigem)
+    markAlterado()
+    if (novaOrigem === 'youtube' && !chapeu) {
+      setChapeu('Vídeo')
+    } else if (novaOrigem === 'instagram' && !chapeu) {
+      setChapeu('Redes Sociais')
+    }
+  }
+
+  function handleMudarSocialUrl(val: string) {
+    setSocialInput(val)
+    setUrlReferencia(val)
+    markAlterado()
+    const detectada = detectarOrigem(val)
+    if (detectada !== 'site' && detectada !== origem) {
+      setOrigem(detectada)
+      if (detectada === 'youtube' && !chapeu) setChapeu('Vídeo')
+      if (detectada === 'instagram' && !chapeu) setChapeu('Redes Sociais')
+    }
+  }
+
+  function handleUsarCapaYoutube() {
+    const ytId = extrairYoutubeId(socialInput)
+    if (!ytId) {
+      showToast('Cole um link válido do YouTube primeiro.', 'erro')
+      return
+    }
+    const thumbUrl = obterYoutubeThumb(ytId)
+    const novaFoto: FotoItem = {
+      url: thumbUrl,
+      preview: thumbUrl,
+      foco: 50,
+      legenda: 'Vídeo oficial do YouTube',
+      credito: 'YouTube / Sindicato dos Químicos',
+      enviando: false,
+      erro: null,
+    }
+    setFotos((prev) => [novaFoto, ...prev.filter((f) => f.url !== thumbUrl)].slice(0, 5))
+    markAlterado()
+    showToast('Capa do YouTube definida como foto principal em 3:2!', 'sucesso')
+  }
+
+  function handleInserirPlayerYoutube() {
+    const ytId = extrairYoutubeId(socialInput)
+    if (!ytId) {
+      showToast('Cole um link válido do YouTube primeiro.', 'erro')
+      return
+    }
+    const iframeHtml = gerarIframeYoutube(ytId)
+    setCorpo((prev) => {
+      const p = prev?.trim() || ''
+      if (!p || p === '<p></p>') return `<p>${iframeHtml}</p>`
+      return `${p}<p>${iframeHtml}</p>`
+    })
+    markAlterado()
+    showToast('Player do YouTube inserido no texto da notícia!', 'sucesso')
+  }
+
+  function handleInserirEmbedInstagram() {
+    const instaId = extrairInstagramId(socialInput)
+    if (!instaId) {
+      showToast('Cole um link válido de post ou reel do Instagram.', 'erro')
+      return
+    }
+    const iframeHtml = gerarIframeInstagram(instaId)
+    setCorpo((prev) => {
+      const p = prev?.trim() || ''
+      if (!p || p === '<p></p>') return `<p>${iframeHtml}</p>`
+      return `${p}<p>${iframeHtml}</p>`
+    })
+    markAlterado()
+    showToast('Publicação do Instagram inserida no texto da notícia!', 'sucesso')
   }
 
   function buildFormData(): NoticiaFormData {
@@ -820,6 +908,228 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
 
         {/* ── Main column ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+          {/* ── ORIGEM DA NOTÍCIA & FAST TRACK (Cenário 4) ── */}
+          <div style={cardStyle}>
+            <div style={{ marginBottom: '14px' }}>
+              <label style={{ ...labelStyle, fontSize: '14px', marginBottom: '4px' }}>
+                Origem da notícia
+              </label>
+              <p style={{ margin: 0, fontSize: '13px', color: '#71636a' }}>
+                Escolha se é uma matéria comum do site ou uma publicação expressa de vídeo/redes sociais.
+              </p>
+            </div>
+
+            {/* Seletor de Origem (Pills) */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: origem !== 'site' ? '16px' : '0' }}>
+              <button
+                type="button"
+                onClick={() => handleTrocarOrigem('site')}
+                style={{
+                  padding: '9px 16px',
+                  borderRadius: '5px',
+                  border: origem === 'site' ? '2px solid #861e32' : '1px solid #cbd7de',
+                  background: origem === 'site' ? '#fdf5f6' : '#ffffff',
+                  color: origem === 'site' ? '#861e32' : '#30252a',
+                  fontWeight: origem === 'site' ? 700 : 500,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontFamily: 'inherit',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <span>🌐</span> Matéria do Site
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleTrocarOrigem('youtube')}
+                style={{
+                  padding: '9px 16px',
+                  borderRadius: '5px',
+                  border: origem === 'youtube' ? '2px solid #c62828' : '1px solid #cbd7de',
+                  background: origem === 'youtube' ? '#ffebee' : '#ffffff',
+                  color: origem === 'youtube' ? '#c62828' : '#30252a',
+                  fontWeight: origem === 'youtube' ? 700 : 500,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontFamily: 'inherit',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <span>🎥</span> Vídeo do YouTube
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleTrocarOrigem('instagram')}
+                style={{
+                  padding: '9px 16px',
+                  borderRadius: '5px',
+                  border: origem === 'instagram' ? '2px solid #ad1457' : '1px solid #cbd7de',
+                  background: origem === 'instagram' ? '#fce4ec' : '#ffffff',
+                  color: origem === 'instagram' ? '#ad1457' : '#30252a',
+                  fontWeight: origem === 'instagram' ? 700 : 500,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontFamily: 'inherit',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <span>📷</span> Post do Instagram
+              </button>
+            </div>
+
+            {/* Painel Fast Track YouTube */}
+            {origem === 'youtube' && (
+              <div
+                style={{
+                  background: '#fff8f9',
+                  border: '1px solid #ffcdd2',
+                  borderRadius: '6px',
+                  padding: '16px 18px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '18px' }}>🎥</span>
+                  <strong style={{ fontSize: '13.5px', color: '#c62828' }}>Fast Track — Vídeo do YouTube</strong>
+                </div>
+                <label style={{ ...labelStyle, fontSize: '12.5px', marginBottom: '4px' }}>
+                  Link do vídeo (URL completa ou compartilhamento)
+                </label>
+                <input
+                  type="url"
+                  placeholder="Ex.: https://www.youtube.com/watch?v=... ou https://youtu.be/..."
+                  value={socialInput}
+                  onChange={(e) => handleMudarSocialUrl(e.target.value)}
+                  style={{ ...inputStyle, marginBottom: '10px', background: '#ffffff' }}
+                />
+
+                {/* Ações automáticas quando URL válida */}
+                {extrairYoutubeId(socialInput) ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', paddingTop: '4px' }}>
+                    <button
+                      type="button"
+                      onClick={handleUsarCapaYoutube}
+                      style={{
+                        background: '#861e32',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '8px 13px',
+                        fontSize: '12.5px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      <span>📸</span> Definir capa automática do vídeo (3:2)
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleInserirPlayerYoutube}
+                      style={{
+                        background: '#ffffff',
+                        color: '#c62828',
+                        border: '1px solid #ffcdd2',
+                        borderRadius: '4px',
+                        padding: '8px 13px',
+                        fontSize: '12.5px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      <span>▶</span> Inserir player no texto da matéria
+                    </button>
+                    <span style={{ fontSize: '12px', color: '#2e7d32', fontWeight: 600 }}>
+                      ✓ Link válido do YouTube
+                    </span>
+                  </div>
+                ) : (
+                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
+                    Cole o link do vídeo para habilitar a capa automática e o player incorporado.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Painel Fast Track Instagram */}
+            {origem === 'instagram' && (
+              <div
+                style={{
+                  background: '#fdf7f9',
+                  border: '1px solid #f8bbd0',
+                  borderRadius: '6px',
+                  padding: '16px 18px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '18px' }}>📷</span>
+                  <strong style={{ fontSize: '13.5px', color: '#ad1457' }}>Fast Track — Publicação do Instagram</strong>
+                </div>
+                <label style={{ ...labelStyle, fontSize: '12.5px', marginBottom: '4px' }}>
+                  Link do post ou Reel
+                </label>
+                <input
+                  type="url"
+                  placeholder="Ex.: https://www.instagram.com/p/... ou https://www.instagram.com/reel/..."
+                  value={socialInput}
+                  onChange={(e) => handleMudarSocialUrl(e.target.value)}
+                  style={{ ...inputStyle, marginBottom: '10px', background: '#ffffff' }}
+                />
+
+                {/* Ações automáticas quando URL válida */}
+                {extrairInstagramId(socialInput) ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', paddingTop: '4px' }}>
+                    <button
+                      type="button"
+                      onClick={handleInserirEmbedInstagram}
+                      style={{
+                        background: '#ad1457',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '8px 13px',
+                        fontSize: '12.5px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      <span>📷</span> Inserir post do Instagram no texto da matéria
+                    </button>
+                    <span style={{ fontSize: '12px', color: '#2e7d32', fontWeight: 600 }}>
+                      ✓ Link válido do Instagram
+                    </span>
+                  </div>
+                ) : (
+                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
+                    Cole o link do post ou reel para habilitar a incorporação oficial.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Chapéu */}
           <div style={cardStyle}>

@@ -18,7 +18,7 @@ export default async function NoticiasIndexPage() {
 
   const { data: noticiasData } = await supabase
     .from('conteudos')
-    .select('id, titulo, slug, resumo, chapeu, banner_url, imagem_y, publicado_em, fotos_json')
+    .select('id, titulo, slug, resumo, chapeu, banner_url, imagem_y, publicado_em, fotos_json, url_referencia')
     .eq('tipo', 'noticia')
     .eq('status', 'publicado')
     .order('publicado_em', { ascending: false })

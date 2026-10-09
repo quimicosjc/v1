@@ -9,6 +9,7 @@ import BarraCompartilhamento from '@/components/publico/BarraCompartilhamento'
 import { formatarDataHoraNoticia } from '@/lib/data-formatada'
 import { CONTAINER_STYLE } from '@/lib/design'
 import { sanitizarHtml } from '@/lib/security'
+import { detectarOrigem } from '@/lib/social-origem'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -122,6 +123,7 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
     .replace(/&lt;iframe([\s\S]*?)\/&gt;/gi, '<iframe$1></iframe>')
   const corpoFormatado = sanitizarHtml(corpoBruto)
 
+  const origem = detectarOrigem(noticia.url_referencia)
   const dataExibicao = formatarDataHoraNoticia(noticia.publicado_em || noticia.criado_em)
 
   return (
@@ -161,21 +163,60 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
       <main style={{ flex: 1, padding: '40px 20px 64px 20px' }}>
         <article style={{ maxWidth: '780px', margin: '0 auto' }}>
           
-          {/* Chapéu / Assunto (Estilo G1: minimalista, vermelho bordô, uppercase) */}
-          {noticia.chapeu && (
-            <div
-              style={{
-                color: '#861e32',
-                fontSize: '12.5px',
-                fontWeight: 800,
-                textTransform: 'uppercase',
-                letterSpacing: '1px',
-                marginBottom: '12px',
-              }}
-            >
-              {noticia.chapeu}
-            </div>
-          )}
+          {/* Chapéu e Selo de Origem */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
+            {origem === 'youtube' && (
+              <span
+                style={{
+                  background: '#fee2e2',
+                  color: '#b91c1c',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  padding: '3px 8px',
+                  borderRadius: '4px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.6px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                🎥 VÍDEO OFICIAL
+              </span>
+            )}
+            {origem === 'instagram' && (
+              <span
+                style={{
+                  background: '#fce7f3',
+                  color: '#be185d',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  padding: '3px 8px',
+                  borderRadius: '4px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.6px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                📷 POST DO INSTAGRAM
+              </span>
+            )}
+            {noticia.chapeu && (
+              <div
+                style={{
+                  color: '#861e32',
+                  fontSize: '12.5px',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                }}
+              >
+                {noticia.chapeu}
+              </div>
+            )}
+          </div>
 
           {/* Título Principal (H1 forte, peso 800, entrelinha precisa) */}
           <h1
@@ -251,27 +292,54 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
           {/* Barra de Compartilhamento no Rodapé do Artigo */}
           <BarraCompartilhamento titulo={noticia.titulo} modo="rodape" />
 
-          {/* URL de Referência */}
+          {/* URL de Referência / Conteúdo Original */}
           {noticia.url_referencia && (
             <div
               style={{
                 marginTop: '32px',
-                padding: '14px 18px',
-                background: '#f8fafb',
-                borderLeft: '4px solid #861e32',
+                padding: '16px 20px',
+                background: origem === 'youtube' ? '#fff5f5' : origem === 'instagram' ? '#fdf2f8' : '#f8fafb',
+                borderLeft: `4px solid ${origem === 'youtube' ? '#b91c1c' : origem === 'instagram' ? '#be185d' : '#861e32'}`,
                 borderRadius: '0 6px 6px 0',
-                fontSize: '13.5px',
-                color: '#554950',
+                fontSize: '14px',
+                color: '#30252a',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '12px',
               }}
             >
-              <strong>Mais informações / Fonte:</strong>{' '}
+              <div>
+                <strong>
+                  {origem === 'youtube'
+                    ? '🎥 Conteúdo publicado em nosso canal do YouTube'
+                    : origem === 'instagram'
+                    ? '📷 Publicação original em nosso Instagram oficial'
+                    : 'Mais informações / Fonte:'}
+                </strong>
+                <div style={{ fontSize: '12px', color: '#71636a', marginTop: '3px', wordBreak: 'break-all' }}>
+                  {noticia.url_referencia}
+                </div>
+              </div>
               <a
                 href={noticia.url_referencia}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#861e32', textDecoration: 'underline', wordBreak: 'break-all' }}
+                style={{
+                  background: origem === 'youtube' ? '#b91c1c' : origem === 'instagram' ? '#be185d' : '#861e32',
+                  color: 'white',
+                  padding: '8px 14px',
+                  borderRadius: '5px',
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
               >
-                {noticia.url_referencia}
+                {origem === 'youtube' ? 'Assistir no YouTube ↗' : origem === 'instagram' ? 'Ver no Instagram ↗' : 'Acessar link ↗'}
               </a>
             </div>
           )}
