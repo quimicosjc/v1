@@ -81,18 +81,43 @@ export default async function FooterPublico({ textoRodape }: FooterPublicoProps)
             }}
             className="rodape-texto-bloco"
           >
-            {paragrafos.map((p, idx) => (
-              <p
-                key={idx}
-                style={{
-                  margin: '0 0 5px 0',
-                  fontWeight: idx === 0 ? 700 : 400,
-                  color: idx === 0 ? '#FFFFFF' : '#f6e7ec',
-                }}
-              >
-                {p}
-              </p>
-            ))}
+            {paragrafos.map((p, idx) => {
+              // Destaca telefones em branco visível e torna clicáveis
+              const partes = p.split(/(\(\d{2}\)\s*\d{4,5}-\d{4})/g)
+
+              return (
+                <p
+                  key={idx}
+                  style={{
+                    margin: '0 0 5px 0',
+                    fontWeight: idx === 0 ? 700 : 400,
+                    color: idx === 0 ? '#FFFFFF' : '#f6e7ec',
+                  }}
+                >
+                  {partes.map((parte, pIdx) => {
+                    const matchTel = parte.match(/^\(\d{2}\)\s*\d{4,5}-\d{4}$/)
+                    if (matchTel) {
+                      const telLimpo = parte.replace(/\D/g, '')
+                      return (
+                        <a
+                          key={pIdx}
+                          href={`tel:${telLimpo}`}
+                          style={{
+                            color: '#FFFFFF',
+                            fontWeight: 700,
+                            textDecoration: 'none',
+                          }}
+                          className="rodape-telefone"
+                        >
+                          {parte}
+                        </a>
+                      )
+                    }
+                    return <span key={pIdx}>{parte}</span>
+                  })}
+                </p>
+              )
+            })}
           </div>
         </div>
 
@@ -111,8 +136,9 @@ export default async function FooterPublico({ textoRodape }: FooterPublicoProps)
             color: 'rgba(255,255,255,0.7)',
           }}
         >
-          <div>
-            © {new Date().getFullYear()} Sindicato dos Químicos de São José dos Campos e Região. Todos os direitos reservados.
+          <div style={{ lineHeight: 1.5 }}>
+            <div>© {new Date().getFullYear()} Sindicato dos Químicos de São José dos Campos e Região.</div>
+            <div style={{ color: 'rgba(255,255,255,0.7)', marginTop: '2px' }}>Todos os direitos reservados.</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <Link
@@ -133,6 +159,10 @@ export default async function FooterPublico({ textoRodape }: FooterPublicoProps)
       </div>
 
       <style>{`
+        .rodape-telefone:hover {
+          text-decoration: underline !important;
+          color: #FFFFFF !important;
+        }
         @media (max-width: 820px) {
           .rodape-corpo-row {
             flex-direction: column !important;

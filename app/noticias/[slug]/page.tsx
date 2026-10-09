@@ -46,13 +46,37 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://quimicosjc.org.br'
+  const imgUrl = noticia.banner_url || `${siteUrl}/noticia-padrao.png`
+  const descricao = noticia.resumo || 'Notícia publicada pelo Sindicato dos Químicos de São José dos Campos e Região.'
+
   return {
     title: `${noticia.titulo} · Sindicato dos Químicos SJC`,
-    description: noticia.resumo || 'Notícia publicada pelo Sindicato dos Químicos de São José dos Campos e Região.',
+    description: descricao,
+    alternates: {
+      canonical: `/noticias/${slug}`,
+    },
     openGraph: {
+      type: 'article',
+      locale: 'pt_BR',
+      url: `/noticias/${slug}`,
+      siteName: 'Sindicato dos Químicos de SJC',
       title: noticia.titulo,
-      description: noticia.resumo || undefined,
-      images: noticia.banner_url ? [noticia.banner_url] : ['/noticia-padrao.png'],
+      description: descricao,
+      images: [
+        {
+          url: imgUrl,
+          width: 1200,
+          height: 630,
+          alt: noticia.titulo,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: noticia.titulo,
+      description: descricao,
+      images: [imgUrl],
     },
   }
 }
@@ -132,7 +156,7 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
       <HeaderPublico slugAtivo="noticias" />
 
       {/* ── BREADCRUMB LIMPO ALINHADO ÀS MARGENS DO CONTAINER ── */}
-      <div style={{ borderBottom: '1px solid #f0e8eb', background: '#faf8f9' }}>
+      <div style={{ borderBottom: '1px solid #f0e8eb', background: '#faf8f9' }} className="noticia-breadcrumb-topo">
         <div style={{ ...CONTAINER_STYLE, paddingTop: '12px', paddingBottom: '12px' }}>
           <nav
             style={{
@@ -205,6 +229,7 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
                 color: '#554950',
                 margin: '0 0 20px 0',
               }}
+              className="noticia-subtitulo"
             >
               {noticia.subtitulo}
             </p>
@@ -686,10 +711,20 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
         .breadcrumb-link:hover {
           text-decoration: underline !important;
         }
+        @media (max-width: 768px) {
+          .noticia-breadcrumb-topo {
+            display: none !important;
+          }
+        }
         @media (max-width: 640px) {
           .noticia-titulo-h1 {
-            font-size: 28px !important;
-            line-height: 1.3 !important;
+            font-size: 31px !important;
+            line-height: 1.1 !important;
+          }
+          .noticia-subtitulo {
+            font-size: 16.5px !important;
+            line-height: 1.28 !important;
+            margin-bottom: 16px !important;
           }
         }
         .noticia-corpo p {

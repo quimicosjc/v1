@@ -134,22 +134,6 @@ export default function BannerRotativo({ banners }: BannerRotativoProps) {
             </div>
           )
         })}
-
-        {/* Linha discreta de progresso na base do banner (apenas se total > 1) */}
-        {total > 1 && (
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              height: '3px',
-              width: `${progressoPercentual}%`,
-              background: CORES.action,
-              zIndex: 4,
-              transition: 'width 0.1s linear',
-            }}
-          />
-        )}
       </div>
 
       {/* Controles, timer e indicadores (apenas quando total > 1) */}

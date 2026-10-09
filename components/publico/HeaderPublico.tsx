@@ -338,7 +338,7 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                 }}
                 title="Sindicato dos Químicos de São José dos Campos e Região"
               >
-                <div style={{ height: '104px', display: 'flex', alignItems: 'center' }}>
+                <div style={{ height: '104px', display: 'flex', alignItems: 'center' }} className="header-logo-container">
                   <img
                     src="/logo-sindicato.svg"
                     alt="Sindicato dos Químicos de São José dos Campos e Região"
@@ -613,7 +613,7 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
             className="header-affiliation-link"
           >
             <img
-              src="/logo-unidos-pra-lutar-horizontal.png"
+              src="/logo-unidos-pra-lutar-horizontal.png?v=branco"
               alt="Unidos pra Lutar"
               style={{
                 height: '32px',
@@ -624,7 +624,7 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           </a>
 
           <a
-            href="https://www.cspconlutas.org.br"
+            href="https://cspconlutas.org.br/"
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -661,19 +661,20 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
             overflowY: 'auto',
           }}
         >
-          <div style={{ display: 'grid', gap: '8px' }}>
+          <div style={{ display: 'grid', gap: '4px' }}>
             <Link
                 href="/"
                 onClick={() => setMobileMenuAberto(false)}
                 style={{
                   color: '#ffffff',
-                  padding: '10px 14px',
+                  padding: '7px 12px',
                   borderRadius: '6px',
                   textDecoration: 'none',
-                  fontSize: '15px',
+                  fontSize: '14px',
                   fontWeight: 600,
                   background: 'rgba(255,255,255,0.06)',
                   display: 'block',
+                  lineHeight: 1.2,
                 }}
               >
                 Início
@@ -693,14 +694,15 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                         background: 'transparent',
                         border: 'none',
                         color: '#ffffff',
-                        padding: '12px 14px',
-                        fontSize: '15px',
+                        padding: '8px 12px',
+                        fontSize: '14.5px',
                         fontWeight: 700,
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         fontFamily: 'inherit',
+                        lineHeight: 1.2,
                       }}
                     >
                       <span>{grupo.nome}</span>
@@ -723,7 +725,7 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                     </button>
 
                     {aberto && (
-                      <div style={{ padding: '0 8px 12px 14px', display: 'grid', gap: '4px' }}>
+                      <div style={{ padding: '0 6px 8px 10px', display: 'grid', gap: '3px' }}>
                         {grupo.items.map((item) => (
                           <Link
                             key={item.href}
@@ -731,13 +733,14 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                             onClick={() => setMobileMenuAberto(false)}
                             style={{
                               color: 'rgba(255,255,255,0.9)',
-                              padding: '8px 10px',
+                              padding: '5px 8px',
                               borderRadius: '4px',
                               textDecoration: 'none',
-                              fontSize: '13.5px',
+                              fontSize: '13px',
+                              lineHeight: 1.25,
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '10px',
+                              gap: '8px',
                             }}
                           >
                             <span style={{ filter: 'brightness(2)' }}>{item.icone}</span>
@@ -754,19 +757,20 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                 href="/paginas/fique-socio"
                 onClick={() => setMobileMenuAberto(false)}
                 style={{
-                  marginTop: '12px',
+                  marginTop: '8px',
                   background: '#861e32',
                   color: '#ffffff',
-                  padding: '12px',
+                  padding: '9px 12px',
                   borderRadius: '6px',
                   textAlign: 'center',
                   fontWeight: 700,
-                  fontSize: '14px',
+                  fontSize: '13.5px',
                   textDecoration: 'none',
                   display: 'block',
+                  lineHeight: 1.25,
                 }}
               >
-                Sindicalize-se Agora
+                Sindicalize-se agora
               </Link>
 
               {/* Logos de filiação também acessíveis no rodapé do menu mobile */}
@@ -789,13 +793,13 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                   style={{ display: 'inline-flex', alignItems: 'center' }}
                 >
                   <img
-                    src="/logo-unidos-pra-lutar-horizontal.png"
+                    src="/logo-unidos-pra-lutar-horizontal.png?v=branco"
                     alt="Unidos pra Lutar"
                     style={{ height: '28px', width: 'auto', display: 'block' }}
                   />
                 </a>
                 <a
-                  href="https://www.cspconlutas.org.br"
+                  href="https://cspconlutas.org.br/"
                   target="_blank"
                   rel="noopener noreferrer"
                   title="CSP-Conlutas — Central Sindical e Popular"
@@ -825,11 +829,17 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
         }
         @media (max-width: 600px) {
           .header-main-bar {
-            padding-top: 8px !important;
-            padding-bottom: 8px !important;
+            padding-top: 2px !important;
+            padding-bottom: 2px !important;
+          }
+          .header-logo-container {
+            height: 92px !important;
+            overflow: visible !important;
           }
           .header-logo-img {
-            height: 76px !important;
+            height: 90px !important;
+            transform: scale(1.35) !important;
+            transform-origin: left center !important;
           }
           .header-mobile-toggle {
             flex-shrink: 0 !important;

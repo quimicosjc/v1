@@ -143,6 +143,7 @@ export default function AtalhosServicos({ ordem }: AtalhosServicosProps) {
                   lineHeight: 1.15,
                   color: CORES.primary,
                 }}
+                className="atalho-titulo-txt"
               >
                 {item.titulo}
               </div>
@@ -161,19 +162,38 @@ export default function AtalhosServicos({ ordem }: AtalhosServicosProps) {
           background: ${CORES.action} !important;
           color: #FFFFFF !important;
         }
-        @media (max-width: 960px) {
+        @media (max-width: 960px) and (min-width: 601px) {
           .atalhos-servicos-grid {
             grid-template-columns: repeat(2, 1fr) !important;
             gap: 12px !important;
           }
         }
-        @media (max-width: 540px) {
+        @media (max-width: 600px) {
           .atalhos-servicos-grid {
-            grid-template-columns: 1fr !important;
-            gap: 10px !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 6px !important;
           }
           .atalho-card {
-            padding: 12px 14px !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+            justify-content: center !important;
+            padding: 8px 4px 6px 4px !important;
+            gap: 4px !important;
+            border-top-width: 2.5px !important;
+          }
+          .atalho-icone-box {
+            width: 32px !important;
+            height: 32px !important;
+          }
+          .atalho-icone-box svg {
+            width: 17px !important;
+            height: 17px !important;
+          }
+          .atalho-titulo-txt {
+            font-size: 11px !important;
+            line-height: 1.15 !important;
+            letter-spacing: 0px !important;
           }
         }
       `}</style>
