@@ -194,26 +194,32 @@ export default function FormularioDenuncia() {
         <div style={{ fontSize: '13px', fontWeight: 700, color: '#30252a', marginBottom: '10px' }}>
           Modo de Identificação:
         </div>
-        <div style={{ display: 'flex', gap: '24px' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '14px', lineHeight: 1.5 }}>
             <input
               type="radio"
               name="sigilo"
               value="anonimo"
               checked={sigilo === 'anonimo'}
               onChange={() => setSigilo('anonimo')}
+              style={{ marginTop: '3px' }}
             />
-            <strong>Denúncia 100% Anônima</strong> (Recomendado)
+            <span>
+              <strong>Denúncia 100% Anônima</strong> (Recomendado) — Nenhum dado pessoal será solicitado ou registrado.
+            </span>
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px' }}>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '14px', lineHeight: 1.5 }}>
             <input
               type="radio"
               name="sigilo"
               value="identificado"
               checked={sigilo === 'identificado'}
               onChange={() => setSigilo('identificado')}
+              style={{ marginTop: '3px' }}
             />
-            Quero me identificar (sigilo garantido pelo Sindicato)
+            <span>
+              <strong>Quero me identificar</strong> — Sigilo estrito guardado pela diretoria do Sindicato. Seus dados nunca serão expostos à empresa.
+            </span>
           </label>
         </div>
       </div>
@@ -232,7 +238,7 @@ export default function FormularioDenuncia() {
       )}
 
       {/* DADOS DA IRREGULARIDADE */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '22px' }}>
+      <div className="form-denuncia-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '22px' }}>
         <div>
           <label style={labelStyle}>Empresa Denunciada <span style={{ color: '#861e32' }}>*</span></label>
           <input type="text" name="empresa" required placeholder="Nome ou razão social da empresa" style={inputStyle} />
@@ -301,6 +307,14 @@ export default function FormularioDenuncia() {
           <span>{enviando ? 'Enviando com Sigilo...' : 'Enviar Denúncia Sigilosa'}</span>
         </button>
       </div>
+
+      <style>{`
+        @media (max-width: 640px) {
+          .form-denuncia-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </form>
   )
 }

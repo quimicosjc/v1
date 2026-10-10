@@ -25,18 +25,26 @@ interface ListaNoticiasPublicaProps {
 
 const ITENS_POR_PAGINA = 20
 
+function normalizarTexto(txt: string): string {
+  return txt
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+}
+
 export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticiasPublicaProps) {
   const [busca, setBusca] = useState('')
   const [pagina, setPagina] = useState(1)
 
-  // Filtra as matérias apenas pelo campo de busca textual (conforme M9)
+  // Filtra as matérias por busca textual com suporte a acentuação e diacríticos (N01)
   const filtradas = useMemo(() => {
     if (!busca.trim()) return noticiasIniciais
-    const termo = busca.toLowerCase()
+    const termo = normalizarTexto(busca)
     return noticiasIniciais.filter((n) => {
-      const noTitulo = n.titulo.toLowerCase().includes(termo)
-      const noResumo = n.resumo?.toLowerCase().includes(termo) ?? false
-      const noChapeu = n.chapeu?.toLowerCase().includes(termo) ?? false
+      const noTitulo = normalizarTexto(n.titulo).includes(termo)
+      const noResumo = n.resumo ? normalizarTexto(n.resumo).includes(termo) : false
+      const noChapeu = n.chapeu ? normalizarTexto(n.chapeu).includes(termo) : false
       return noTitulo || noResumo || noChapeu
     })
   }, [noticiasIniciais, busca])
@@ -46,6 +54,25 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
     const inicio = (pagina - 1) * ITENS_POR_PAGINA
     return filtradas.slice(inicio, inicio + ITENS_POR_PAGINA)
   }, [filtradas, pagina])
+
+  // Janela deslizante de páginas (N02): evita que dezenas de botões estoure a tela mobile
+  const paginasVisiveis = useMemo(() => {
+    if (totalPaginas <= 7) {
+      return Array.from({ length: totalPaginas }, (_, i) => i + 1)
+    }
+    const lista: (number | string)[] = [1]
+    const inicio = Math.max(2, pagina - 1)
+    const fim = Math.min(totalPaginas - 1, pagina + 1)
+
+    if (inicio > 2) lista.push('ellipsis-inicio')
+    for (let p = inicio; p <= fim; p++) {
+      lista.push(p)
+    }
+    if (fim < totalPaginas - 1) lista.push('ellipsis-fim')
+
+    lista.push(totalPaginas)
+    return lista
+  }, [totalPaginas, pagina])
 
   function mudarBusca(val: string) {
     setBusca(val)
@@ -359,60 +386,102 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
         </div>
       )}
 
-      {/* ── PAGINAÇÃO ── */}
+      {/* ── PAGINAÇÃO RESPONSIVA (N02) ── */}
       {totalPaginas > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '20px' }}>
+        <nav
+          aria-label="Navegação de páginas de notícias"
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '6px',
+            marginTop: '28px',
+          }}
+        >
           <button
-            onClick={() => setPagina(1)}
+            onClick={() => setPagina((p) => Math.max(1, p - 1))}
             disabled={pagina === 1}
+            aria-label="Página anterior"
             style={{
               padding: '8px 12px',
               border: '1px solid #cbd7de',
               background: '#ffffff',
               borderRadius: '4px',
               cursor: pagina === 1 ? 'not-allowed' : 'pointer',
-              opacity: pagina === 1 ? 0.5 : 1,
+              opacity: pagina === 1 ? 0.4 : 1,
               fontSize: '13px',
+              fontWeight: 500,
             }}
           >
-            « Início
+            ‹ Anterior
           </button>
 
-          {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((num) => (
-            <button
-              key={num}
-              onClick={() => setPagina(num)}
-              style={{
-                padding: '8px 14px',
-                border: num === pagina ? '1px solid #861e32' : '1px solid #cbd7de',
-                background: num === pagina ? '#861e32' : '#ffffff',
-                color: num === pagina ? '#ffffff' : '#30252a',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: num === pagina ? 700 : 500,
-              }}
-            >
-              {num}
-            </button>
-          ))}
+          {paginasVisiveis.map((item) => {
+            if (typeof item === 'string') {
+              return (
+                <span
+                  key={item}
+                  style={{
+                    padding: '8px 4px',
+                    color: '#71636a',
+                    fontSize: '14px',
+                    userSelect: 'none',
+                  }}
+                >
+                  …
+                </span>
+              )
+            }
+
+            const num = item
+            const ativa = num === pagina
+
+            return (
+              <button
+                key={num}
+                onClick={() => setPagina(num)}
+                aria-label={`Página ${num}`}
+                aria-current={ativa ? 'page' : undefined}
+                style={{
+                  minWidth: '36px',
+                  height: '36px',
+                  padding: '0 8px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: ativa ? '1px solid #861e32' : '1px solid #cbd7de',
+                  background: ativa ? '#861e32' : '#ffffff',
+                  color: ativa ? '#ffffff' : '#30252a',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: ativa ? 700 : 500,
+                }}
+              >
+                {num}
+              </button>
+            )
+          })}
 
           <button
-            onClick={() => setPagina(totalPaginas)}
+            onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
             disabled={pagina === totalPaginas}
+            aria-label="Próxima página"
             style={{
               padding: '8px 12px',
               border: '1px solid #cbd7de',
               background: '#ffffff',
               borderRadius: '4px',
               cursor: pagina === totalPaginas ? 'not-allowed' : 'pointer',
-              opacity: pagina === totalPaginas ? 0.5 : 1,
+              opacity: pagina === totalPaginas ? 0.4 : 1,
               fontSize: '13px',
+              fontWeight: 500,
             }}
           >
-            Fim »
+            Próxima ›
           </button>
-        </div>
+        </nav>
       )}
 
       <style>{`

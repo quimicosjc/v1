@@ -236,21 +236,21 @@ export default function FormularioSindicalizacao() {
       <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#30252a', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.5px', borderTop: '1px solid #e4dce0', paddingTop: '18px' }}>
         2. Endereço Residencial
       </h4>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '22px' }}>
-        <div style={{ gridColumn: 'span 2' }}>
-          <label style={labelStyle}>Endereço (Rua, Av, Número, Compl.)</label>
+      <div className="form-sind-grid form-sind-grid-endereco" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '22px' }}>
+        <div className="form-sind-col-span-2" style={{ gridColumn: 'span 2' }}>
+          <label style={labelStyle}>Endereço (Rua, Av, Número, Compl.) <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span></label>
           <input type="text" name="endereco" placeholder="Ex: Rua das Flores, 123, Apto 4" style={inputStyle} />
         </div>
         <div>
-          <label style={labelStyle}>Bairro</label>
+          <label style={labelStyle}>Bairro <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span></label>
           <input type="text" name="bairro" placeholder="Bairro" style={inputStyle} />
         </div>
         <div>
-          <label style={labelStyle}>Cidade</label>
+          <label style={labelStyle}>Cidade <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span></label>
           <input type="text" name="cidade" placeholder="São José dos Campos" style={inputStyle} />
         </div>
         <div>
-          <label style={labelStyle}>CEP</label>
+          <label style={labelStyle}>CEP <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span></label>
           <input type="text" name="cep" placeholder="12200-000" style={inputStyle} />
         </div>
       </div>
@@ -307,6 +307,17 @@ export default function FormularioSindicalizacao() {
           {enviando ? 'Enviando Ficha...' : 'Enviar Ficha de Filiação →'}
         </button>
       </div>
+
+      <style>{`
+        @media (max-width: 640px) {
+          .form-sind-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .form-sind-col-span-2 {
+            grid-column: span 1 !important;
+          }
+        }
+      `}</style>
     </form>
   )
 }

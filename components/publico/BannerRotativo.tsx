@@ -22,13 +22,25 @@ const TICK_MS = 100
 export default function BannerRotativo({ banners }: BannerRotativoProps) {
   const listaAtivos = banners.filter((b) => b.ativo !== false && b.imagem)
   const [indiceAtual, setIndiceAtual] = useState(0)
-  const [pausado, setPausado] = useState(false)
+  const [pausadoManual, setPausadoManual] = useState(false)
+  const [hoverOuFoco, setHoverOuFoco] = useState(false)
   const [tempoRestanteMs, setTempoRestanteMs] = useState(DURACAO_BANNER_MS)
 
   const total = listaAtivos.length
+  const estaPausado = pausadoManual || hoverOuFoco
+
+  // Respeita preferência por movimento reduzido (L08)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+      if (mediaQuery.matches) {
+        setPausadoManual(true)
+      }
+    }
+  }, [])
 
   useEffect(() => {
-    if (total <= 1 || pausado) return
+    if (total <= 1 || estaPausado) return
 
     const interval = setInterval(() => {
       setTempoRestanteMs((prev) => {
@@ -41,7 +53,7 @@ export default function BannerRotativo({ banners }: BannerRotativoProps) {
     }, TICK_MS)
 
     return () => clearInterval(interval)
-  }, [total, pausado])
+  }, [total, estaPausado])
 
   if (total === 0) return null
 
@@ -66,8 +78,10 @@ export default function BannerRotativo({ banners }: BannerRotativoProps) {
   return (
     <div
       style={{ position: 'relative', width: '100%' }}
-      onMouseEnter={() => setPausado(true)}
-      onMouseLeave={() => setPausado(false)}
+      onMouseEnter={() => setHoverOuFoco(true)}
+      onMouseLeave={() => setHoverOuFoco(false)}
+      onFocus={() => setHoverOuFoco(true)}
+      onBlur={() => setHoverOuFoco(false)}
       className="banner-rotativo-wrapper"
     >
       <div
@@ -139,18 +153,22 @@ export default function BannerRotativo({ banners }: BannerRotativoProps) {
       {/* Controles, timer e indicadores (apenas quando total > 1) */}
       {total > 1 && (
         <>
-          {/* Mostrador com Timer elegante no canto superior direito */}
-          <div
+          {/* Botão de Pausa / Retomada acessível por toque e teclado (L08) */}
+          <button
+            type="button"
+            onClick={() => setPausadoManual((prev) => !prev)}
+            aria-label={estaPausado ? 'Retomar rotação automática dos banners' : 'Pausar rotação automática dos banners'}
             style={{
               position: 'absolute',
               top: '12px',
               right: '12px',
               zIndex: 4,
-              background: 'rgba(0, 0, 0, 0.65)',
+              background: estaPausado ? 'rgba(134, 30, 50, 0.9)' : 'rgba(0, 0, 0, 0.65)',
               backdropFilter: 'blur(4px)',
               color: '#FFFFFF',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
               borderRadius: '20px',
-              padding: '4px 10px',
+              padding: '5px 12px',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
@@ -158,17 +176,29 @@ export default function BannerRotativo({ banners }: BannerRotativoProps) {
               fontWeight: 700,
               letterSpacing: '0.4px',
               boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-              pointerEvents: 'none',
+              cursor: 'pointer',
               fontFamily: 'monospace',
+              transition: 'background 0.2s ease',
             }}
-            title={pausado ? 'Rotação pausada com o cursor' : `Próximo banner em ${segundosRestantes}s`}
+            title={estaPausado ? 'Clique para retomar a rotação' : 'Clique para pausar a rotação'}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-            <span>{pausado ? 'Pausa' : `${segundosRestantes}s`}</span>
-          </div>
+            {estaPausado ? (
+              <>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+                <span>Pausado</span>
+              </>
+            ) : (
+              <>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="6" y="4" width="4" height="16" />
+                  <rect x="14" y="4" width="4" height="16" />
+                </svg>
+                <span>{`${segundosRestantes}s`}</span>
+              </>
+            )}
+          </button>
 
           {/* Seta Esquerda */}
           <button
