@@ -19,8 +19,10 @@ function getSupabaseAdmin() {
  * 3. Keepalive do Supabase para evitar hibernação
  */
 export async function GET(request: NextRequest) {
+  // Blindagem de segurança (S05): exige CRON_SECRET estritamente configurado
+  const cronSecret = process.env.CRON_SECRET
   const authHeader = request.headers.get('authorization')
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
 

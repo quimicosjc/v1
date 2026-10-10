@@ -8,6 +8,7 @@ export interface UsuarioPerfil {
   email: string
   papel: 'operador' | 'gestor' | 'admin_ti'
   ativo: boolean
+  pode_denuncias?: boolean
   permissoes_json?: string | null
 }
 
@@ -29,7 +30,8 @@ export function temPermissao(usuario: UsuarioPerfil, area: string, acao: string)
 
 /**
  * Obtém o perfil do usuário logado a partir da tabela `usuarios`.
- * Se não estiver logado, redireciona automaticamente para o login.
+ * Princípio Fail Closed: Se não estiver logado ou não possuir perfil ativo,
+ * nega acesso imediatamente e redireciona para o login.
  */
 export async function getUsuarioLogado(): Promise<UsuarioPerfil> {
   const supabase = await createClient()
@@ -48,35 +50,11 @@ export async function getUsuarioLogado(): Promise<UsuarioPerfil> {
     .eq('auth_user_id', user.id)
     .single()
 
-  // Se o usuário autenticado ainda não tem registro na tabela `usuarios`,
-  // cria um perfil inicial como admin_ti para o primeiro acesso
+  // Se o usuário autenticado não possui registro ou ocorreu erro na consulta,
+  // NEGA o acesso sumariamente (Fail Closed) e destrói a sessão
   if (error || !usuario) {
-    const nomePadrao = user.user_metadata?.nome || user.email?.split('@')[0] || 'Administrador'
-    
-    const { data: novoUsuario } = await supabase
-      .from('usuarios')
-      .upsert({
-        auth_user_id: user.id,
-        email: user.email!,
-        nome: nomePadrao,
-        papel: 'admin_ti',
-        ativo: true,
-      }, { onConflict: 'email' })
-      .select()
-      .single()
-
-    if (novoUsuario) {
-      return novoUsuario as UsuarioPerfil
-    }
-
-    return {
-      id: user.id,
-      auth_user_id: user.id,
-      nome: nomePadrao,
-      email: user.email!,
-      papel: 'admin_ti',
-      ativo: true,
-    }
+    await supabase.auth.signOut()
+    redirect('/admin/login?error=sem_perfil')
   }
 
   if (!usuario.ativo) {

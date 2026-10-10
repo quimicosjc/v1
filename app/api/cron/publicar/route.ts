@@ -17,9 +17,10 @@ function getSupabaseAdmin() {
  * e atualiza seu status para 'publicado'.
  */
 export async function GET(request: NextRequest) {
-  // Verificação de segurança: autorização via CRON_SECRET se configurado
+  // Blindagem de segurança (S05): exige CRON_SECRET estritamente configurado
+  const cronSecret = process.env.CRON_SECRET
   const authHeader = request.headers.get('authorization')
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
 

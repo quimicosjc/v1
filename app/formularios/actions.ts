@@ -1,5 +1,6 @@
 'use server'
 
+import crypto from 'crypto'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import {
   enviarAvisoRecebimento,
@@ -18,7 +19,7 @@ function gerarProtocolo(prefixo: string): string {
   const agora = new Date()
   const ano = agora.getFullYear().toString().slice(-2)
   const mes = (agora.getMonth() + 1).toString().padStart(2, '0')
-  const aleatorio = Math.floor(Math.random() * 9000 + 1000)
+  const aleatorio = crypto.randomBytes(3).toString('hex').toUpperCase()
   return `PROT-${prefixo}-${ano}${mes}-${aleatorio}`
 }
 
@@ -148,22 +149,30 @@ export async function submeterCarteirinha(
     if (!nome) return { ok: false, erro: 'Informe o seu nome completo.' }
     if (!telefone) return { ok: false, erro: 'Informe um telefone para contato.' }
 
-    let fotoUrl: string | null = null
+    let fotoPath: string | null = null
     const fotoFile = formData.get('foto') as File | null
-    if (fotoFile && fotoFile.size > 0 && fotoFile.size <= 5 * 1024 * 1024) {
+    if (fotoFile && fotoFile.size > 0) {
+      if (fotoFile.size > 5 * 1024 * 1024) {
+        return { ok: false, erro: 'A foto deve ter no máximo 5 MB.' }
+      }
+      const allowedExts = ['jpg', 'jpeg', 'png', 'webp']
+      const ext = fotoFile.name.split('.').pop()?.toLowerCase() || ''
+      if (!allowedExts.includes(ext)) {
+        return { ok: false, erro: 'Formato de foto não suportado. Envie em JPG, PNG ou WebP.' }
+      }
       const supabase = getSupabaseAdmin()
-      const ext = fotoFile.name.split('.').pop()?.toLowerCase() || 'jpg'
-      const nomeArquivo = `carteirinhas/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`
+      const nomeArquivo = `carteirinhas/${Date.now()}-${crypto.randomBytes(4).toString('hex')}.${ext}`
       const arrayBuffer = await fotoFile.arrayBuffer()
       const { error: upErr } = await supabase.storage
-        .from('midias')
+        .from('privado')
         .upload(nomeArquivo, Buffer.from(arrayBuffer), {
-          contentType: fotoFile.type,
+          contentType: fotoFile.type || 'image/jpeg',
           upsert: false,
         })
       if (!upErr) {
-        const { data: pubData } = supabase.storage.from('midias').getPublicUrl(nomeArquivo)
-        fotoUrl = pubData.publicUrl
+        fotoPath = nomeArquivo
+      } else {
+        console.error('[carteirinha] Erro ao enviar foto para storage privado:', upErr.message)
       }
     }
 
@@ -182,7 +191,8 @@ export async function submeterCarteirinha(
       telefone,
       email,
       tipo_via: tipoVia,
-      foto_url: fotoUrl,
+      foto_path: fotoPath,
+      foto_url: null,
       observacoes,
       enviado_em: new Date().toISOString(),
     }
@@ -194,7 +204,8 @@ export async function submeterCarteirinha(
     })
 
     if (dbError) {
-      return { ok: false, erro: `Falha ao registrar: ${dbError.message}` }
+      console.error('[carteirinha] Erro no Supabase:', dbError.message)
+      return { ok: false, erro: 'Falha ao registrar solicitação de carteirinha. Tente novamente em instantes.' }
     }
 
     // Notificação interna para a equipe do Sindicato
@@ -308,7 +319,8 @@ export async function submeterDenuncia(
 
     // Processamento de anexos (até 5 arquivos, max 20MB cada)
     const arquivos = formData.getAll('arquivos') as File[]
-    const anexosSalvos: AnexoDenunciaEmail[] = []
+    const anexosSalvos: (AnexoDenunciaEmail & { path?: string })[] = []
+    const allowedExts = ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'doc', 'docx', 'txt', 'mp4', 'mp3', 'm4a', 'odt', 'ods']
 
     if (arquivos && arquivos.length > 0) {
       const supabase = getSupabaseAdmin()
@@ -317,25 +329,32 @@ export async function submeterDenuncia(
         if (arq.size > 20 * 1024 * 1024) continue
 
         const ext = arq.name.split('.').pop()?.toLowerCase() || 'bin'
-        const nomeArquivo = `denuncias/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`
+        if (!allowedExts.includes(ext)) {
+          console.warn(`[denuncia] Anexo rejeitado por extensão não permitida: .${ext}`)
+          continue
+        }
+
+        const nomeArquivo = `denuncias/${Date.now()}-${crypto.randomBytes(4).toString('hex')}.${ext}`
         const arrayBuffer = await arq.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
 
         const { error: upErr } = await supabase.storage
-          .from('midias')
+          .from('privado')
           .upload(nomeArquivo, buffer, {
-            contentType: arq.type,
+            contentType: arq.type || 'application/octet-stream',
             upsert: false,
           })
 
         if (!upErr) {
-          const { data: pubData } = supabase.storage.from('midias').getPublicUrl(nomeArquivo)
           anexosSalvos.push({
             nome: arq.name,
-            url: pubData.publicUrl,
+            url: '', // Privado: acessado via link assinado com auth
+            path: nomeArquivo,
             tipo: ext,
             buffer,
           })
+        } else {
+          console.error('[denuncia] Erro ao salvar anexo no storage privado:', upErr.message)
         }
       }
     }
@@ -344,8 +363,8 @@ export async function submeterDenuncia(
     const formularioId = await obterFormularioId('denuncia')
     const supabase = getSupabaseAdmin()
 
-    // Para o banco de dados salvamos sem os buffers binários
-    const anexosBanco = anexosSalvos.map(({ nome, url, tipo }) => ({ nome, url, tipo }))
+    // Para o banco de dados salvamos a referência do arquivo privado
+    const anexosBanco = anexosSalvos.map(({ nome, path, tipo }) => ({ nome, path, tipo, url: '' }))
 
     const dados = {
       protocolo,
@@ -368,7 +387,8 @@ export async function submeterDenuncia(
     })
 
     if (dbError) {
-      return { ok: false, erro: `Falha ao registrar denúncia: ${dbError.message}` }
+      console.error('[denuncia] Erro no Supabase:', dbError.message)
+      return { ok: false, erro: 'Falha ao registrar denúncia. Tente novamente em instantes.' }
     }
 
     // Dispara e-mail com conteúdo completo e anexos para o responsável do Sindicato
@@ -424,7 +444,7 @@ export async function submeterCadastroNoticias(
     }
 
     const formularioId = await obterFormularioId('contato')
-    await supabase.from('recebimentos').insert({
+    const { error: dbError } = await supabase.from('recebimentos').insert({
       formulario_id: formularioId,
       dados: {
         protocolo,
@@ -437,6 +457,11 @@ export async function submeterCadastroNoticias(
       },
       processado: false,
     })
+
+    if (dbError) {
+      console.error('[cadastro-noticias] Erro no Supabase:', dbError.message)
+      return { ok: false, erro: 'Falha ao registrar inscrição. Tente novamente mais tarde.' }
+    }
 
     return { ok: true, protocolo }
   } catch (err: any) {

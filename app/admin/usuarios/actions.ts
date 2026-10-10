@@ -60,9 +60,19 @@ export async function criarUsuario(data: {
   try {
     const usuarioLogado = await getUsuarioLogado()
 
-    // Apenas admin_ti ou gestores autorizados podem criar usuários
+    // Regra estrita de autorização: Apenas admin_ti ou gestores podem cadastrar usuários
     if (usuarioLogado.papel === 'operador') {
       return { error: 'Você não tem permissão para cadastrar novos usuários.' }
+    }
+
+    // Apenas Administradores de TI podem conceder privilégios de admin_ti
+    if (data.papel === 'admin_ti' && usuarioLogado.papel !== 'admin_ti') {
+      return { error: 'Apenas Administradores podem conceder o nível de Administrador.' }
+    }
+
+    // Gestor só pode conceder permissão de denúncias se ele próprio possuir essa permissão
+    if (data.pode_denuncias && usuarioLogado.papel !== 'admin_ti' && !(usuarioLogado as any).pode_denuncias) {
+      return { error: 'Você não tem permissão para conceder acesso a denúncias.' }
     }
 
     if (!data.nome.trim() || !data.email.trim() || !data.senha) {
@@ -136,6 +146,12 @@ export async function atualizarUsuario(
 ): Promise<{ ok: boolean } | { error: string }> {
   try {
     const usuarioLogado = await getUsuarioLogado()
+
+    // Regra estrita: Operadores nunca podem gerenciar outros usuários
+    if (usuarioLogado.papel === 'operador') {
+      return { error: 'Você não tem permissão para gerenciar contas de usuários.' }
+    }
+
     const supabaseAdmin = getSupabaseAdmin()
 
     // 1. Busca usuário alvo para checagem de proteção
@@ -159,9 +175,24 @@ export async function atualizarUsuario(
       }
     }
 
-    // Gestores comuns não podem alterar outros gestores ou admins
+    // Gestores não podem alterar contas de administradores
     if (usuarioLogado.papel === 'gestor' && usuarioAlvo.papel === 'admin_ti') {
       return { error: 'Você não tem permissão para alterar contas de Administrador.' }
+    }
+
+    // Gestores não podem promover ninguém a admin_ti
+    if (usuarioLogado.papel === 'gestor' && data.papel === 'admin_ti') {
+      return { error: 'Apenas Administradores podem conceder o nível de Administrador.' }
+    }
+
+    // Gestores não podem alterar outros gestores
+    if (usuarioLogado.papel === 'gestor' && usuarioAlvo.papel === 'gestor' && usuarioAlvo.id !== usuarioLogado.id) {
+      return { error: 'Você não tem permissão para alterar outros Gestores.' }
+    }
+
+    // Gestores não podem conceder pode_denuncias
+    if (usuarioLogado.papel === 'gestor' && data.pode_denuncias !== undefined && !(usuarioLogado as any).pode_denuncias) {
+      return { error: 'Você não tem permissão para gerenciar acesso a denúncias.' }
     }
 
     // 2. Atualiza dados no banco

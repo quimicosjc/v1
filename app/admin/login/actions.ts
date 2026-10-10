@@ -6,7 +6,10 @@ import { createClient } from '@/lib/supabase/server'
 export async function loginAction(formData: FormData) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
-  const redirectTo = (formData.get('redirect') as string) || '/admin'
+  const rawRedirect = (formData.get('redirect') as string) || '/admin'
+
+  // Blindagem contra Open Redirect (CWE-601): aceita apenas caminhos locais seguros
+  const redirectTo = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') && !rawRedirect.includes('\\') ? rawRedirect : '/admin'
 
   if (!email || !password) {
     return { error: 'Por favor, preencha o e-mail e a senha.' }
