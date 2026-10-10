@@ -131,6 +131,8 @@ export default function ColoniaNav({ slugAtual }: ColoniaNavProps) {
 
       <div
         className="colonia-nav-abas"
+        role="tablist"
+        aria-label="Abas informativas da Colônia de Férias"
         style={{
           display: 'flex',
           flexWrap: 'wrap',
@@ -143,6 +145,9 @@ export default function ColoniaNav({ slugAtual }: ColoniaNavProps) {
             <Link
               key={aba.slug}
               href={aba.href}
+              role="tab"
+              aria-selected={ativa}
+              aria-current={ativa ? 'page' : undefined}
               style={{
                 background: ativa ? '#861e32' : '#f8fafb',
                 color: ativa ? '#ffffff' : '#30252a',

@@ -128,11 +128,16 @@ a:hover {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   Acessibilidade — foco visível em todos os elementos interativos
+   Acessibilidade — foco visível em todos os elementos interativos (N04)
    ────────────────────────────────────────────────────────────────────────── */
-:focus-visible {
-  outline: 3px solid var(--cor-botao);
-  outline-offset: 2px;
+:focus-visible,
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #861e32 !important;
+  outline-offset: 2px !important;
 }
 
 /* ──────────────────────────────────────────────────────────────────────────

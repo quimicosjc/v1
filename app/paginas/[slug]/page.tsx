@@ -11,6 +11,7 @@ import HeaderPublico from '@/components/publico/HeaderPublico'
 import FooterPublico from '@/components/publico/FooterPublico'
 import ColoniaNav from '@/components/publico/ColoniaNav'
 import ListaNoticiasPublica, { type NoticiaItemPublico } from '@/components/publico/ListaNoticiasPublica'
+import ListaConveniosPublica from '@/components/publico/ListaConveniosPublica'
 import { CONTAINER_STYLE } from '@/lib/design'
 import { sanitizarHtml } from '@/lib/security'
 
@@ -405,72 +406,9 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
             </div>
           )}
 
-          {/* 2. CONVÊNIOS E BENEFÍCIOS */}
+          {/* 2. CONVÊNIOS E BENEFÍCIOS PESQUISÁVEIS (L03) */}
           {tipoPagina === 'partners' && records.length > 0 && (
-            <div style={{ marginTop: '40px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '18px' }}>
-                {records.filter((r: any) => r.active !== false).map((c: any) => (
-                  <div
-                    key={c.id || c.name}
-                    style={{
-                      background: '#ffffff',
-                      border: '1px solid #e4dce0',
-                      borderRadius: '8px',
-                      padding: '18px',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <span
-                          style={{
-                            fontSize: '11px',
-                            fontWeight: 700,
-                            color: '#861e32',
-                            background: '#f8f2f4',
-                            padding: '3px 8px',
-                            borderRadius: '4px',
-                            textTransform: 'uppercase',
-                          }}
-                        >
-                          {c.kind}
-                        </span>
-                        <span style={{ fontSize: '11.5px', color: '#71636a' }}>{c.city}</span>
-                      </div>
-                      <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#30252a', margin: '0 0 6px 0' }}>
-                        {c.name}
-                      </h3>
-                      <p style={{ fontSize: '13px', color: '#52434a', margin: '0 0 12px 0', lineHeight: 1.45 }}>
-                        {c.description}
-                      </p>
-                    </div>
-
-                    <div style={{ borderTop: '1px solid #f0e8ea', paddingTop: '10px', fontSize: '12px', color: '#71636a', display: 'grid', gap: '4px' }}>
-                      {c.phone && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                          </svg>
-                          <span>{c.phone}</span>
-                        </div>
-                      )}
-                      {c.address && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                            <circle cx="12" cy="10" r="3"/>
-                          </svg>
-                          <span>{c.address}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ListaConveniosPublica conveniosIniciais={records} />
           )}
 
           {/* 3. CONTATOS E SEDES */}
@@ -502,7 +440,17 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
                           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                           <circle cx="12" cy="10" r="3"/>
                         </svg>
-                        <span><strong>Endereço:</strong> {s.address}</span>
+                        <span>
+                          <strong>Endereço:</strong>{' '}
+                          <a
+                            href={s.url || `https://maps.google.com/?q=${encodeURIComponent(`${s.name} ${s.address}`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: '#861e32', textDecoration: 'underline' }}
+                          >
+                            {s.address} <span style={{ fontSize: '11px' }}>(Abrir rota ↗)</span>
+                          </a>
+                        </span>
                       </div>
                     )}
                     {s.hours && (
@@ -519,7 +467,15 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
                         </svg>
-                        <span><strong>Telefone:</strong> {s.phone}</span>
+                        <span>
+                          <strong>Telefone:</strong>{' '}
+                          <a
+                            href={`tel:${s.phone.replace(/[^\d+]/g, '')}`}
+                            style={{ color: '#861e32', fontWeight: 600, textDecoration: 'none' }}
+                          >
+                            {s.phone} <span style={{ fontSize: '11px', fontWeight: 400 }}>(Ligar)</span>
+                          </a>
+                        </span>
                       </div>
                     )}
                     {s.whatsapp && (
@@ -527,7 +483,17 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
                         </svg>
-                        <span><strong>WhatsApp:</strong> {s.whatsapp}</span>
+                        <span>
+                          <strong>WhatsApp:</strong>{' '}
+                          <a
+                            href={`https://wa.me/55${s.whatsapp.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: '#16a34a', fontWeight: 600, textDecoration: 'none' }}
+                          >
+                            {s.whatsapp} <span style={{ fontSize: '11px', fontWeight: 400 }}>(WhatsApp ↗)</span>
+                          </a>
+                        </span>
                       </div>
                     )}
                     {s.email && (
@@ -536,7 +502,15 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
                           <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                           <polyline points="22,6 12,13 2,6"/>
                         </svg>
-                        <span><strong>E-mail:</strong> {s.email}</span>
+                        <span>
+                          <strong>E-mail:</strong>{' '}
+                          <a
+                            href={`mailto:${s.email}`}
+                            style={{ color: '#861e32', textDecoration: 'underline' }}
+                          >
+                            {s.email}
+                          </a>
+                        </span>
                       </div>
                     )}
                   </div>

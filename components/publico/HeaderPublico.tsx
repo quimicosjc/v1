@@ -25,8 +25,9 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
   const [mobileMenuAberto, setMobileMenuAberto] = useState(false)
   const [mobileAcordeon, setMobileAcordeon] = useState<string | null>(null)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const headerRef = useRef<HTMLElement | null>(null)
 
-  // Fecha menus ao mudar rota ou redimensionar
+  // Fecha menus ao redimensionar
   useEffect(() => {
     function handleResize() {
       if (window.innerWidth > 960) {
@@ -35,6 +36,34 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
     }
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  // Fecha menus ao pressionar Escape ou clicar fora (N03)
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setDropdownAtivo(null)
+        setMobileMenuAberto(false)
+        setMobileAcordeon(null)
+      }
+    }
+
+    function handleClickOutside(e: MouseEvent | TouchEvent) {
+      if (headerRef.current && !headerRef.current.contains(e.target as Node)) {
+        setDropdownAtivo(null)
+        setMobileMenuAberto(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
+    }
   }, [])
 
   function handleMouseEnter(grupo: string) {
@@ -298,6 +327,7 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
   return (
     <>
       <header
+        ref={headerRef}
         style={{
           position: 'sticky',
           top: 0,
@@ -395,6 +425,8 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                   <button
                     type="button"
                     onClick={() => setDropdownAtivo(aberto ? null : grupo.nome)}
+                    aria-expanded={aberto}
+                    aria-haspopup="true"
                     style={{
                       background: aberto || ativo ? 'rgba(255,255,255,0.14)' : 'transparent',
                       color: '#ffffff',
@@ -550,7 +582,9 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
           <button
             type="button"
             onClick={() => setMobileMenuAberto(!mobileMenuAberto)}
-            aria-label="Abrir menu de navegação"
+            aria-expanded={mobileMenuAberto}
+            aria-haspopup="true"
+            aria-label={mobileMenuAberto ? 'Fechar menu de navegação' : 'Abrir menu de navegação'}
             style={{
               background: 'rgba(255,255,255,0.12)',
               border: '1px solid rgba(255,255,255,0.2)',
@@ -688,6 +722,7 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                     <button
                       type="button"
                       onClick={() => setMobileAcordeon(aberto ? null : grupo.nome)}
+                      aria-expanded={aberto}
                       style={{
                         width: '100%',
                         textAlign: 'left',
