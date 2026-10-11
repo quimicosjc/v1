@@ -268,7 +268,7 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
           <ColoniaNav slugAtual={slug} />
 
           {/* Foto Principal com Preservação de Orientação Original (Regra de Ouro) */}
-          {fotoPrincipal && (
+          {fotoPrincipal && tipoPagina !== 'gallery' && (
             <div style={{ marginBottom: '32px' }}>
               <div
                 style={{
@@ -685,6 +685,199 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
             </div>
           )}
 
+          {/* 6.1 LOCALIZAÇÃO E ROTAS (COLÔNIA COMO CHEGAR — L01) */}
+          {tipoPagina === 'locations' && records.length > 0 && (
+            <div style={{ marginTop: '36px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+              {records.map((loc: any) => (
+                <div
+                  key={loc.name}
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid #e4dce0',
+                    borderRadius: '8px',
+                    padding: '24px',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                    borderTop: '4px solid #861e32',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#30252a', margin: 0 }}>
+                      {loc.name}
+                    </h3>
+                  </div>
+                  {loc.description && (
+                    <p style={{ fontSize: '13.5px', color: '#52434a', margin: '0 0 14px 0', lineHeight: 1.5 }}>
+                      {loc.description}
+                    </p>
+                  )}
+                  <div style={{ fontSize: '13.5px', color: '#30252a', marginBottom: '18px', padding: '10px 12px', background: '#faf8f9', borderRadius: '6px', border: '1px solid #ebdbe0' }}>
+                    <strong>Endereço:</strong> {loc.address}
+                  </div>
+                  <a
+                    href={loc.url || `https://maps.google.com/?q=${encodeURIComponent(`${loc.name} ${loc.address}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: '#861e32',
+                      color: '#ffffff',
+                      padding: '10px 18px',
+                      borderRadius: '6px',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    <span>Abrir rota no Maps ↗</span>
+                  </a>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 6.2 GALERIA DE FOTOS DA COLÔNIA COM FOTOS PROVISÓRIAS ORGANIZADAS POR UNIDADE (L01) */}
+          {tipoPagina === 'gallery' && (
+            <div style={{ marginTop: '36px' }}>
+              <div
+                style={{
+                  background: '#fff9ea',
+                  border: '1px solid #f3d489',
+                  borderRadius: '8px',
+                  padding: '14px 18px',
+                  marginBottom: '28px',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '12px',
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#825914" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '2px' }}>
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <div style={{ fontSize: '13.5px', color: '#66450c', lineHeight: 1.5 }}>
+                  <strong>Galeria Provisória da Colônia de Férias:</strong> As fotografias abaixo são registros institucionais e demonstrativos do acervo das unidades de São Sebastião e Caraguatatuba. A catalogação fotográfica detalhada dos quartos e acomodações internas está em andamento pela equipe do Sindicato.
+                </div>
+              </div>
+
+              {['São Sebastião', 'Caraguatatuba'].map((unidade) => {
+                const fotosDaUnidade = (records as any[]).filter(
+                  (r) => !r.unidade || r.unidade.toLowerCase().includes(unidade.toLowerCase())
+                )
+                if (fotosDaUnidade.length === 0) return null
+
+                return (
+                  <section key={unidade} style={{ marginBottom: '40px' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        paddingBottom: '8px',
+                        borderBottom: '2px solid #861e32',
+                        marginBottom: '20px',
+                      }}
+                    >
+                      <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#861e32', margin: 0 }}>
+                        Unidade {unidade}
+                      </h2>
+                      <span style={{ fontSize: '12px', background: '#f8e9ec', color: '#861e32', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
+                        {fotosDaUnidade.length} {fotosDaUnidade.length === 1 ? 'registro' : 'registros'}
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                        gap: '20px',
+                      }}
+                    >
+                      {fotosDaUnidade.map((item: any, idx: number) => (
+                        <div
+                          key={item.id || item.url || idx}
+                          style={{
+                            background: '#ffffff',
+                            border: '1px solid #e4dce0',
+                            borderRadius: '8px',
+                            overflow: 'hidden',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '100%',
+                              height: '240px',
+                              background: '#f8fafb',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderBottom: '1px solid #e4dce0',
+                              position: 'relative',
+                            }}
+                          >
+                            <img
+                              src={item.url}
+                              alt={item.titulo || `Foto ${unidade}`}
+                              loading="lazy"
+                              style={{
+                                maxWidth: '100%',
+                                maxHeight: '100%',
+                                width: 'auto',
+                                height: 'auto',
+                                objectFit: 'contain',
+                                display: 'block',
+                              }}
+                            />
+                            {item.provisoria && (
+                              <span
+                                style={{
+                                  position: 'absolute',
+                                  top: '10px',
+                                  right: '10px',
+                                  background: 'rgba(48, 37, 42, 0.85)',
+                                  color: '#ffffff',
+                                  fontSize: '10.5px',
+                                  fontWeight: 700,
+                                  padding: '3px 7px',
+                                  borderRadius: '4px',
+                                  letterSpacing: '0.4px',
+                                }}
+                              >
+                                Foto Demonstrativa
+                              </span>
+                            )}
+                          </div>
+
+                          <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                            {item.titulo && (
+                              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#30252a', margin: '0 0 6px 0' }}>
+                                {item.titulo}
+                              </h3>
+                            )}
+                            {item.legenda && (
+                              <p style={{ fontSize: '12.5px', color: '#71636a', margin: 0, lineHeight: 1.45, fontStyle: 'italic' }}>
+                                {item.legenda}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )
+              })}
+            </div>
+          )}
+
           {/* 7. FORMULÁRIOS INTERATIVOS PÚBLICOS */}
           {slug === 'fique-socio' && <FormularioSindicalizacao />}
           {slug === 'carteirinha' && <FormularioCarteirinha />}
@@ -699,8 +892,8 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
             </div>
           )}
 
-          {/* Galeria de Fotos Adicionais (se houver) */}
-          {fotosGaleria.length > 0 && (
+          {/* Galeria de Fotos Adicionais (se houver e não for página de galeria dedicada) */}
+          {fotosGaleria.length > 0 && tipoPagina !== 'gallery' && (
             <div style={{ marginTop: '40px', borderTop: '1px solid #e4dce0', paddingTop: '28px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#30252a', marginBottom: '16px' }}>
                 Fotos complementares do acervo
