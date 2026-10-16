@@ -151,7 +151,7 @@ export default function AdminLayout({ usuario, breadcrumb, activeHref, pendentes
           }}
         >
           <img
-            src="/icone-painel-adm.svg"
+            src="/icone-painel-adm.svg?v=5"
             alt=""
             width={22}
             height={22}
@@ -316,7 +316,7 @@ export default function AdminLayout({ usuario, breadcrumb, activeHref, pendentes
             </button>
 
             <img
-              src="/icone-painel-adm.svg"
+              src="/icone-painel-adm.svg?v=5"
               alt="Sindicato dos Químicos ADM"
               width={28}
               height={28}
@@ -373,7 +373,7 @@ export default function AdminLayout({ usuario, breadcrumb, activeHref, pendentes
         >
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
             <img
-              src="/icone-painel-adm.svg"
+              src="/icone-painel-adm.svg?v=5"
               alt=""
               width={18}
               height={18}

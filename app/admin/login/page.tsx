@@ -63,7 +63,7 @@ export default async function LoginPage({ searchParams }: Props) {
             gap: '8px',
           }}>
             <img
-              src="/icone-painel-adm.svg"
+              src="/icone-painel-adm.svg?v=5"
               alt=""
               width={24}
               height={24}

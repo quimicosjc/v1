@@ -35,11 +35,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/icone-site.svg?v=2', type: 'image/svg+xml' },
-      { url: '/icone-site.png?v=2', type: 'image/png', sizes: '512x512' },
+      { url: '/icone-site.svg?v=3', type: 'image/svg+xml' },
+      { url: '/icone-site.png?v=3', type: 'image/png', sizes: '512x512' },
     ],
-    shortcut: '/icone-site.png?v=2',
-    apple: '/apple-touch-icon.png?v=2',
+    shortcut: '/icone-site.png?v=3',
+    apple: '/apple-touch-icon.png?v=3',
   },
   robots: {
     index: true,
