@@ -101,7 +101,7 @@ export default function AdminLayout({ usuario, breadcrumb, activeHref, pendentes
             }}
           >
             <Image
-              src="/logo-sindicato.png"
+              src="/logo-sindicato.svg"
               alt="Sindicato dos Químicos de São José dos Campos e Região"
               width={200}
               height={90}
@@ -145,9 +145,19 @@ export default function AdminLayout({ usuario, breadcrumb, activeHref, pendentes
             color: '#eed2dc',
             margin: '0 12px 15px',
             paddingTop: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
           }}
         >
-          PAINEL DE CONTROLE
+          <img
+            src="/icone-painel-adm.svg"
+            alt=""
+            width={22}
+            height={22}
+            style={{ width: '22px', height: '22px', display: 'block', flexShrink: 0 }}
+          />
+          <span>PAINEL DE CONTROLE</span>
         </div>
 
         {/* Navegação */}
@@ -305,6 +315,14 @@ export default function AdminLayout({ usuario, breadcrumb, activeHref, pendentes
               ☰
             </button>
 
+            <img
+              src="/icone-painel-adm.svg"
+              alt="Sindicato dos Químicos ADM"
+              width={28}
+              height={28}
+              style={{ width: '28px', height: '28px', display: 'block', flexShrink: 0 }}
+            />
+
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               <span className="admin-breadcrumb-prefix">Painel editorial </span>
               <span style={{ color: '#c8b4bc', margin: '0 8px' }} className="admin-breadcrumb-sep">/</span>
@@ -349,10 +367,20 @@ export default function AdminLayout({ usuario, breadcrumb, activeHref, pendentes
             fontSize: '12px',
             display: 'flex',
             justifyContent: 'space-between',
+            alignItems: 'center',
             gap: '15px',
           }}
         >
-          <span>Químicos · Painel de administração</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+            <img
+              src="/icone-painel-adm.svg"
+              alt=""
+              width={18}
+              height={18}
+              style={{ width: '18px', height: '18px', display: 'block' }}
+            />
+            <span>Químicos · Painel de administração</span>
+          </span>
           <span>Versão 1.0</span>
         </footer>
       </div>

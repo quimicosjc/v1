@@ -45,7 +45,7 @@ export default async function LoginPage({ searchParams }: Props) {
           justifyContent: 'center',
         }}>
           <Image
-            src="/logo-sindicato.png"
+            src="/logo-sindicato.svg"
             alt="Sindicato dos Químicos de São José dos Campos e Região"
             width={200}
             height={100}
@@ -56,16 +56,30 @@ export default async function LoginPage({ searchParams }: Props) {
 
         {/* Corpo */}
         <div style={{ padding: '32px' }}>
-          <p style={{
+          <div style={{
             margin: '0 0 24px 0',
-            fontSize: '12px',
-            letterSpacing: '1.5px',
-            color: '#861e32',
-            fontWeight: 700,
-            textTransform: 'uppercase',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
           }}>
-            PAINEL DE CONTROLE
-          </p>
+            <img
+              src="/icone-painel-adm.svg"
+              alt=""
+              width={24}
+              height={24}
+              style={{ width: '24px', height: '24px', display: 'block', flexShrink: 0 }}
+            />
+            <p style={{
+              margin: 0,
+              fontSize: '12px',
+              letterSpacing: '1.5px',
+              color: '#861e32',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+            }}>
+              PAINEL DE CONTROLE
+            </p>
+          </div>
 
           <LoginForm redirectTo={redirectTo} />
         </div>

@@ -33,6 +33,14 @@ export const metadata: Metadata = {
     locale: 'pt_BR',
     type: 'website',
   },
+  icons: {
+    icon: [
+      { url: '/icone-site.svg?v=2', type: 'image/svg+xml' },
+      { url: '/icone-site.png?v=2', type: 'image/png', sizes: '512x512' },
+    ],
+    shortcut: '/icone-site.png?v=2',
+    apple: '/apple-touch-icon.png?v=2',
+  },
   robots: {
     index: true,
     follow: true,
