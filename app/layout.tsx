@@ -16,6 +16,11 @@ const fontCondensed = Barlow_Condensed({
   variable: '--font-condensed',
 })
 
+const isDominioOficial = Boolean(
+  process.env.NEXT_PUBLIC_SITE_URL &&
+  process.env.NEXT_PUBLIC_SITE_URL.includes('quimicosjc.org.br')
+)
+
 // ─── Metadados padrão do site ────────────────────────────────────────────────
 // Cada página pode sobrescrever esses valores individualmente
 export const metadata: Metadata = {
@@ -42,8 +47,8 @@ export const metadata: Metadata = {
     apple: '/apple-touch-icon.png?v=3',
   },
   robots: {
-    index: true,
-    follow: true,
+    index: isDominioOficial,
+    follow: isDominioOficial,
   },
 }
 

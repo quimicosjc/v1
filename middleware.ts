@@ -2,7 +2,12 @@ import { type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request)
+  const response = await updateSession(request)
+  const host = request.nextUrl.hostname || ''
+  if (!host.includes('quimicosjc.org.br') || request.nextUrl.pathname.startsWith('/admin')) {
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive')
+  }
+  return response
 }
 
 export const config = {

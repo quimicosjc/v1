@@ -58,11 +58,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const descricao = pagina.subtitulo || stripHtml(pagina.corpo || '').slice(0, 160) || 'Página do Sindicato dos Químicos de São José dos Campos e Região.'
+  const isDominioOficial = Boolean(
+    process.env.NEXT_PUBLIC_SITE_URL &&
+    process.env.NEXT_PUBLIC_SITE_URL.includes('quimicosjc.org.br')
+  )
 
   return {
     title: `${pagina.titulo} · Sindicato dos Químicos SJC`,
     description: descricao,
-    robots: pagina.noindex ? { index: false, follow: false } : { index: true, follow: true },
+    robots: (!isDominioOficial || pagina.noindex) ? { index: false, follow: false } : { index: true, follow: true },
     openGraph: {
       title: pagina.titulo,
       description: descricao,
