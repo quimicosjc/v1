@@ -43,6 +43,7 @@ export default function AdminLayout({ usuario, breadcrumb, activeHref, pendentes
 
   return (
     <div
+      className="admin-root"
       style={{
         fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
         color: '#30252a',
@@ -530,6 +531,12 @@ export default function AdminLayout({ usuario, breadcrumb, activeHref, pendentes
           .admin-backdrop {
             display: none !important;
           }
+        }
+        .admin-root a:hover {
+          text-decoration: none;
+        }
+        .admin-root .ProseMirror a:hover {
+          text-decoration: underline;
         }
       `}</style>
     </div>

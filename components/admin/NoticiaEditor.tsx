@@ -233,8 +233,12 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
   const [tagInput, setTagInput] = useState('')
   const [destaque, setDestaque] = useState(noticia?.destaque ?? false)
   const [publicadoEm, setPublicadoEm] = useState(() => {
-    if (noticia?.publicado_em) return noticia.publicado_em.slice(0, 16)
-    const d = new Date()
+    const d = noticia?.publicado_em ? new Date(noticia.publicado_em) : new Date()
+    if (isNaN(d.getTime())) {
+      const fallback = new Date()
+      fallback.setMinutes(fallback.getMinutes() - fallback.getTimezoneOffset())
+      return fallback.toISOString().slice(0, 16)
+    }
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
     return d.toISOString().slice(0, 16)
   })
@@ -884,13 +888,13 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
     setShowConfirm(false)
     startTransition(async () => {
       const data = buildFormData()
+      const dataPublicacao = data.publicado_em || new Date().toISOString()
       let id = noticiaIdRef.current
       if (!id) {
-        const result = await criarNoticia({ ...data, status: 'publicado' })
+        const result = await criarNoticia({ ...data, status: 'publicado', publicado_em: dataPublicacao })
         if ('error' in result) { showToast(result.error, 'erro'); return }
       } else {
-        await atualizarNoticia(id, data)
-        const result = await publicarNoticia(id)
+        const result = await atualizarNoticia(id, { ...data, status: 'publicado', publicado_em: dataPublicacao })
         if ('error' in result) { showToast(result.error, 'erro'); return }
       }
       router.push('/admin/noticias')
@@ -2081,7 +2085,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
               <div>
                 <div style={{ fontWeight: 600 }}>Destacar na homepage</div>
                 <div style={{ fontSize: '12px', color: '#71636a', marginTop: '2px' }}>
-                  Até 4 notícias em destaque. Marcar desloca as demais.
+                  Até 5 notícias em destaque (1 manchete + 4 chamadas). Marcar coloca em 1º lugar.
                 </div>
               </div>
             </label>
@@ -2455,9 +2459,12 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
           }
           .noticia-secao-redacao,
           .noticia-secao-fotos,
-          .noticia-secao-publicacao,
+          .noticia-secao-publicacao {
+            display: block !important;
+          }
           .noticia-sidebar-column {
             display: flex !important;
+            flex-direction: column !important;
           }
         }
       `}</style>

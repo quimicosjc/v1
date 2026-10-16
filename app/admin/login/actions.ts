@@ -12,7 +12,7 @@ export async function loginAction(formData: FormData) {
   const redirectTo = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') && !rawRedirect.includes('\\') ? rawRedirect : '/admin'
 
   if (!email || !password) {
-    return { error: 'Por favor, preencha o e-mail e a senha.' }
+    return { error: 'Por favor, preencha o e-mail e a senha.', email }
   }
 
   const supabase = await createClient()
@@ -24,12 +24,12 @@ export async function loginAction(formData: FormData) {
 
   if (error) {
     if (error.message.includes('Invalid login credentials')) {
-      return { error: 'E-mail ou senha incorretos. Por favor, confira os dados.' }
+      return { error: 'E-mail ou senha incorretos. Por favor, confira os dados.', email }
     }
     if (error.message.includes('Email not confirmed')) {
-      return { error: 'Este e-mail ainda não foi confirmado.' }
+      return { error: 'Este e-mail ainda não foi confirmado.', email }
     }
-    return { error: `Não foi possível entrar: ${error.message}` }
+    return { error: `Não foi possível entrar: ${error.message}`, email }
   }
 
   redirect(redirectTo)

@@ -60,16 +60,41 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
-    const { data: noticias } = await supabase
-      .from('conteudos')
-      .select('slug, atualizado_em, publicado_em')
-      .eq('tipo', 'noticia')
-      .eq('status', 'publicado')
-      .order('publicado_em', { ascending: false })
-      .limit(100)
+    let todasNoticias: { slug: string; atualizado_em: string | null; publicado_em: string | null }[] = []
+    let page = 0
+    const pageSize = 500
+    let hasMore = true
 
-    if (noticias && noticias.length > 0) {
-      for (const n of noticias) {
+    while (hasMore) {
+      const from = page * pageSize
+      const to = from + pageSize - 1
+      const { data, error } = await supabase
+        .from('conteudos')
+        .select('slug, atualizado_em, publicado_em')
+        .eq('tipo', 'noticia')
+        .eq('status', 'publicado')
+        .order('publicado_em', { ascending: false })
+        .range(from, to)
+
+      if (error) {
+        console.error('[sitemap] Erro na consulta paginada:', error)
+        break
+      }
+
+      if (data && data.length > 0) {
+        todasNoticias = todasNoticias.concat(data)
+        if (data.length < pageSize) {
+          hasMore = false
+        } else {
+          page++
+        }
+      } else {
+        hasMore = false
+      }
+    }
+
+    if (todasNoticias.length > 0) {
+      for (const n of todasNoticias) {
         staticRoutes.push({
           url: `${baseUrl}/noticias/${n.slug}`,
           lastModified: new Date(n.atualizado_em || n.publicado_em || new Date()),

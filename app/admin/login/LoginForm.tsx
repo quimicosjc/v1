@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useState, useRef, useEffect } from 'react'
 import { loginAction } from './actions'
 
 interface LoginFormProps {
@@ -8,14 +8,31 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ redirectTo }: LoginFormProps) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [mostrarSenha, setMostrarSenha] = useState(false)
+  const passwordInputRef = useRef<HTMLInputElement>(null)
+
   const [state, formAction, isPending] = useActionState(
-    async (_prev: { error?: string } | null, formData: FormData) => {
+    async (_prev: { error?: string; email?: string } | null, formData: FormData) => {
       const res = await loginAction(formData)
       return res || null
     },
     null
   )
+
+  // Ao ocorrer erro de senha/login:
+  // - O e-mail permanece preenchido
+  // - Limpa o campo de senha
+  // - Foca automaticamente no campo de senha para redigitação imediata
+  useEffect(() => {
+    if (state?.error) {
+      setPassword('')
+      if (passwordInputRef.current) {
+        passwordInputRef.current.focus()
+      }
+    }
+  }, [state?.error])
 
   return (
     <form action={formAction} noValidate>
@@ -45,7 +62,10 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           type="email"
           required
           autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           placeholder="seu@email.com.br"
+          disabled={isPending}
           style={{
             display: 'block',
             width: '100%',
@@ -54,7 +74,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
             borderRadius: '5px',
             fontSize: '16px',
             color: '#30252a',
-            background: 'white',
+            background: isPending ? '#f8fafb' : 'white',
             boxSizing: 'border-box',
           }}
         />
@@ -66,11 +86,15 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         </span>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
           <input
+            ref={passwordInputRef}
             name="password"
             type={mostrarSenha ? 'text' : 'password'}
             required
             autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
+            disabled={isPending}
             style={{
               display: 'block',
               width: '100%',
@@ -79,7 +103,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
               borderRadius: '5px',
               fontSize: '16px',
               color: '#30252a',
-              background: 'white',
+              background: isPending ? '#f8fafb' : 'white',
               boxSizing: 'border-box',
               outline: 'none',
             }}
@@ -88,12 +112,13 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
             type="button"
             onClick={() => setMostrarSenha((v) => !v)}
             title={mostrarSenha ? 'Ocultar senha' : 'Ver senha digitada'}
+            disabled={isPending}
             style={{
               position: 'absolute',
               right: '10px',
               background: 'none',
               border: 'none',
-              cursor: 'pointer',
+              cursor: isPending ? 'not-allowed' : 'pointer',
               color: '#71636a',
               display: 'flex',
               alignItems: 'center',
@@ -120,7 +145,10 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         type="submit"
         disabled={isPending}
         style={{
-          display: 'block',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '10px',
           width: '100%',
           padding: '12px 16px',
           background: isPending ? '#a85068' : '#861e32',
@@ -129,12 +157,46 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           borderRadius: '5px',
           fontSize: '15px',
           fontWeight: 650,
-          cursor: isPending ? 'not-allowed' : 'pointer',
+          cursor: isPending ? 'wait' : 'pointer',
           fontFamily: 'inherit',
           transition: 'background 0.15s',
         }}
       >
-        {isPending ? 'Entrando…' : 'Entrar no painel'}
+        {isPending ? (
+          <>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{
+                animation: 'girarSpinner 0.8s linear infinite',
+              }}
+            >
+              <line x1="12" y1="2" x2="12" y2="6" />
+              <line x1="12" y1="18" x2="12" y2="22" />
+              <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
+              <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
+              <line x1="2" y1="12" x2="6" y2="12" />
+              <line x1="18" y1="12" x2="22" y2="12" />
+              <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
+              <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
+            </svg>
+            <style>{`
+              @keyframes girarSpinner {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+              }
+            `}</style>
+            <span>Autenticando…</span>
+          </>
+        ) : (
+          'Entrar no painel'
+        )}
       </button>
     </form>
   )

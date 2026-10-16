@@ -97,6 +97,10 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
   }
 
   function togglePermissao(area: string, acao: string) {
+    if (acao === 'excluir') {
+      showFeedback('A permissão de exclusão é restrita exclusivamente ao Administrador.', 'erro')
+      return
+    }
     setPermissoesLocais((prev) => {
       const atuais = prev[area] || []
       const existe = atuais.includes(acao)
@@ -109,11 +113,17 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
   function handleSalvarAlteracoes() {
     if (!usuarioSelecionado) return
     startTransition(async () => {
+      // Garante que a permissão de exclusão jamais seja delegada
+      const permissoesSeguras: Record<string, string[]> = {}
+      for (const [area, acoes] of Object.entries(permissoesLocais)) {
+        permissoesSeguras[area] = acoes.filter((a) => a !== 'excluir')
+      }
+
       const res = await atualizarUsuario(usuarioSelecionado.id, {
         ativo: ativoLocal,
         papel: papelLocal,
         pode_denuncias: podeDenunciasLocal,
-        permissoes_json: JSON.stringify(permissoesLocais),
+        permissoes_json: JSON.stringify(permissoesSeguras),
       })
 
       if ('error' in res) {
@@ -127,7 +137,7 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
                   ativo: ativoLocal,
                   papel: papelLocal,
                   pode_denuncias: podeDenunciasLocal,
-                  permissoes_json: JSON.stringify(permissoesLocais),
+                  permissoes_json: JSON.stringify(permissoesSeguras),
                 }
               : u
           )
@@ -535,6 +545,20 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
                             }}
                           >
                             <div>{acao.label}</div>
+                            {acao.id === 'excluir' && (
+                              <div
+                                style={{
+                                  fontSize: '10px',
+                                  fontWeight: 700,
+                                  color: '#861e32',
+                                  marginTop: '2px',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.4px',
+                                }}
+                              >
+                                🔒 Exclusivo Admin
+                              </div>
+                            )}
                           </th>
                         ))}
                       </tr>
@@ -552,6 +576,30 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
                             {area.label}
                           </td>
                           {ACOES.map((acao) => {
+                            if (acao.id === 'excluir') {
+                              return (
+                                <td key={acao.id} style={{ padding: '14px 12px' }}>
+                                  <span
+                                    title="Exclusão de conteúdos é prerrogativa restrita exclusivamente ao Administrador"
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      fontSize: '11px',
+                                      fontWeight: 600,
+                                      color: '#71636a',
+                                      background: '#f4eff1',
+                                      border: '1px solid #e5d9dc',
+                                      padding: '3px 8px',
+                                      borderRadius: '4px',
+                                      userSelect: 'none',
+                                    }}
+                                  >
+                                    🔒 Restrito
+                                  </span>
+                                </td>
+                              )
+                            }
                             const isChecked = (permissoesLocais[area.id] || []).includes(acao.id)
                             return (
                               <td key={acao.id} style={{ padding: '14px 12px' }}>

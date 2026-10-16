@@ -113,6 +113,7 @@ export async function criarNoticia(
         status: data.status ?? 'rascunho',
         destaque: data.destaque ?? false,
         banner_url: data.banner_url ?? null,
+        imagem_y: data.imagem_y ?? 50,
         // autor_id não é enviado pelo cliente — coluna aceita null
         publicado_em: data.publicado_em ?? null,
         fotos_json: data.fotos_json ?? null,
@@ -164,6 +165,7 @@ export async function atualizarNoticia(
     if (data.status !== undefined) updates.status = data.status
     if (data.destaque !== undefined) updates.destaque = data.destaque
     if (data.banner_url !== undefined) updates.banner_url = data.banner_url ?? null
+    if (data.imagem_y !== undefined) updates.imagem_y = data.imagem_y ?? 50
     if (data.publicado_em !== undefined) updates.publicado_em = data.publicado_em ?? null
     if (data.fotos_json !== undefined) updates.fotos_json = data.fotos_json ?? null
     if (data.documentos_json !== undefined) updates.documentos_json = data.documentos_json ?? null
@@ -199,7 +201,8 @@ export async function atualizarNoticia(
 
 
 export async function publicarNoticia(
-  id: string
+  id: string,
+  publicadoEm?: string | null
 ): Promise<{ ok: boolean } | { error: string }> {
   try {
     await getUsuarioLogado()
@@ -209,7 +212,7 @@ export async function publicarNoticia(
       .from('conteudos')
       .update({
         status: 'publicado',
-        publicado_em: new Date().toISOString(),
+        publicado_em: publicadoEm || new Date().toISOString(),
       })
       .eq('id', id)
       .eq('tipo', 'noticia')
