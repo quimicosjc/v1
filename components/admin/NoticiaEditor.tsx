@@ -1305,7 +1305,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                       </span>
                     </div>
                     <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
-                      💡 Dica rápida: Você também pode copiar qualquer imagem no Instagram e colar direto nesta tela pressionando <strong>Cmd+V</strong> (Mac) ou <strong>Ctrl+V</strong> (Windows).
+                      💡 A foto capturada aparecerá apenas na <strong>Home e nas listas de notícias</strong> (não duplica na página da matéria). Se não capturar foto, será exibida a imagem padrão do site. Você também pode colar uma imagem com <strong>Cmd+V</strong> / <strong>Ctrl+V</strong>.
                     </p>
                   </div>
                 ) : (

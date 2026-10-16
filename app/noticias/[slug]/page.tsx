@@ -261,8 +261,8 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
           {/* Barra de Compartilhamento no Topo */}
           <BarraCompartilhamento titulo={noticia.titulo} modo="topo" />
 
-          {/* Carrossel Editorial de Fotos (M8-B: Não exibir foto se origem YouTube — apenas o vídeo basta) */}
-          {origem !== 'youtube' && <CarrosselNoticia fotos={fotos} titulo={noticia.titulo} />}
+          {/* Carrossel Editorial de Fotos (Não exibir foto na página interna se origem for YouTube ou Instagram — apenas o embed basta) */}
+          {origem !== 'youtube' && origem !== 'instagram' && <CarrosselNoticia fotos={fotos} titulo={noticia.titulo} />}
 
           {/* Corpo da Notícia (+2 pontos: 20px) */}
           <div
