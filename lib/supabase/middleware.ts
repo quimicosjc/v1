@@ -11,6 +11,29 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
+  const pathname = request.nextUrl.pathname
+
+  // Rotas públicas não precisam consultar o Supabase Auth no Middleware.
+  // Isso garante carregamento instantâneo e evita erro 504 se o banco oscilar.
+  if (!pathname.startsWith('/admin')) {
+    return supabaseResponse
+  }
+
+  // Se não houver nenhum cookie de sessão do Supabase (sb-*), evita chamada de rede desnecessária
+  const hasSupabaseCookie = request.cookies
+    .getAll()
+    .some((cookie) => cookie.name.startsWith('sb-'))
+
+  if (!hasSupabaseCookie) {
+    if (!pathname.startsWith('/admin/login')) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/admin/login'
+      url.searchParams.set('redirect', pathname)
+      return NextResponse.redirect(url)
+    }
+    return supabaseResponse
+  }
+
   const cookieMethods: CookieMethodsServer = {
     getAll() {
       return request.cookies.getAll()
@@ -34,12 +57,18 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // Obtém o usuário atual com segurança (valida token criptográfico no Supabase)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  const pathname = request.nextUrl.pathname
+  // Obtém o usuário atual com timeout de segurança (3,5s) para nunca travar o Middleware
+  let user = null
+  try {
+    const authPromise = supabase.auth.getUser()
+    const timeoutPromise = new Promise<{ data: { user: null } }>((resolve) =>
+      setTimeout(() => resolve({ data: { user: null } }), 3500)
+    )
+    const result = await Promise.race([authPromise, timeoutPromise])
+    user = result?.data?.user ?? null
+  } catch {
+    user = null
+  }
 
   // Proteção: se tentar acessar qualquer rota /admin (exceto login) sem estar logado
   if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
@@ -60,3 +89,4 @@ export async function updateSession(request: NextRequest) {
 
   return supabaseResponse
 }
+

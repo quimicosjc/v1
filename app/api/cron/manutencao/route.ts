@@ -19,18 +19,35 @@ function getSupabaseAdmin() {
  * 3. Keepalive do Supabase para evitar hibernação
  */
 export async function GET(request: NextRequest) {
-  // Blindagem de segurança (S05): exige CRON_SECRET estritamente configurado
+  const agora = new Date().toISOString()
+  const supabase = getSupabaseAdmin()
+
+  // Sempre executa o toque de keepalive no banco (leitura + heartbeat)
+  // mesmo que CRON_SECRET não esteja configurado no ambiente de testes
+  try {
+    await supabase.from('site_config').select('chave').limit(1)
+    await supabase.from('site_config').upsert(
+      {
+        chave: 'keepalive_heartbeat',
+        valor: { ultimo_toque: agora, origem: 'vercel-cron-manutencao' },
+        atualizado_em: agora,
+      },
+      { onConflict: 'chave' }
+    )
+  } catch {
+    // Segue fluxo normal
+  }
+
+  // Blindagem de segurança (S05): exige CRON_SECRET estritamente configurado para rotinas de escrita/expurgo
   const cronSecret = process.env.CRON_SECRET
   const authHeader = request.headers.get('authorization')
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    return NextResponse.json({ error: 'Não autorizado', banco_tocado: true }, { status: 401 })
   }
 
-  const agora = new Date().toISOString()
   const resultados: Record<string, any> = { executado_em: agora }
 
   try {
-    const supabase = getSupabaseAdmin()
 
     // 1. PUBLICAÇÃO DE MATÉRIAS AGENDADAS
     const { data: programados } = await supabase
