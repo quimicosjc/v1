@@ -2,7 +2,12 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { getUsuarioLogado } from '@/lib/supabase/auth'
+import {
+  getUsuarioLogado,
+  podeGerenciarUsuarios,
+  temPermissao,
+  type UsuarioPerfil,
+} from '@/lib/supabase/auth'
 
 export interface UsuarioAdmin {
   id: string
@@ -18,6 +23,20 @@ export interface UsuarioAdmin {
   atualizado_em?: string
 }
 
+const AREAS_PERMITIDAS = new Set([
+  'noticias',
+  'jornais',
+  'paginas',
+  'homepage',
+  'sindicalizacoes',
+  'carteirinhas',
+  'atualizacoes',
+  'denuncias',
+  'inscricoes',
+])
+
+const ACOES_DELEGAVEIS = new Set(['consultar', 'criar', 'editar', 'publicar'])
+
 function getSupabaseAdmin() {
   return createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,10 +45,65 @@ function getSupabaseAdmin() {
 }
 
 /**
- * Lista todos os usuários do painel.
+ * Sanitiza o mapa de permissões e garante que:
+ * - Apenas áreas válidas e ações delegáveis (nunca 'excluir') sejam gravadas.
+ * - Um Gestor nunca possa conceder uma permissão que ele próprio não possui.
+ */
+function validarESanitizarPermissoes(
+  usuarioLogado: UsuarioPerfil,
+  permissoesRaw: Record<string, string[]> | null | undefined
+): { ok: true; mapa: Record<string, string[]>; podeDenuncias: boolean } | { ok: false; error: string } {
+  const mapa: Record<string, string[]> = {
+    noticias: [],
+    jornais: [],
+    paginas: [],
+    homepage: [],
+    sindicalizacoes: [],
+    carteirinhas: [],
+    atualizacoes: [],
+    denuncias: [],
+    inscricoes: [],
+  }
+
+  if (permissoesRaw && typeof permissoesRaw === 'object') {
+    for (const [area, acoes] of Object.entries(permissoesRaw)) {
+      if (!AREAS_PERMITIDAS.has(area) || !Array.isArray(acoes)) continue
+      const limpas = Array.from(
+        new Set(acoes.filter((a): a is string => typeof a === 'string' && ACOES_DELEGAVEIS.has(a)))
+      )
+
+      // Regra de delegação: Gestor só pode conceder ações que ele mesmo possui
+      if (usuarioLogado.papel !== 'admin_ti') {
+        for (const acao of limpas) {
+          if (!temPermissao(usuarioLogado, area, acao)) {
+            return {
+              ok: false,
+              error: `Você não possui a permissão "${acao}" em "${area}" e não pode delegá-la.`,
+            }
+          }
+        }
+      }
+
+      mapa[area] = limpas
+    }
+  }
+
+  const podeDenuncias =
+    Array.isArray(mapa.denuncias) &&
+    mapa.denuncias.some((a) => ['consultar', 'editar'].includes(a))
+
+  return { ok: true, mapa, podeDenuncias }
+}
+
+/**
+ * Lista todos os usuários do painel (restrito a Administradores e Gestores).
  */
 export async function listarUsuarios(): Promise<UsuarioAdmin[]> {
-  await getUsuarioLogado()
+  const usuarioLogado = await getUsuarioLogado()
+  if (!podeGerenciarUsuarios(usuarioLogado)) {
+    return []
+  }
+
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -47,32 +121,25 @@ export async function listarUsuarios(): Promise<UsuarioAdmin[]> {
 }
 
 /**
- * Cria um novo usuário no Supabase Auth e salva seu perfil.
+ * Cria um novo usuário no Supabase Auth e salva seu perfil com princípio do menor privilégio.
  */
 export async function criarUsuario(data: {
   nome: string
   email: string
   senha: string
   papel: 'operador' | 'gestor' | 'admin_ti'
-  pode_denuncias: boolean
+  pode_denuncias?: boolean
   permissoes?: Record<string, string[]>
-}): Promise<{ ok: boolean; id?: string } | { error: string }> {
+}): Promise<{ ok: boolean; id?: string; permissoes_json?: string; pode_denuncias?: boolean } | { error: string }> {
   try {
     const usuarioLogado = await getUsuarioLogado()
 
-    // Regra estrita de autorização: Apenas admin_ti ou gestores podem cadastrar usuários
-    if (usuarioLogado.papel === 'operador') {
+    if (!podeGerenciarUsuarios(usuarioLogado)) {
       return { error: 'Você não tem permissão para cadastrar novos usuários.' }
     }
 
-    // Apenas Administradores de TI podem conceder privilégios de admin_ti
     if (data.papel === 'admin_ti' && usuarioLogado.papel !== 'admin_ti') {
       return { error: 'Apenas Administradores podem conceder o nível de Administrador.' }
-    }
-
-    // Gestor só pode conceder permissão de denúncias se ele próprio possuir essa permissão
-    if (data.pode_denuncias && usuarioLogado.papel !== 'admin_ti' && !(usuarioLogado as any).pode_denuncias) {
-      return { error: 'Você não tem permissão para conceder acesso a denúncias.' }
     }
 
     if (!data.nome.trim() || !data.email.trim() || !data.senha) {
@@ -83,10 +150,25 @@ export async function criarUsuario(data: {
       return { error: 'A senha deve ter no mínimo 6 caracteres.' }
     }
 
+    // Princípio do menor privilégio: se permissoes não forem informadas, inicia sem permissões sensíveis
+    const permissoesEntrada: Record<string, string[]> = {
+      ...(data.permissoes || {}),
+    }
+    if (data.pode_denuncias && !permissoesEntrada.denuncias?.length) {
+      permissoesEntrada.denuncias = ['consultar', 'editar']
+    }
+
+    const validacao = validarESanitizarPermissoes(usuarioLogado, permissoesEntrada)
+    if (!validacao.ok) {
+      return { error: validacao.error }
+    }
+
+    const podeDenunciasFinal = data.papel === 'admin_ti' ? true : validacao.podeDenuncias
+    const permissoesJsonFinal = JSON.stringify(validacao.mapa)
+
     const emailNormalizado = data.email.trim().toLowerCase()
     const supabaseAdmin = getSupabaseAdmin()
 
-    // 1. Cria usuário no Supabase Auth
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: emailNormalizado,
       password: data.senha,
@@ -103,7 +185,6 @@ export async function criarUsuario(data: {
 
     const authUserId = authData.user.id
 
-    // 2. Insere na tabela de usuários do banco
     const { error: dbError } = await supabaseAdmin.from('usuarios').upsert({
       id: authUserId,
       auth_user_id: authUserId,
@@ -112,8 +193,8 @@ export async function criarUsuario(data: {
       papel: data.papel,
       ativo: true,
       e_principal: false,
-      pode_denuncias: data.pode_denuncias,
-      permissoes_json: data.permissoes ? JSON.stringify(data.permissoes) : null,
+      pode_denuncias: podeDenunciasFinal,
+      permissoes_json: permissoesJsonFinal,
       criado_em: new Date().toISOString(),
       atualizado_em: new Date().toISOString(),
     })
@@ -123,7 +204,12 @@ export async function criarUsuario(data: {
       return { error: 'O acesso foi criado, mas houve um erro ao salvar os detalhes do perfil.' }
     }
 
-    return { ok: true, id: authUserId }
+    return {
+      ok: true,
+      id: authUserId,
+      permissoes_json: permissoesJsonFinal,
+      pode_denuncias: podeDenunciasFinal,
+    }
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : 'Erro inesperado'
     console.error('Erro em criarUsuario:', err)
@@ -132,7 +218,7 @@ export async function criarUsuario(data: {
 }
 
 /**
- * Atualiza dados de um usuário (permissões, status ativo/inativo, papel).
+ * Atualiza dados de um usuário (permissões segmentadas, status ativo/inativo, papel).
  */
 export async function atualizarUsuario(
   id: string,
@@ -143,18 +229,16 @@ export async function atualizarUsuario(
     pode_denuncias?: boolean
     permissoes_json?: string | null
   }
-): Promise<{ ok: boolean } | { error: string }> {
+): Promise<{ ok: boolean; permissoes_json?: string | null; pode_denuncias?: boolean } | { error: string }> {
   try {
     const usuarioLogado = await getUsuarioLogado()
 
-    // Regra estrita: Operadores nunca podem gerenciar outros usuários
-    if (usuarioLogado.papel === 'operador') {
+    if (!podeGerenciarUsuarios(usuarioLogado)) {
       return { error: 'Você não tem permissão para gerenciar contas de usuários.' }
     }
 
     const supabaseAdmin = getSupabaseAdmin()
 
-    // 1. Busca usuário alvo para checagem de proteção
     const { data: usuarioAlvo, error: erroBusca } = await supabaseAdmin
       .from('usuarios')
       .select('*')
@@ -165,7 +249,7 @@ export async function atualizarUsuario(
       return { error: 'Usuário não encontrado.' }
     }
 
-    // Regra de Ouro do Documento Mestre (§14.5): Proteção do Administrador Principal
+    // Proteção do Administrador Principal
     if (usuarioAlvo.e_principal) {
       if (data.ativo === false) {
         return { error: 'A conta principal é protegida e não pode ser inativada.' }
@@ -175,27 +259,18 @@ export async function atualizarUsuario(
       }
     }
 
-    // Gestores não podem alterar contas de administradores
     if (usuarioLogado.papel === 'gestor' && usuarioAlvo.papel === 'admin_ti') {
       return { error: 'Você não tem permissão para alterar contas de Administrador.' }
     }
 
-    // Gestores não podem promover ninguém a admin_ti
     if (usuarioLogado.papel === 'gestor' && data.papel === 'admin_ti') {
       return { error: 'Apenas Administradores podem conceder o nível de Administrador.' }
     }
 
-    // Gestores não podem alterar outros gestores
     if (usuarioLogado.papel === 'gestor' && usuarioAlvo.papel === 'gestor' && usuarioAlvo.id !== usuarioLogado.id) {
       return { error: 'Você não tem permissão para alterar outros Gestores.' }
     }
 
-    // Gestores não podem conceder pode_denuncias
-    if (usuarioLogado.papel === 'gestor' && data.pode_denuncias !== undefined && !(usuarioLogado as any).pode_denuncias) {
-      return { error: 'Você não tem permissão para gerenciar acesso a denúncias.' }
-    }
-
-    // 2. Atualiza dados no banco
     const updatePayload: Record<string, unknown> = {
       atualizado_em: new Date().toISOString(),
     }
@@ -203,8 +278,40 @@ export async function atualizarUsuario(
     if (data.nome !== undefined) updatePayload.nome = data.nome.trim()
     if (data.papel !== undefined) updatePayload.papel = data.papel
     if (data.ativo !== undefined) updatePayload.ativo = data.ativo
-    if (data.pode_denuncias !== undefined) updatePayload.pode_denuncias = data.pode_denuncias
-    if (data.permissoes_json !== undefined) updatePayload.permissoes_json = data.permissoes_json
+
+    let permissoesJsonFinal = data.permissoes_json
+    let podeDenunciasFinal = data.pode_denuncias
+
+    if (data.permissoes_json !== undefined && data.permissoes_json !== null) {
+      let parsed: Record<string, string[]>
+      try {
+        parsed = JSON.parse(data.permissoes_json)
+      } catch {
+        return { error: 'Formato inválido de permissões.' }
+      }
+
+      // Se o checkbox de denúncias foi alterado separadamente sem atualizar o mapa, sincroniza
+      if (data.pode_denuncias === false) {
+        parsed.denuncias = []
+      } else if (data.pode_denuncias === true && (!parsed.denuncias || parsed.denuncias.length === 0)) {
+        parsed.denuncias = ['consultar', 'editar']
+      }
+
+      const validacao = validarESanitizarPermissoes(usuarioLogado, parsed)
+      if (!validacao.ok) {
+        return { error: validacao.error }
+      }
+
+      permissoesJsonFinal = JSON.stringify(validacao.mapa)
+      podeDenunciasFinal = (data.papel ?? usuarioAlvo.papel) === 'admin_ti' ? true : validacao.podeDenuncias
+      updatePayload.permissoes_json = permissoesJsonFinal
+      updatePayload.pode_denuncias = podeDenunciasFinal
+    } else if (data.pode_denuncias !== undefined) {
+      if (usuarioLogado.papel === 'gestor' && !temPermissao(usuarioLogado, 'denuncias', 'consultar')) {
+        return { error: 'Você não tem permissão para gerenciar acesso a denúncias.' }
+      }
+      updatePayload.pode_denuncias = data.pode_denuncias
+    }
 
     const { error: dbError } = await supabaseAdmin
       .from('usuarios')
@@ -216,7 +323,11 @@ export async function atualizarUsuario(
       return { error: 'Não foi possível salvar as alterações no banco de dados.' }
     }
 
-    return { ok: true }
+    return {
+      ok: true,
+      permissoes_json: permissoesJsonFinal,
+      pode_denuncias: podeDenunciasFinal,
+    }
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : 'Erro inesperado'
     console.error('Erro em atualizarUsuario:', err)
@@ -233,7 +344,7 @@ export async function redefinirSenha(
 ): Promise<{ ok: boolean } | { error: string }> {
   try {
     const usuarioLogado = await getUsuarioLogado()
-    if (usuarioLogado.papel === 'operador') {
+    if (!podeGerenciarUsuarios(usuarioLogado)) {
       return { error: 'Você não tem permissão para redefinir senhas.' }
     }
 
@@ -243,7 +354,6 @@ export async function redefinirSenha(
 
     const supabaseAdmin = getSupabaseAdmin()
 
-    // Checa conta alvo
     const { data: usuarioAlvo } = await supabaseAdmin
       .from('usuarios')
       .select('*')
@@ -254,9 +364,12 @@ export async function redefinirSenha(
       return { error: 'Usuário não encontrado.' }
     }
 
-    // A conta principal só pode ter a senha alterada pelo próprio titular
     if (usuarioAlvo.e_principal && usuarioLogado.id !== usuarioAlvo.id) {
       return { error: 'A senha da conta principal protegida só pode ser alterada pelo próprio titular.' }
+    }
+
+    if (usuarioLogado.papel === 'gestor' && usuarioAlvo.papel === 'admin_ti') {
+      return { error: 'Você não tem permissão para alterar a senha de um Administrador.' }
     }
 
     const authUserId = usuarioAlvo.auth_user_id || usuarioAlvo.id
@@ -277,7 +390,7 @@ export async function redefinirSenha(
 }
 
 /**
- * Exclui um usuário do sistema.
+ * Exclui um usuário do sistema (exclusivo de Administrador).
  */
 export async function excluirUsuario(id: string): Promise<{ ok: boolean } | { error: string }> {
   try {
@@ -308,10 +421,8 @@ export async function excluirUsuario(id: string): Promise<{ ok: boolean } | { er
 
     const authUserId = usuarioAlvo.auth_user_id || usuarioAlvo.id
 
-    // 1. Remove do Supabase Auth
     await supabaseAdmin.auth.admin.deleteUser(authUserId)
 
-    // 2. Remove do banco
     const { error: dbError } = await supabaseAdmin
       .from('usuarios')
       .delete()

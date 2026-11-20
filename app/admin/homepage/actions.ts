@@ -1,7 +1,12 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { getUsuarioLogado } from '@/lib/supabase/auth'
+import { getUsuarioLogado, temPermissao } from '@/lib/supabase/auth'
+import {
+  TEMPO_BANNER_PADRAO_SEG,
+  sanitizarTempoBannerSegundos,
+} from '@/lib/banner-config'
 
 export interface BannerItem {
   id: string
@@ -20,6 +25,7 @@ export interface HomepageConfig {
   shortcuts: string[]
   model: 'A' | 'B'
   posicaoServicos?: 'entre' | 'acima' | 'abaixo'
+  bannerTempoSegundos: number
   banners: BannerItem[]
   footer: string
 }
@@ -37,6 +43,7 @@ const CONFIG_PADRAO: HomepageConfig = {
   shortcuts: ['fique-socio', 'denuncia', 'colonia', 'juridico'],
   model: 'B',
   posicaoServicos: 'entre',
+  bannerTempoSegundos: TEMPO_BANNER_PADRAO_SEG,
   banners: [
     {
       id: 'b1',
@@ -76,7 +83,10 @@ E-mail: contato@quimicosjc.org.br | Horário: Segunda a sexta, das 8h às 17h`,
  */
 export async function obterConfigHomepage(): Promise<HomepageConfig> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'homepage', 'consultar')) {
+      return CONFIG_PADRAO
+    }
     const supabaseAdmin = getSupabaseAdmin()
 
     const { data: config, error } = await supabaseAdmin
@@ -96,6 +106,7 @@ export async function obterConfigHomepage(): Promise<HomepageConfig> {
       shortcuts: valor.shortcuts || CONFIG_PADRAO.shortcuts,
       model: valor.model || CONFIG_PADRAO.model,
       posicaoServicos: valor.posicaoServicos || 'entre',
+      bannerTempoSegundos: sanitizarTempoBannerSegundos(valor.bannerTempoSegundos),
       banners: Array.isArray(valor.banners) && valor.banners.length > 0 ? valor.banners : CONFIG_PADRAO.banners,
       footer: valor.footer || CONFIG_PADRAO.footer,
     }
@@ -113,8 +124,13 @@ export async function salvarConfigHomepage(
 ): Promise<{ ok: boolean } | { error: string }> {
   try {
     const usuario = await getUsuarioLogado()
-    if (usuario.papel === 'operador') {
+    if (!temPermissao(usuario, 'homepage', 'editar') && !temPermissao(usuario, 'homepage', 'publicar')) {
       return { error: 'Você não tem permissão para alterar a configuração da homepage.' }
+    }
+
+    const configSanitizada: HomepageConfig = {
+      ...config,
+      bannerTempoSegundos: sanitizarTempoBannerSegundos(config.bannerTempoSegundos),
     }
 
     const supabaseAdmin = getSupabaseAdmin()
@@ -124,7 +140,7 @@ export async function salvarConfigHomepage(
       .upsert(
         {
           chave: 'homepage',
-          valor: config,
+          valor: configSanitizada,
           atualizado_em: new Date().toISOString(),
         },
         { onConflict: 'chave' }
@@ -135,6 +151,7 @@ export async function salvarConfigHomepage(
       return { error: `Erro no banco de dados: ${error.message}` }
     }
 
+    revalidatePath('/')
     return { ok: true }
   } catch (err) {
     return { error: `Erro inesperado: ${err instanceof Error ? err.message : String(err)}` }
@@ -142,25 +159,38 @@ export async function salvarConfigHomepage(
 }
 
 /**
- * Upload de imagem panorâmica de banner (proporção 9:2)
+ * Upload de imagem panorâmica de banner (proporção 9:2) no bucket `midias`
  */
 export async function uploadBanner(
   formData: FormData
 ): Promise<{ url: string; nome: string } | { error: string }> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'homepage', 'editar') && !temPermissao(usuario, 'homepage', 'publicar')) {
+      return { error: 'Você não tem permissão para enviar imagens de banners.' }
+    }
+
     const file = formData.get('arquivo') as File | null
     if (!file) return { error: 'Nenhum arquivo enviado.' }
+
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp']
+    if (file.type && !tiposPermitidos.includes(file.type)) {
+      return { error: 'Formato não suportado. Envie JPG, PNG ou WebP.' }
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      return { error: 'A imagem do banner deve ter no máximo 10 MB.' }
+    }
 
     const supabaseAdmin = getSupabaseAdmin()
     const timestamp = Date.now()
     const random = Math.random().toString(36).substring(2, 8)
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    const caminho = `banners/${timestamp}-${random}.${ext}`
+    const extSegura = ['jpg', 'jpeg', 'png', 'webp'].includes(ext) ? ext : 'jpg'
+    const caminho = `banners/${timestamp}-${random}.${extSegura}`
 
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
-    const bucketName = 'midia'
+    const bucketName = 'midias'
 
     const { error: uploadError } = await supabaseAdmin.storage
       .from(bucketName)

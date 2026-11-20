@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { getUsuarioLogado } from '@/lib/supabase/auth'
+import { getUsuarioLogado, temPermissao } from '@/lib/supabase/auth'
 
 export interface PaginaInstitucional {
   id: string
@@ -52,6 +52,10 @@ function getSupabaseAdmin() {
  */
 export async function listarPaginasInstitucionais(): Promise<PaginaInstitucional[]> {
   try {
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'paginas', 'consultar')) {
+      return []
+    }
     const supabase = await createClient()
 
     const { data, error } = await supabase
@@ -77,6 +81,10 @@ export async function listarPaginasInstitucionais(): Promise<PaginaInstitucional
  */
 export async function obterPaginaInstitucional(slug: string): Promise<PaginaInstitucional | null> {
   try {
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'paginas', 'consultar')) {
+      return null
+    }
     const supabase = await createClient()
 
     const { data, error } = await supabase
@@ -105,7 +113,13 @@ export async function salvarPaginaInstitucional(
   data: Partial<PaginaInstitucionalFormData>
 ): Promise<{ ok: boolean } | { error: string }> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'paginas', 'editar')) {
+      return { error: 'Você não tem permissão para editar páginas do site.' }
+    }
+    if (data.status === 'publicado' && !temPermissao(usuario, 'paginas', 'publicar')) {
+      return { error: 'Você não tem permissão para publicar páginas do site.' }
+    }
     const supabase = await createClient()
 
     const updates: Record<string, unknown> = {
@@ -158,7 +172,10 @@ export async function salvarPaginaInstitucional(
  */
 export async function uploadMidiaInstitucional(formData: FormData): Promise<{ url: string } | { error: string }> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'paginas', 'editar') && !temPermissao(usuario, 'paginas', 'criar')) {
+      return { error: 'Você não tem permissão para enviar arquivos nas páginas do site.' }
+    }
     const file = formData.get('arquivo') as File
     if (!file) return { error: 'Nenhum arquivo enviado' }
 
@@ -209,7 +226,10 @@ export async function uploadDocumentoInstitucional(
   formData: FormData
 ): Promise<{ url: string; nome: string; tipo: string; tamanho: number } | { error: string }> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'paginas', 'editar') && !temPermissao(usuario, 'paginas', 'criar')) {
+      return { error: 'Você não tem permissão para enviar documentos nas páginas do site.' }
+    }
     const file = formData.get('arquivo') as File
     if (!file) return { error: 'Nenhum arquivo enviado' }
 

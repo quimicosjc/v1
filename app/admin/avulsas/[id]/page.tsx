@@ -1,8 +1,9 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getUsuarioLogado } from '@/lib/supabase/auth'
+import { getUsuarioLogado, temPermissao } from '@/lib/supabase/auth'
 import { createClient } from '@/lib/supabase/server'
 import AdminLayout from '@/components/admin/AdminLayout'
+import AcessoRestritoAdmin from '@/components/admin/AcessoRestritoAdmin'
 import PaginaAvulsaEditor from '@/components/admin/PaginaAvulsaEditor'
 import type { PaginaAvulsa } from '@/app/admin/avulsas/actions'
 
@@ -18,6 +19,17 @@ interface Props {
 export default async function EditarPaginaAvulsaPage({ params }: Props) {
   const { id } = await params
   const usuario = await getUsuarioLogado()
+
+  if (!temPermissao(usuario, 'paginas', 'editar') && !temPermissao(usuario, 'paginas', 'consultar')) {
+    return (
+      <AdminLayout usuario={usuario} breadcrumb="Editar página avulsa" activeHref="/admin/avulsas">
+        <AcessoRestritoAdmin
+          titulo="Acesso restrito à edição de páginas avulsas"
+          descricao="Sua conta não possui autorização para editar páginas avulsas."
+        />
+      </AdminLayout>
+    )
+  }
 
   const supabase = await createClient()
   const { data: pagina, error } = await supabase

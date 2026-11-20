@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { CORES } from '@/lib/design'
 import { formatarDataExtenso } from '@/lib/data-formatada'
 import { detectarOrigem } from '@/lib/social-origem'
+import SeloOrigemSocial from '@/components/publico/SeloOrigemSocial'
 
 interface CardDestaqueProps {
   id: string
@@ -94,60 +95,7 @@ export default function CardDestaque({
               />
             </div>
           )}
-          {(() => {
-            const orig = detectarOrigem(urlReferencia)
-            if (orig === 'youtube') {
-              return (
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: '10px',
-                    right: '10px',
-                    background: '#b91c1c',
-                    color: '#ffffff',
-                    fontSize: '10px',
-                    fontWeight: 800,
-                    padding: '3px 7px',
-                    borderRadius: '3px',
-                    letterSpacing: '0.4px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
-                    zIndex: 2,
-                  }}
-                >
-                  ▶ VÍDEO
-                </span>
-              )
-            }
-            if (orig === 'instagram') {
-              return (
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: '10px',
-                    right: '10px',
-                    background: '#be185d',
-                    color: '#ffffff',
-                    fontSize: '10px',
-                    fontWeight: 800,
-                    padding: '3px 7px',
-                    borderRadius: '3px',
-                    letterSpacing: '0.4px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
-                    zIndex: 2,
-                  }}
-                >
-                  📷 INSTAGRAM
-                </span>
-              )
-            }
-            return null
-          })()}
+          <SeloOrigemSocial origem={detectarOrigem(urlReferencia)} variante="card" />
         </div>
 
         {/* Conteúdo editorial */}

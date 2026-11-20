@@ -13,6 +13,7 @@ import {
   uploadMidia,
   uploadDocumento,
 } from '@/app/admin/avulsas/actions'
+import ImagemLightboxModal, { type ImagemLightboxDados } from '@/components/admin/ImagemLightboxModal'
 
 const RichEditor = dynamic(() => import('@/components/admin/RichEditor'), {
   ssr: false,
@@ -269,6 +270,7 @@ export default function PaginaAvulsaEditor({ pagina }: PaginaAvulsaEditorProps) 
   const [dialogPosPublicacao, setDialogPosPublicacao] = useState(false)
   const [dialogProgramar, setDialogProgramar] = useState(false)
   const [hasLocalDraft, setHasLocalDraft] = useState(false)
+  const [imagemAmpliada, setImagemAmpliada] = useState<ImagemLightboxDados | null>(null)
 
   const isSavingRef = useRef(false)
   const fotoInputRef = useRef<HTMLInputElement>(null)
@@ -787,54 +789,82 @@ export default function PaginaAvulsaEditor({ pagina }: PaginaAvulsaEditorProps) 
                       alignItems: 'center',
                     }}
                   >
-                    {/* Preview 3:2 com recorte dinâmico */}
-                    <div
+                    {/* Miniatura compacta preservando proporção original */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setImagemAmpliada({
+                          url: f.url,
+                          titulo: i === 0 ? 'Foto principal da página' : `Foto ${i + 1}`,
+                        })
+                      }
+                      aria-label={`Ampliar foto ${i + 1}`}
+                      title="Clique para visualizar em tamanho maior"
                       style={{
-                        width: '160px',
-                        height: '107px',
+                        width: '124px',
+                        height: '86px',
+                        padding: '3px',
                         borderRadius: '4px',
                         overflow: 'hidden',
                         position: 'relative',
-                        background: '#e4dce0',
+                        background: '#efebed',
+                        border: '1px solid #d9ced3',
                         flexShrink: 0,
+                        cursor: 'zoom-in',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     >
                       <img
                         src={f.url}
                         alt={`Foto ${i + 1}`}
                         style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          objectPosition: `50% ${f.foco}%`,
+                          maxWidth: '100%',
+                          maxHeight: '100%',
+                          width: 'auto',
+                          height: 'auto',
+                          objectFit: 'contain',
                         }}
                       />
                       {i === 0 && (
                         <span
                           style={{
                             position: 'absolute',
-                            top: '6px',
-                            left: '6px',
+                            top: '4px',
+                            left: '4px',
                             background: '#861e32',
                             color: 'white',
-                            fontSize: '10px',
+                            fontSize: '9.5px',
                             fontWeight: 700,
-                            padding: '2px 6px',
+                            padding: '1px 5px',
                             borderRadius: '3px',
                           }}
                         >
                           Capa
                         </span>
                       )}
-                    </div>
+                    </button>
 
                     {/* Controles de Foco e Ordem */}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
                         <span style={{ fontSize: '13px', fontWeight: 600, color: '#30252a' }}>
                           Foto {i + 1} {i === 0 && '· Foto Principal'}
                         </span>
-                        <div style={{ display: 'flex', gap: '6px' }}>
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setImagemAmpliada({
+                                url: f.url,
+                                titulo: i === 0 ? 'Foto principal da página' : `Foto ${i + 1}`,
+                              })
+                            }
+                            style={{ ...btnNeutro, padding: '4px 8px', fontSize: '11px', color: '#183b4b', fontWeight: 600 }}
+                          >
+                            Ampliar
+                          </button>
                           <button
                             type="button"
                             onClick={() => moverFoto(i, 'up')}
@@ -1168,50 +1198,83 @@ export default function PaginaAvulsaEditor({ pagina }: PaginaAvulsaEditorProps) 
                     border: '1px solid #dce4e8',
                     borderRadius: '8px',
                     overflow: 'hidden',
-                    maxWidth: '440px',
+                    maxWidth: '520px',
                     background: '#f8fafb',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '10px 12px',
                   }}
                 >
                   {fotos[0]?.url ? (
-                    <div style={{ width: '100%', height: '180px', overflow: 'hidden' }}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setImagemAmpliada({
+                          url: fotos[0].url,
+                          titulo: titulo.trim() || 'Prévia de capa',
+                        })
+                      }
+                      aria-label="Ampliar imagem da prévia"
+                      style={{
+                        width: '112px',
+                        height: '78px',
+                        padding: '3px',
+                        borderRadius: '5px',
+                        background: '#e7edf2',
+                        border: '1px solid #cbd7de',
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                        cursor: 'zoom-in',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
                       <img
                         src={fotos[0].url}
                         alt="Prévia de capa"
                         style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          objectPosition: `50% ${fotos[0].foco}%`,
+                          maxWidth: '100%',
+                          maxHeight: '100%',
+                          width: 'auto',
+                          height: 'auto',
+                          objectFit: 'contain',
                         }}
                       />
-                    </div>
+                    </button>
                   ) : (
                     <div
                       style={{
-                        width: '100%',
-                        height: '120px',
+                        width: '112px',
+                        height: '78px',
+                        borderRadius: '5px',
                         background: '#65172a',
                         color: 'white',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '13px',
+                        fontSize: '11px',
                         fontWeight: 600,
+                        textAlign: 'center',
+                        padding: '6px',
+                        flexShrink: 0,
+                        boxSizing: 'border-box',
                       }}
                     >
-                      Sindicato dos Químicos de SJC e Região
+                      Químicos SJC
                     </div>
                   )}
 
-                  <div style={{ padding: '14px' }}>
-                    <div style={{ fontSize: '11px', color: '#71636a', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: '11px', color: '#71636a', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '3px', wordBreak: 'break-all' }}>
                       quimicosjc.org.br/paginas/{slug || 'nome-da-pagina'}
                     </div>
-                    <div style={{ fontWeight: 700, fontSize: '15px', color: '#30252a', marginBottom: '4px', lineHeight: '1.3' }}>
+                    <div style={{ fontWeight: 700, fontSize: '14px', color: '#30252a', marginBottom: '3px', lineHeight: '1.3' }}>
                       {titulo.trim() || 'Título da página avulsa'}
                     </div>
-                    <div style={{ fontSize: '13px', color: '#71636a', lineHeight: '1.4' }}>
+                    <div style={{ fontSize: '12.5px', color: '#71636a', lineHeight: '1.4' }}>
                       {subtitulo.trim() || stripHtml(corpo).slice(0, 110) || 'Conteúdo da página…'}
                     </div>
                   </div>
@@ -1537,6 +1600,12 @@ export default function PaginaAvulsaEditor({ pagina }: PaginaAvulsaEditorProps) 
           </div>
         </div>
       )}
+
+      {/* Lightbox de visualização ampliada */}
+      <ImagemLightboxModal
+        imagem={imagemAmpliada}
+        onClose={() => setImagemAmpliada(null)}
+      />
 
       {/* Dialog: Pós-Publicação */}
       {dialogPosPublicacao && (

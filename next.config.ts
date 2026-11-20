@@ -1,6 +1,13 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  // Permite envio de arquivos maiores via Server Actions (fotos, banners, documentos e anexos)
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
+  },
+
   // Imagens externas permitidas (adicionar domínios conforme necessário)
   images: {
     remotePatterns: [

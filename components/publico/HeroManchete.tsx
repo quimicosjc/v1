@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { CORES } from '@/lib/design'
 import { formatarDataExtenso } from '@/lib/data-formatada'
 import { detectarOrigem } from '@/lib/social-origem'
+import SeloOrigemSocial from '@/components/publico/SeloOrigemSocial'
 
 interface HeroMancheteProps {
   id: string
@@ -94,60 +95,7 @@ export default function HeroManchete({
               />
             </div>
           )}
-          {(() => {
-            const orig = detectarOrigem(urlReferencia)
-            if (orig === 'youtube') {
-              return (
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: '16px',
-                    left: '16px',
-                    background: '#b91c1c',
-                    color: '#ffffff',
-                    fontSize: '11px',
-                    fontWeight: 800,
-                    padding: '4px 10px',
-                    borderRadius: '4px',
-                    letterSpacing: '0.6px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                    zIndex: 2,
-                  }}
-                >
-                  ▶ VÍDEO EM DESTAQUE
-                </span>
-              )
-            }
-            if (orig === 'instagram') {
-              return (
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: '16px',
-                    left: '16px',
-                    background: '#be185d',
-                    color: '#ffffff',
-                    fontSize: '11px',
-                    fontWeight: 800,
-                    padding: '4px 10px',
-                    borderRadius: '4px',
-                    letterSpacing: '0.6px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                    zIndex: 2,
-                  }}
-                >
-                  📷 INSTAGRAM OFICIAL
-                </span>
-              )
-            }
-            return null
-          })()}
+          <SeloOrigemSocial origem={detectarOrigem(urlReferencia)} variante="hero" />
         </div>
 
         {/* Painel Bordô Editorial */}

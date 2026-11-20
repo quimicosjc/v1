@@ -1,7 +1,8 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getUsuarioLogado } from '@/lib/supabase/auth'
+import { getUsuarioLogado, temPermissao } from '@/lib/supabase/auth'
 import AdminLayout from '@/components/admin/AdminLayout'
+import AcessoRestritoAdmin from '@/components/admin/AcessoRestritoAdmin'
 import { obterPaginaInstitucional } from '../actions'
 import EditorTextoInstitucional from '@/components/admin/paginas/EditorTextoInstitucional'
 import EditorDiretoria from '@/components/admin/paginas/EditorDiretoria'
@@ -28,6 +29,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function EditarPaginaInstitucionalPage({ params }: Props) {
   const { slug } = await params
   const usuario = await getUsuarioLogado()
+
+  if (!temPermissao(usuario, 'paginas', 'consultar')) {
+    return (
+      <AdminLayout usuario={usuario} breadcrumb="Páginas do site" activeHref="/admin/paginas">
+        <AcessoRestritoAdmin
+          titulo="Acesso restrito a Páginas do Site"
+          descricao="Sua conta não possui autorização para editar páginas institucionais."
+        />
+      </AdminLayout>
+    )
+  }
+
   const pagina = await obterPaginaInstitucional(slug)
 
   if (!pagina) {

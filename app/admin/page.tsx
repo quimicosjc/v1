@@ -1,5 +1,9 @@
 import { Metadata } from 'next'
-import { getUsuarioLogado } from '@/lib/supabase/auth'
+import {
+  getUsuarioLogado,
+  temPermissao,
+  podeAcessarAlgumaSolicitacao,
+} from '@/lib/supabase/auth'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { obterContagemPendentes } from '@/app/admin/solicitacoes/actions'
 
@@ -13,6 +17,51 @@ export default async function AdminPage() {
     getUsuarioLogado(),
     obterContagemPendentes(),
   ])
+
+  const atalhos = [
+    {
+      label: 'Publicar notícia',
+      desc: 'Escreva e publique uma nova notícia no portal',
+      href: '/admin/noticias/nova',
+      visivel: temPermissao(usuario, 'noticias', 'criar'),
+    },
+    {
+      label: 'Gerenciar notícias',
+      desc: 'Edite matérias e organize os destaques da homepage',
+      href: '/admin/noticias',
+      visivel: temPermissao(usuario, 'noticias', 'consultar') && !temPermissao(usuario, 'noticias', 'criar'),
+    },
+    {
+      label: 'Páginas do site',
+      desc: 'Gerencie História, Diretoria, Convênios e Jurídico',
+      href: '/admin/paginas',
+      visivel: temPermissao(usuario, 'paginas', 'consultar'),
+    },
+    {
+      label: 'Páginas avulsas',
+      desc: 'Crie comunicados e páginas com endereço próprio',
+      href: '/admin/avulsas',
+      visivel: temPermissao(usuario, 'paginas', 'consultar'),
+    },
+    {
+      label: 'Ver solicitações',
+      desc: 'Acompanhe os pedidos e formulários autorizados para sua conta',
+      href: '/admin/solicitacoes',
+      visivel: podeAcessarAlgumaSolicitacao(usuario),
+    },
+    {
+      label: 'Upload de jornal',
+      desc: 'Adicione novas edições do Boca no Trombone e outros jornais',
+      href: '/admin/jornais',
+      visivel: temPermissao(usuario, 'jornais', 'consultar'),
+    },
+    {
+      label: 'Homepage e banners',
+      desc: 'Organize blocos, atalhos e tempo dos banners rotativos',
+      href: '/admin/homepage',
+      visivel: temPermissao(usuario, 'homepage', 'consultar'),
+    },
+  ].filter((item) => item.visivel)
 
   return (
     <AdminLayout
@@ -31,38 +80,47 @@ export default async function AdminPage() {
         Bem-vindo ao painel de controle editorial do Sindicato dos Químicos de SJC e Região.
       </p>
 
-      {/* Cards de acesso rápido */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '18px', marginBottom: '40px' }}>
-        {[
-          { label: 'Publicar notícia',  desc: 'Escreva e publique uma nova notícia no portal',  href: '/admin/noticias/nova' },
-          { label: 'Páginas do site',   desc: 'Gerencie História, Diretoria, Convênios e Jurídico', href: '/admin/paginas' },
-          { label: 'Páginas avulsas',   desc: 'Crie comunicados e páginas com endereço próprio', href: '/admin/avulsas' },
-          { label: 'Ver solicitações',  desc: 'Mensagens, denúncias e contatos recebidos',      href: '/admin/solicitacoes' },
-          { label: 'Upload de jornal',  desc: 'Adicione uma nova edição do jornal O Químico',   href: '/admin/jornais' },
-        ].map((item) => (
-          <a
-            key={item.href}
-            href={item.href}
-            style={{
-              display: 'block',
-              width: '100%',
-              textAlign: 'left',
-              padding: '18px',
-              border: '1px solid #e4dce0',
-              background: 'white',
-              borderRadius: '6px',
-              color: '#30252a',
-              textDecoration: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            <strong style={{ display: 'block', marginBottom: '4px', fontSize: '15px' }}>{item.label}</strong>
-            <small style={{ fontSize: '13px', color: '#71636a' }}>{item.desc}</small>
-          </a>
-        ))}
-      </div>
+      {/* Cards de acesso rápido filtrados conforme permissões do usuário */}
+      {atalhos.length > 0 ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '18px', marginBottom: '40px' }}>
+          {atalhos.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              style={{
+                display: 'block',
+                width: '100%',
+                textAlign: 'left',
+                padding: '18px',
+                border: '1px solid #e4dce0',
+                background: 'white',
+                borderRadius: '6px',
+                color: '#30252a',
+                textDecoration: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <strong style={{ display: 'block', marginBottom: '4px', fontSize: '15px' }}>{item.label}</strong>
+              <small style={{ fontSize: '13px', color: '#71636a' }}>{item.desc}</small>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div
+          style={{
+            padding: '18px 22px',
+            border: '1px solid #e4dce0',
+            background: 'white',
+            borderRadius: '6px',
+            marginBottom: '28px',
+            color: '#554950',
+            fontSize: '14px',
+          }}
+        >
+          Sua conta ainda não possui módulos liberados. Solicite ao administrador a configuração das permissões de acesso.
+        </div>
+      )}
 
-      {/* Aviso de módulos em construção */}
       <div
         style={{
           padding: '16px 20px',
@@ -73,7 +131,7 @@ export default async function AdminPage() {
           borderRadius: '0 4px 4px 0',
         }}
       >
-        <strong>Módulos de Notícias, Páginas do Site e Páginas Avulsas disponíveis.</strong> Acesse o menu lateral para gerenciar conteúdos institucionais e editoriais. Os demais módulos serão ativados progressivamente.
+        <strong>Painel ativo e protegido.</strong> Utilize o menu lateral para acessar os módulos liberados para o seu perfil.
       </div>
     </AdminLayout>
   )

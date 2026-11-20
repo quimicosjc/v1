@@ -8,11 +8,15 @@ import {
   reenviarAvisoEmail,
   excluirSolicitacao,
   exportarSolicitacoesCSV,
+  obterUrlAnexoPrivado,
 } from '@/app/admin/solicitacoes/actions'
+import ImagemLightboxModal, { type ImagemLightboxDados } from '@/components/admin/ImagemLightboxModal'
 
 interface Props {
   solicitacoesIniciais: SolicitacaoItem[]
   usuarioLogado: { id: string; nome: string; papel: string }
+  slugsPermitidos: string[]
+  tipoInicial?: string
 }
 
 const TIPO_CONFIG: Record<string, { label: string; cor: string; bg: string }> = {
@@ -27,13 +31,35 @@ const TIPO_CONFIG: Record<string, { label: string; cor: string; bg: string }> = 
 export default function SolicitacoesGerenciador({
   solicitacoesIniciais,
   usuarioLogado,
+  slugsPermitidos,
+  tipoInicial = 'todas',
 }: Props) {
+  const permitidosSet = useMemo(() => new Set(slugsPermitidos), [slugsPermitidos])
+
+  const abasDisponiveis = useMemo(() => {
+    const lista: { key: string; label: string }[] = []
+    if (permitidosSet.has('sindicalizacao')) lista.push({ key: 'sindicalizacao', label: 'Sindicalizações' })
+    if (permitidosSet.has('carteirinha')) lista.push({ key: 'carteirinha', label: 'Carteirinhas' })
+    if (permitidosSet.has('atualizacao-cadastral')) lista.push({ key: 'atualizacao-cadastral', label: 'Atualizações' })
+    if (permitidosSet.has('denuncia')) lista.push({ key: 'denuncia', label: '🔒 Denúncias Sigilosas' })
+    if (permitidosSet.has('juridico') || permitidosSet.has('contato')) {
+      lista.push({ key: 'outras', label: 'Plantão / Contato' })
+    }
+    if (lista.length > 1) {
+      return [{ key: 'todas', label: 'Todas as autorizadas' }, ...lista]
+    }
+    return lista
+  }, [permitidosSet])
+
   const [itens, setItens] = useState<SolicitacaoItem[]>(solicitacoesIniciais)
   const [isPending, startTransition] = useTransition()
   const [toast, setToast] = useState<{ msg: string; tipo: 'sucesso' | 'erro' } | null>(null)
 
   // Filtros
-  const [filtroTipo, setFiltroTipo] = useState<string>('todas')
+  const [filtroTipo, setFiltroTipo] = useState<string>(() => {
+    if (abasDisponiveis.some((a) => a.key === tipoInicial)) return tipoInicial
+    return abasDisponiveis[0]?.key || 'todas'
+  })
   const [filtroSituacao, setFiltroSituacao] = useState<'todas' | 'pendentes' | 'em_atendimento' | 'concluidas'>('todas')
   const [busca, setBusca] = useState<string>('')
   const [pagina, setPagina] = useState(1)
@@ -44,6 +70,8 @@ export default function SolicitacoesGerenciador({
   const [notaTexto, setNotaTexto] = useState<string>('')
   const [salvandoNota, setSalvandoNota] = useState(false)
   const [reenviandoAviso, setReenviandoAviso] = useState(false)
+  const [abrindoAnexo, setAbrindoAnexo] = useState<string | null>(null)
+  const [lightboxImg, setLightboxImg] = useState<ImagemLightboxDados | null>(null)
 
   // Modal de Exclusão
   const [itemParaExcluir, setItemParaExcluir] = useState<SolicitacaoItem | null>(null)
@@ -125,16 +153,15 @@ export default function SolicitacoesGerenciador({
     setDetalheItem(atualizado)
     setItens((prev) => prev.map((i) => (i.id === detalheItem.id ? atualizado : i)))
 
-    // 2. Sincronização em background com o servidor
+    // 2. Sincronização em background com o servidor (validação estrita de permissão no servidor)
     startTransition(async () => {
       const res = await atualizarSituacaoSolicitacao(
         detalheItem.id,
         novaSituacao,
-        notaTexto,
-        { ...detalheItem.campos, situacao: novaSituacao, nota_interna: notaTexto }
+        notaTexto
       )
       if ('error' in res) {
-        // Reverte em caso de falha de conexão
+        // Reverte em caso de falha ou falta de permissão
         setDetalheItem(anterior)
         setItens((prev) => prev.map((i) => (i.id === detalheItem.id ? anterior : i)))
         showFeedback(res.error, 'erro')
@@ -150,15 +177,10 @@ export default function SolicitacoesGerenciador({
     const anterior = detalheItem
     const atualizado = { ...detalheItem, nota_interna: notaTexto }
 
-    // Atualização otimista imediata
     setDetalheItem(atualizado)
     setItens((prev) => prev.map((i) => (i.id === detalheItem.id ? atualizado : i)))
 
-    const res = await salvarNotaInterna(
-      detalheItem.id,
-      notaTexto,
-      { ...detalheItem.campos, nota_interna: notaTexto }
-    )
+    const res = await salvarNotaInterna(detalheItem.id, notaTexto)
     setSalvandoNota(false)
     if ('error' in res) {
       setDetalheItem(anterior)
@@ -166,6 +188,27 @@ export default function SolicitacoesGerenciador({
       showFeedback(res.error, 'erro')
     } else {
       showFeedback('Anotação interna salva com sucesso.')
+    }
+  }
+
+  async function handleAbrirAnexoSeguro(solicitacaoId: string, path: string, nome: string, ehDenuncia: boolean, ehImagem = false) {
+    if (ehDenuncia) {
+      const conf = window.confirm(
+        'Atenção: este arquivo pode conter evidências sigilosas da denúncia. Deseja abrir via link temporário seguro?'
+      )
+      if (!conf) return
+    }
+    setAbrindoAnexo(path)
+    const res = await obterUrlAnexoPrivado(solicitacaoId, path)
+    setAbrindoAnexo(null)
+    if ('error' in res) {
+      showFeedback(res.error, 'erro')
+      return
+    }
+    if (ehImagem) {
+      setLightboxImg({ url: res.url, titulo: nome, subtitulo: 'Link temporário seguro (expira em 2 minutos)' })
+    } else {
+      window.open(res.url, '_blank', 'noopener,noreferrer')
     }
   }
 
@@ -287,7 +330,7 @@ export default function SolicitacoesGerenciador({
         </div>
       </div>
 
-      {/* Abas por Tipo de Formulário */}
+      {/* Abas por Tipo de Formulário (somente categorias autorizadas) */}
       <div
         style={{
           display: 'flex',
@@ -298,14 +341,7 @@ export default function SolicitacoesGerenciador({
           paddingBottom: '4px',
         }}
       >
-        {[
-          { key: 'todas', label: 'Todas as solicitações' },
-          { key: 'sindicalizacao', label: 'Sindicalizações' },
-          { key: 'carteirinha', label: 'Carteirinhas' },
-          { key: 'atualizacao-cadastral', label: 'Atualizações' },
-          { key: 'denuncia', label: '🔒 Denúncias Sigilosas' },
-          { key: 'outras', label: 'Plantão / Contato' },
-        ].map((tab) => {
+        {abasDisponiveis.map((tab) => {
           const active = filtroTipo === tab.key
           return (
             <button
@@ -785,8 +821,8 @@ export default function SolicitacoesGerenciador({
                   }}
                 >
                   {Object.entries(detalheItem.campos).map(([chave, valor], idx) => {
-                    // Oculta metadados internos da exibição da tabela de dados
-                    if (['protocolo', 'situacao', 'nota_interna', 'aviso_email', 'anexos', 'campos'].includes(chave)) return null
+                    // Oculta metadados internos e caminhos técnicos da tabela de dados
+                    if (['protocolo', 'situacao', 'nota_interna', 'aviso_email', 'anexos', 'campos', 'foto_path', 'foto_url'].includes(chave)) return null
 
                     let valorTexto = String(valor ?? '—')
                     if (typeof valor === 'boolean') valorTexto = valor ? 'Sim' : 'Não'
@@ -815,6 +851,42 @@ export default function SolicitacoesGerenciador({
                 </div>
               </div>
 
+              {/* Foto privada de carteirinha (acesso temporário seguro sob demanda) */}
+              {typeof detalheItem.campos?.foto_path === 'string' && detalheItem.campos.foto_path && (
+                <div style={{ marginBottom: '20px' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#30252a', marginBottom: '8px' }}>
+                    Foto enviada (armazenamento privado)
+                  </h3>
+                  <button
+                    type="button"
+                    disabled={abrindoAnexo === detalheItem.campos.foto_path}
+                    onClick={() =>
+                      handleAbrirAnexoSeguro(
+                        detalheItem.id,
+                        detalheItem.campos.foto_path,
+                        `Foto — ${detalheItem.nome || detalheItem.protocolo}`,
+                        false,
+                        true
+                      )
+                    }
+                    style={{
+                      background: 'white',
+                      border: '1px solid #ced9df',
+                      borderRadius: '5px',
+                      padding: '8px 14px',
+                      color: '#861e32',
+                      fontWeight: 600,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {abrindoAnexo === detalheItem.campos.foto_path
+                      ? 'Gerando acesso seguro…'
+                      : '🔒 Visualizar foto 3×4 com link temporário'}
+                  </button>
+                </div>
+              )}
+
               {/* Anexos (se houver) */}
               {detalheItem.anexos && detalheItem.anexos.length > 0 && (
                 <div style={{ marginBottom: '24px' }}>
@@ -822,56 +894,64 @@ export default function SolicitacoesGerenciador({
                     Anexos enviados ({detalheItem.anexos.length})
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {detalheItem.anexos.map((anexo, idx) => (
-                      <div
-                        key={idx}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          background: '#f8fafb',
-                          border: '1px solid #e4dce0',
-                          borderRadius: '6px',
-                          padding: '10px 14px',
-                          fontSize: '13px',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span>📎</span>
-                          <span style={{ fontWeight: 600, color: '#30252a' }}>{anexo.nome}</span>
-                        </div>
-                        <a
-                          href={anexo.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => {
-                            if (detalheItem.formulario_slug === 'denuncia') {
-                              const conf = window.confirm(
-                                'Atenção: este arquivo pode conter evidências sigilosas da denúncia. Deseja abrir?'
-                              )
-                              if (!conf) e.preventDefault()
-                            }
-                          }}
+                    {detalheItem.anexos.map((anexo, idx) => {
+                      const ehImg = ['jpg', 'jpeg', 'png', 'webp'].includes((anexo.tipo || '').toLowerCase())
+                      return (
+                        <div
+                          key={idx}
                           style={{
-                            background: 'white',
-                            border: '1px solid #ced9df',
-                            borderRadius: '4px',
-                            padding: '4px 10px',
-                            color: '#861e32',
-                            textDecoration: 'none',
-                            fontWeight: 600,
-                            fontSize: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            background: '#f8fafb',
+                            border: '1px solid #e4dce0',
+                            borderRadius: '6px',
+                            padding: '10px 14px',
+                            fontSize: '13px',
                           }}
                         >
-                          Abrir arquivo ↗
-                        </a>
-                      </div>
-                    ))}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span>📎</span>
+                            <span style={{ fontWeight: 600, color: '#30252a' }}>{anexo.nome}</span>
+                          </div>
+                          {anexo.path ? (
+                            <button
+                              type="button"
+                              disabled={abrindoAnexo === anexo.path}
+                              onClick={() =>
+                                handleAbrirAnexoSeguro(
+                                  detalheItem.id,
+                                  anexo.path!,
+                                  anexo.nome,
+                                  detalheItem.formulario_slug === 'denuncia',
+                                  ehImg
+                                )
+                              }
+                              style={{
+                                background: 'white',
+                                border: '1px solid #ced9df',
+                                borderRadius: '4px',
+                                padding: '5px 10px',
+                                color: '#861e32',
+                                fontWeight: 600,
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {abrindoAnexo === anexo.path ? 'Gerando link…' : '🔒 Abrir arquivo ↗'}
+                            </button>
+                          ) : (
+                            <span style={{ fontSize: '12px', color: '#71636a' }}>Arquivo indisponível</span>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )}
 
-              {/* Bloco de Atendimento e Ações */}
+              {/* Bloco de Atendimento e Ações (exibido somente quando o usuário pode editar a categoria) */}
+              {detalheItem.pode_editar !== false ? (
               <div
                 style={{
                   background: '#fcfdfe',
@@ -1077,10 +1157,26 @@ export default function SolicitacoesGerenciador({
                   )}
                 </div>
               </div>
+              ) : (
+                <div
+                  style={{
+                    background: '#f8fafb',
+                    border: '1px solid #e4dce0',
+                    borderRadius: '6px',
+                    padding: '12px 16px',
+                    fontSize: '13px',
+                    color: '#71636a',
+                  }}
+                >
+                  Modo somente consulta: sua conta possui permissão para visualizar esta categoria, sem permissão de edição.
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
+
+      <ImagemLightboxModal imagem={lightboxImg} onClose={() => setLightboxImg(null)} />
 
       {/* Modal de Confirmação de Exclusão */}
       {itemParaExcluir && (

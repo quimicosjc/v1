@@ -8,18 +8,76 @@ import {
   redefinirSenha,
   excluirUsuario,
 } from '@/app/admin/usuarios/actions'
+import { resolverPermissoesEfetivas } from '@/lib/permissoes'
 
 interface Props {
   usuariosIniciais: UsuarioAdmin[]
   usuarioLogado: { id: string; nome: string; papel: string }
 }
 
-const AREAS = [
-  { id: 'noticias',    label: 'Notícias' },
-  { id: 'jornais',     label: 'Jornais (Boca no Trombone)' },
-  { id: 'paginas',     label: 'Páginas do site' },
-  { id: 'solicitacoes', label: 'Solicitações (Sindicalizações, Carteirinhas)' },
-  { id: 'inscricoes',  label: 'Cadastro para notícias' },
+interface AreaDef {
+  id: string
+  label: string
+  subtitulo?: string
+  sensivel?: boolean
+  acoesSuportadas: ('consultar' | 'criar' | 'editar' | 'publicar')[]
+}
+
+const AREAS: AreaDef[] = [
+  {
+    id: 'noticias',
+    label: 'Notícias',
+    acoesSuportadas: ['consultar', 'criar', 'editar', 'publicar'],
+  },
+  {
+    id: 'jornais',
+    label: 'Jornais (Boca no Trombone)',
+    acoesSuportadas: ['consultar', 'criar', 'editar', 'publicar'],
+  },
+  {
+    id: 'paginas',
+    label: 'Páginas do site e avulsas',
+    acoesSuportadas: ['consultar', 'criar', 'editar', 'publicar'],
+  },
+  {
+    id: 'homepage',
+    label: 'Homepage e banners',
+    acoesSuportadas: ['consultar', 'editar', 'publicar'],
+  },
+  {
+    id: 'sindicalizacoes',
+    label: 'Solicitações — Sindicalizações',
+    subtitulo: 'Fichas de filiação e dados pessoais (LGPD)',
+    sensivel: true,
+    acoesSuportadas: ['consultar', 'editar'],
+  },
+  {
+    id: 'carteirinhas',
+    label: 'Solicitações — Carteirinhas',
+    subtitulo: 'Pedidos de emissão/2ª via e foto 3×4 privada',
+    sensivel: true,
+    acoesSuportadas: ['consultar', 'editar'],
+  },
+  {
+    id: 'atualizacoes',
+    label: 'Solicitações — Atualizações e Contatos',
+    subtitulo: 'Atualização cadastral, plantão jurídico e fale conosco',
+    sensivel: true,
+    acoesSuportadas: ['consultar', 'editar'],
+  },
+  {
+    id: 'denuncias',
+    label: '🔒 Denúncias (Sigilo Estrito)',
+    subtitulo: 'Acesso independente a denúncias e anexos sigilosos (LGPD)',
+    sensivel: true,
+    acoesSuportadas: ['consultar', 'editar'],
+  },
+  {
+    id: 'inscricoes',
+    label: 'Cadastro para notícias',
+    subtitulo: 'Lista de inscritos por e-mail/WhatsApp',
+    acoesSuportadas: ['consultar', 'editar'],
+  },
 ]
 
 const ACOES = [
@@ -28,7 +86,7 @@ const ACOES = [
   { id: 'editar',    label: 'Editar' },
   { id: 'publicar',  label: 'Publicar' },
   { id: 'excluir',   label: 'Excluir' },
-]
+] as const
 
 export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }: Props) {
   const [usuarios, setUsuarios] = useState<UsuarioAdmin[]>(usuariosIniciais)
@@ -55,16 +113,10 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
 
   const usuarioSelecionado = usuarios.find((u) => u.id === selecionadoId) || usuarios[0]
 
-  // Parse das permissões do usuário selecionado
+  // Parse das permissões efetivas do usuário selecionado (preserva contas legadas até revisão)
   const [permissoesLocais, setPermissoesLocais] = useState<Record<string, string[]>>(() => {
-    if (usuarioSelecionado?.permissoes_json) {
-      try {
-        return JSON.parse(usuarioSelecionado.permissoes_json)
-      } catch {
-        return {}
-      }
-    }
-    return {}
+    if (!usuarioSelecionado) return {}
+    return resolverPermissoesEfetivas(usuarioSelecionado)
   })
 
   const [ativoLocal, setAtivoLocal] = useState<boolean>(usuarioSelecionado?.ativo ?? true)
@@ -72,23 +124,16 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
     usuarioSelecionado?.papel ?? 'operador'
   )
   const [podeDenunciasLocal, setPodeDenunciasLocal] = useState<boolean>(
-    usuarioSelecionado?.pode_denuncias ?? false
+    usuarioSelecionado ? (resolverPermissoesEfetivas(usuarioSelecionado).denuncias || []).includes('consultar') : false
   )
 
   function selecionarUsuario(u: UsuarioAdmin) {
     setSelecionadoId(u.id)
     setAtivoLocal(u.ativo)
     setPapelLocal(u.papel)
-    setPodeDenunciasLocal(u.pode_denuncias)
-    if (u.permissoes_json) {
-      try {
-        setPermissoesLocais(JSON.parse(u.permissoes_json))
-      } catch {
-        setPermissoesLocais({})
-      }
-    } else {
-      setPermissoesLocais({})
-    }
+    const efetivas = resolverPermissoesEfetivas(u)
+    setPermissoesLocais(efetivas)
+    setPodeDenunciasLocal((efetivas.denuncias || []).some((a) => ['consultar', 'editar'].includes(a)))
   }
 
   function showFeedback(msg: string, tipo: 'sucesso' | 'erro' = 'sucesso') {
@@ -104,31 +149,60 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
     setPermissoesLocais((prev) => {
       const atuais = prev[area] || []
       const existe = atuais.includes(acao)
-      const novoArray = existe ? atuais.filter((a) => a !== acao) : [...atuais, acao]
-      return { ...prev, [area]: novoArray }
+      let novoArray = existe ? atuais.filter((a) => a !== acao) : [...atuais, acao]
+
+      // Se marcou criar/editar/publicar, garante consultar; se desmarcou consultar, limpa demais da área
+      if (!existe && acao !== 'consultar' && !novoArray.includes('consultar')) {
+        novoArray = [...novoArray, 'consultar']
+      }
+      if (existe && acao === 'consultar') {
+        novoArray = []
+      }
+
+      const proximo = { ...prev, [area]: novoArray }
+      if (area === 'denuncias') {
+        setPodeDenunciasLocal(novoArray.some((a) => ['consultar', 'editar'].includes(a)))
+      }
+      return proximo
     })
+  }
+
+  function handleToggleDenunciasCheckbox(marcado: boolean) {
+    setPodeDenunciasLocal(marcado)
+    setPermissoesLocais((prev) => ({
+      ...prev,
+      denuncias: marcado ? (prev.denuncias?.length ? prev.denuncias : ['consultar', 'editar']) : [],
+    }))
   }
 
   // Ações de formulário
   function handleSalvarAlteracoes() {
     if (!usuarioSelecionado) return
     startTransition(async () => {
-      // Garante que a permissão de exclusão jamais seja delegada
+      // Garante que a permissão de exclusão jamais seja delegada e salva sempre chaves segmentadas
       const permissoesSeguras: Record<string, string[]> = {}
-      for (const [area, acoes] of Object.entries(permissoesLocais)) {
-        permissoesSeguras[area] = acoes.filter((a) => a !== 'excluir')
+      for (const area of AREAS) {
+        const acoesAtuais = permissoesLocais[area.id] || []
+        permissoesSeguras[area.id] = acoesAtuais.filter(
+          (a) => a !== 'excluir' && (area.acoesSuportadas as string[]).includes(a)
+        )
       }
+      const denunciasAutorizado = permissoesSeguras.denuncias.some((a) =>
+        ['consultar', 'editar'].includes(a)
+      )
 
       const res = await atualizarUsuario(usuarioSelecionado.id, {
         ativo: ativoLocal,
         papel: papelLocal,
-        pode_denuncias: podeDenunciasLocal,
+        pode_denuncias: denunciasAutorizado,
         permissoes_json: JSON.stringify(permissoesSeguras),
       })
 
       if ('error' in res) {
         showFeedback(res.error, 'erro')
       } else {
+        const jsonFinal = res.permissoes_json ?? JSON.stringify(permissoesSeguras)
+        const podeDenFinal = res.pode_denuncias ?? denunciasAutorizado
         setUsuarios((prev) =>
           prev.map((u) =>
             u.id === usuarioSelecionado.id
@@ -136,12 +210,13 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
                   ...u,
                   ativo: ativoLocal,
                   papel: papelLocal,
-                  pode_denuncias: podeDenunciasLocal,
-                  permissoes_json: JSON.stringify(permissoesSeguras),
+                  pode_denuncias: podeDenFinal,
+                  permissoes_json: jsonFinal,
                 }
               : u
           )
         )
+        setPodeDenunciasLocal(podeDenFinal)
         showFeedback('Permissões e dados do usuário atualizados com sucesso!')
       }
     })
@@ -150,23 +225,36 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
   function handleCriarUsuario(e: React.FormEvent) {
     e.preventDefault()
     startTransition(async () => {
+      // Princípio do menor privilégio: nova conta inicia sem permissões sensíveis
+      const permissoesIniciais: Record<string, string[]> = {
+        noticias: [],
+        jornais: [],
+        paginas: [],
+        homepage: [],
+        sindicalizacoes: [],
+        carteirinhas: [],
+        atualizacoes: [],
+        denuncias: novoPodeDenuncias ? ['consultar', 'editar'] : [],
+        inscricoes: [],
+      }
+
       const res = await criarUsuario({
         nome: novoNome,
         email: novoEmail,
         senha: novaSenha,
         papel: novoPapel,
         pode_denuncias: novoPodeDenuncias,
-        permissoes: {
-          noticias: ['consultar', 'criar', 'editar'],
-          jornais: ['consultar'],
-        },
+        permissoes: permissoesIniciais,
       })
 
       if ('error' in res) {
         showFeedback(res.error, 'erro')
       } else {
-        showFeedback(`Usuário ${novoNome} cadastrado com sucesso!`)
+        showFeedback(`Usuário ${novoNome} cadastrado! Configure abaixo as áreas autorizadas.`)
         setShowAddModal(false)
+        const nomeCriado = novoNome
+        const emailCriado = novoEmail.trim().toLowerCase()
+        const papelCriado = novoPapel
         setNovoNome('')
         setNovoEmail('')
         setNovaSenha('')
@@ -177,16 +265,13 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
           const novoUser: UsuarioAdmin = {
             id: res.id,
             auth_user_id: res.id,
-            nome: novoNome,
-            email: novoEmail.trim().toLowerCase(),
-            papel: novoPapel,
+            nome: nomeCriado,
+            email: emailCriado,
+            papel: papelCriado,
             ativo: true,
             e_principal: false,
-            pode_denuncias: novoPodeDenuncias,
-            permissoes_json: JSON.stringify({
-              noticias: ['consultar', 'criar', 'editar'],
-              jornais: ['consultar'],
-            }),
+            pode_denuncias: res.pode_denuncias ?? false,
+            permissoes_json: res.permissoes_json ?? JSON.stringify(permissoesIniciais),
             criado_em: new Date().toISOString(),
           }
           setUsuarios((prev) => [...prev, novoUser])
@@ -500,12 +585,12 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
 
                     {/* Acesso a Denúncias */}
                     <div>
-                      <label style={labelStyle}>Denúncias (Sigilo Estrito)</label>
+                      <label style={labelStyle}>Denúncias (Sigilo Estrito / LGPD)</label>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#30252a', height: '42px', cursor: 'pointer' }}>
                         <input
                           type="checkbox"
                           checked={podeDenunciasLocal}
-                          onChange={(e) => setPodeDenunciasLocal(e.target.checked)}
+                          onChange={(e) => handleToggleDenunciasCheckbox(e.target.checked)}
                           style={{ width: '16px', height: '16px', accentColor: '#861e32' }}
                         />
                         <span>Autorizar visualização de denúncias e anexos</span>
@@ -524,7 +609,7 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
                     Permissões por Área e Ação
                   </h3>
                   <p style={{ margin: 0, fontSize: '13px', color: '#71636a' }}>
-                    Marque as ações que este usuário tem autorização para realizar.
+                    Controle independente por categoria (princípio do menor privilégio). Ex.: um usuário pode acessar apenas Carteirinhas sem visualizar Sindicalizações ou Denúncias.
                   </p>
                 </div>
 
@@ -532,12 +617,13 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'center' }}>
                     <thead>
                       <tr style={{ background: '#f8fafb', borderBottom: '1px solid #e4dce0' }}>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#71636a' }}>
+                        <th scope="col" style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#71636a' }}>
                           ÁREA DO PAINEL
                         </th>
                         {ACOES.map((acao) => (
                           <th
                             key={acao.id}
+                            scope="col"
                             style={{
                               padding: '12px 12px',
                               fontWeight: 600,
@@ -569,16 +655,21 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
                           key={area.id}
                           style={{
                             borderBottom: idx === AREAS.length - 1 ? 'none' : '1px solid #e8eef1',
-                            background: idx % 2 === 0 ? 'white' : '#fafbfc',
+                            background: area.id === 'denuncias' ? '#fff7f8' : idx % 2 === 0 ? 'white' : '#fafbfc',
                           }}
                         >
-                          <td style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: '#30252a' }}>
-                            {area.label}
-                          </td>
+                          <th scope="row" style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: area.id === 'denuncias' ? '#861e32' : '#30252a' }}>
+                            <div>{area.label}</div>
+                            {area.subtitulo && (
+                              <div style={{ fontSize: '11px', fontWeight: 400, color: '#71636a', marginTop: '2px' }}>
+                                {area.subtitulo}
+                              </div>
+                            )}
+                          </th>
                           {ACOES.map((acao) => {
                             if (acao.id === 'excluir') {
                               return (
-                                <td key={acao.id} style={{ padding: '14px 12px' }}>
+                                <td key={acao.id} style={{ padding: '12px' }}>
                                   <span
                                     title="Exclusão de conteúdos é prerrogativa restrita exclusivamente ao Administrador"
                                     style={{
@@ -600,9 +691,17 @@ export default function UsuariosGerenciador({ usuariosIniciais, usuarioLogado }:
                                 </td>
                               )
                             }
+                            const suportada = (area.acoesSuportadas as string[]).includes(acao.id)
+                            if (!suportada) {
+                              return (
+                                <td key={acao.id} style={{ padding: '12px', color: '#c0b8bc', fontSize: '12px' }}>
+                                  —
+                                </td>
+                              )
+                            }
                             const isChecked = (permissoesLocais[area.id] || []).includes(acao.id)
                             return (
-                              <td key={acao.id} style={{ padding: '14px 12px' }}>
+                              <td key={acao.id} style={{ padding: '12px' }}>
                                 <input
                                   type="checkbox"
                                   checked={isChecked}

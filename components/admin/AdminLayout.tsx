@@ -4,6 +4,12 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { logoutAction } from '@/app/admin/login/actions'
+import {
+  temPermissao,
+  podeAcessarAlgumaSolicitacao,
+  podeGerenciarUsuarios,
+  type UsuarioPermissoesBase,
+} from '@/lib/permissoes'
 
 const papelLabel: Record<string, string> = {
   admin_ti: 'Administrador',
@@ -11,20 +17,32 @@ const papelLabel: Record<string, string> = {
   operador: 'Operador',
 }
 
-const menuItems = [
-  { href: '/admin',                   label: 'Início',                  icon: '🏠' },
-  { href: '/admin/noticias',          label: 'Notícias',                icon: '📰' },
-  { href: '/admin/jornais',           label: 'Jornais',                 icon: '📑' },
-  { href: '/admin/homepage',          label: 'Homepage',                icon: '🏛️' },
-  { href: '/admin/paginas',           label: 'Páginas do site',         icon: '📄' },
-  { href: '/admin/solicitacoes',      label: 'Solicitações',            icon: '📥' },
-  { href: '/admin/inscricoes',        label: 'Cadastro para notícias',  icon: '✉️' },
-  { href: '/admin/avulsas',           label: 'Páginas avulsas',         icon: '🔗' },
-  { href: '/admin/usuarios',          label: 'Usuários e permissões',   icon: '👥' },
+interface MenuItemDef {
+  href: string
+  label: string
+  icon: string
+  visivel: (u: UsuarioPermissoesBase) => boolean
+}
+
+const menuItems: MenuItemDef[] = [
+  { href: '/admin',              label: 'Início',                 icon: '🏠', visivel: () => true },
+  { href: '/admin/noticias',     label: 'Notícias',               icon: '📰', visivel: (u) => temPermissao(u, 'noticias', 'consultar') },
+  { href: '/admin/jornais',      label: 'Jornais',                icon: '📑', visivel: (u) => temPermissao(u, 'jornais', 'consultar') },
+  { href: '/admin/homepage',     label: 'Homepage',               icon: '🏛️', visivel: (u) => temPermissao(u, 'homepage', 'consultar') },
+  { href: '/admin/paginas',      label: 'Páginas do site',        icon: '📄', visivel: (u) => temPermissao(u, 'paginas', 'consultar') },
+  { href: '/admin/solicitacoes', label: 'Solicitações',           icon: '📥', visivel: (u) => podeAcessarAlgumaSolicitacao(u) },
+  { href: '/admin/inscricoes',   label: 'Cadastro para notícias', icon: '✉️', visivel: (u) => temPermissao(u, 'inscricoes', 'consultar') },
+  { href: '/admin/avulsas',      label: 'Páginas avulsas',        icon: '🔗', visivel: (u) => temPermissao(u, 'paginas', 'consultar') },
+  { href: '/admin/usuarios',     label: 'Usuários e permissões',  icon: '👥', visivel: (u) => podeGerenciarUsuarios(u) },
 ]
 
 interface AdminLayoutProps {
-  usuario: { nome: string; papel: string }
+  usuario: {
+    nome: string
+    papel: string
+    pode_denuncias?: boolean
+    permissoes_json?: string | null
+  }
   breadcrumb: string
   activeHref?: string
   pendentesCount?: number
@@ -160,9 +178,11 @@ export default function AdminLayout({ usuario, breadcrumb, activeHref, pendentes
           <span>PAINEL DE CONTROLE</span>
         </div>
 
-        {/* Navegação */}
-        <nav style={{ flex: 1, padding: '0 8px' }}>
-          {menuItems.map((item) => {
+        {/* Navegação filtrada conforme permissões efetivas */}
+        <nav aria-label="Menu do painel administrativo" style={{ flex: 1, padding: '0 8px' }}>
+          {menuItems
+            .filter((item) => item.visivel(usuario))
+            .map((item) => {
             const isActive = activeHref
               ? item.href === activeHref
               : item.href === '/admin'
@@ -233,22 +253,38 @@ export default function AdminLayout({ usuario, breadcrumb, activeHref, pendentes
             {iniciais}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <a
-              href="/admin/usuarios"
-              title="Gerenciar perfil e alterar senha"
-              style={{
-                fontSize: '14px',
-                fontWeight: 600,
-                color: 'white',
-                textDecoration: 'none',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                display: 'block',
-              }}
-            >
-              {usuario.nome}
-            </a>
+            {podeGerenciarUsuarios(usuario) ? (
+              <a
+                href="/admin/usuarios"
+                title="Gerenciar perfil e alterar senha"
+                style={{
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: 'white',
+                  textDecoration: 'none',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  display: 'block',
+                }}
+              >
+                {usuario.nome}
+              </a>
+            ) : (
+              <span
+                style={{
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: 'white',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  display: 'block',
+                }}
+              >
+                {usuario.nome}
+              </span>
+            )}
             <small style={{ fontSize: '11px', color: '#eed2dc' }}>
               {papelLabel[usuario.papel] ?? usuario.papel}
             </small>
@@ -387,6 +423,7 @@ export default function AdminLayout({ usuario, breadcrumb, activeHref, pendentes
 
       {/* ── BARRA INFERIOR DE POLEGAR (EXCLUSIVA MOBILE) ─────────── */}
       <nav
+        aria-label="Atalhos rápidos do painel"
         className="admin-bottom-nav"
         style={{
           position: 'fixed',
@@ -403,89 +440,116 @@ export default function AdminLayout({ usuario, breadcrumb, activeHref, pendentes
           boxShadow: '0 -2px 10px rgba(0,0,0,0.05)',
         }}
       >
-        <Link
-          href="/admin/noticias"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            textDecoration: 'none',
-            color: activeHref?.startsWith('/admin/noticias') && activeHref !== '/admin/noticias/nova' ? '#861e32' : '#71636a',
-            fontSize: '11px',
-            fontWeight: 600,
-            gap: '2px',
-          }}
-        >
-          <span style={{ fontSize: '18px' }}>📰</span>
-          <span>Notícias</span>
-        </Link>
-
-        <Link
-          href="/admin/noticias/nova"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            textDecoration: 'none',
-            color: '#861e32',
-            fontSize: '11px',
-            fontWeight: 700,
-            gap: '2px',
-          }}
-        >
-          <span
+        {temPermissao(usuario, 'noticias', 'consultar') && (
+          <Link
+            href="/admin/noticias"
             style={{
-              width: '36px',
-              height: '36px',
-              background: '#861e32',
-              color: 'white',
-              borderRadius: '50%',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '20px',
-              marginTop: '-14px',
-              boxShadow: '0 2px 8px rgba(134,30,50,0.3)',
+              textDecoration: 'none',
+              color: activeHref?.startsWith('/admin/noticias') && activeHref !== '/admin/noticias/nova' ? '#861e32' : '#71636a',
+              fontSize: '11px',
+              fontWeight: 600,
+              gap: '2px',
             }}
           >
-            ＋
-          </span>
-          <span>Criar</span>
-        </Link>
+            <span style={{ fontSize: '18px' }}>📰</span>
+            <span>Notícias</span>
+          </Link>
+        )}
 
-        <Link
-          href="/admin/homepage"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            textDecoration: 'none',
-            color: activeHref === '/admin/homepage' ? '#861e32' : '#71636a',
-            fontSize: '11px',
-            fontWeight: 600,
-            gap: '2px',
-          }}
-        >
-          <span style={{ fontSize: '18px' }}>🏛️</span>
-          <span>Home</span>
-        </Link>
+        {temPermissao(usuario, 'noticias', 'criar') && (
+          <Link
+            href="/admin/noticias/nova"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textDecoration: 'none',
+              color: '#861e32',
+              fontSize: '11px',
+              fontWeight: 700,
+              gap: '2px',
+            }}
+          >
+            <span
+              style={{
+                width: '36px',
+                height: '36px',
+                background: '#861e32',
+                color: 'white',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px',
+                marginTop: '-14px',
+                boxShadow: '0 2px 8px rgba(134,30,50,0.3)',
+              }}
+            >
+              ＋
+            </span>
+            <span>Criar</span>
+          </Link>
+        )}
 
-        <Link
-          href="/admin/jornais"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            textDecoration: 'none',
-            color: activeHref === '/admin/jornais' ? '#861e32' : '#71636a',
-            fontSize: '11px',
-            fontWeight: 600,
-            gap: '2px',
-          }}
-        >
-          <span style={{ fontSize: '18px' }}>📑</span>
-          <span>Jornais</span>
-        </Link>
+        {temPermissao(usuario, 'homepage', 'consultar') && (
+          <Link
+            href="/admin/homepage"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textDecoration: 'none',
+              color: activeHref === '/admin/homepage' ? '#861e32' : '#71636a',
+              fontSize: '11px',
+              fontWeight: 600,
+              gap: '2px',
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>🏛️</span>
+            <span>Home</span>
+          </Link>
+        )}
+
+        {temPermissao(usuario, 'jornais', 'consultar') && (
+          <Link
+            href="/admin/jornais"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textDecoration: 'none',
+              color: activeHref === '/admin/jornais' ? '#861e32' : '#71636a',
+              fontSize: '11px',
+              fontWeight: 600,
+              gap: '2px',
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>📑</span>
+            <span>Jornais</span>
+          </Link>
+        )}
+
+        {podeAcessarAlgumaSolicitacao(usuario) && !temPermissao(usuario, 'homepage', 'consultar') && (
+          <Link
+            href="/admin/solicitacoes"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textDecoration: 'none',
+              color: activeHref === '/admin/solicitacoes' ? '#861e32' : '#71636a',
+              fontSize: '11px',
+              fontWeight: 600,
+              gap: '2px',
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>📥</span>
+            <span>Solicitações</span>
+          </Link>
+        )}
 
         <button
           type="button"

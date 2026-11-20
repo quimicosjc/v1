@@ -6,6 +6,8 @@ import HeaderPublico from '@/components/publico/HeaderPublico'
 import FooterPublico from '@/components/publico/FooterPublico'
 import CarrosselNoticia from '@/components/publico/CarrosselNoticia'
 import BarraCompartilhamento from '@/components/publico/BarraCompartilhamento'
+import CorpoNoticia from '@/components/publico/CorpoNoticia'
+import SeloOrigemSocial, { IconePlataforma } from '@/components/publico/SeloOrigemSocial'
 import { formatarDataHoraNoticia } from '@/lib/data-formatada'
 import { CONTAINER_STYLE } from '@/lib/design'
 import { sanitizarHtml } from '@/lib/security'
@@ -100,7 +102,7 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
   // Busca matérias relacionadas para o bloco "Leia Também"
   const { data: relacionadasData } = await supabase
     .from('conteudos')
-    .select('id, titulo, slug, resumo, chapeu, banner_url, imagem_y, publicado_em, fotos_json')
+    .select('id, titulo, slug, resumo, chapeu, banner_url, imagem_y, publicado_em, fotos_json, url_referencia')
     .eq('tipo', 'noticia')
     .eq('status', 'publicado')
     .neq('id', noticia.id)
@@ -264,17 +266,8 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
           {/* Carrossel Editorial de Fotos (Não exibir foto na página interna se origem for YouTube ou Instagram — apenas o embed basta) */}
           {origem !== 'youtube' && origem !== 'instagram' && <CarrosselNoticia fotos={fotos} titulo={noticia.titulo} />}
 
-          {/* Corpo da Notícia (+2 pontos: 20px) */}
-          <div
-            className="noticia-corpo"
-            style={{
-              fontSize: '20px',
-              lineHeight: 1.8,
-              color: '#2b2327',
-              wordBreak: 'break-word',
-            }}
-            dangerouslySetInnerHTML={{ __html: corpoFormatado }}
-          />
+          {/* Corpo da Notícia com suporte oficial a embeds responsivos do Instagram (Reels 9:16 e Posts) */}
+          <CorpoNoticia html={corpoFormatado} urlReferencia={noticia.url_referencia} />
 
           {/* Barra de Compartilhamento no Rodapé do Artigo */}
           <BarraCompartilhamento titulo={noticia.titulo} modo="rodape" />
@@ -298,8 +291,18 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
             >
               {origem === 'instagram' ? (
                 <>
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#ad1457' }}>
-                    Publicação do Instagram
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      fontSize: '15px',
+                      fontWeight: 700,
+                      color: '#30252a',
+                    }}
+                  >
+                    <IconePlataforma origem="instagram" tamanho={22} decorativo />
+                    <span>Publicação original no Instagram</span>
                   </div>
                   <a
                     href={noticia.url_referencia}
@@ -318,13 +321,23 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
                       gap: '6px',
                     }}
                   >
-                    <span>Ver no Instagram ↗</span>
+                    <span>Abrir no Instagram ↗</span>
                   </a>
                 </>
               ) : origem === 'youtube' ? (
                 <>
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#b91c1c' }}>
-                    Publicação do Youtube
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      fontSize: '15px',
+                      fontWeight: 700,
+                      color: '#30252a',
+                    }}
+                  >
+                    <IconePlataforma origem="youtube" tamanho={24} decorativo />
+                    <span>Vídeo original no YouTube</span>
                   </div>
                   <a
                     href={noticia.url_referencia}
@@ -664,6 +677,7 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
                           {rel.chapeu}
                         </span>
                       )}
+                      <SeloOrigemSocial origem={detectarOrigem(rel.url_referencia)} variante="card" />
                     </div>
                     <div
                       style={{
@@ -817,23 +831,65 @@ export default async function NoticiaPublicaPage({ params }: PageProps) {
           border: none !important;
           margin: 0 !important;
         }
-        .noticia-corpo iframe {
+        .noticia-corpo iframe:not(.instagram-media):not([src*="instagram"]) {
           max-width: 100% !important;
+          width: 100% !important;
+          aspect-ratio: 16 / 9 !important;
           border: none !important;
           border-radius: 6px !important;
           margin: 24px auto !important;
           display: block !important;
         }
-        .noticia-corpo iframe:not([src*="instagram"]) {
-          width: 100% !important;
-          aspect-ratio: 16 / 9 !important;
-        }
-        .noticia-corpo iframe[src*="instagram"] {
+        /* Container oficial para embeds do Instagram (Posts e Reels 9:16) sem corte de altura */
+        .noticia-corpo .ig-embed-container {
           width: 100% !important;
           max-width: 540px !important;
-          min-height: 680px !important;
-          height: 680px !important;
-          overflow: hidden !important;
+          margin: 24px auto !important;
+          display: flex !important;
+          justify-content: center !important;
+          overflow: visible !important;
+        }
+        .noticia-corpo .ig-embed-container .instagram-media,
+        .noticia-corpo .ig-embed-container .instagram-media-rendered,
+        .noticia-corpo iframe.instagram-media,
+        .noticia-corpo iframe.instagram-media-rendered {
+          width: 100% !important;
+          max-width: 540px !important;
+          min-width: 280px !important;
+          margin: 0 auto !important;
+          border-radius: 8px !important;
+          box-sizing: border-box !important;
+        }
+        /* Preserva o estilo de blockquote do Instagram sem herdar borda/fundo de citação editorial */
+        .noticia-corpo blockquote.instagram-media {
+          border-left: none !important;
+          background: #ffffff !important;
+          font-style: normal !important;
+          padding: 0 !important;
+          margin: 0 auto !important;
+        }
+        /* Fallback seguro caso algum iframe bruto do Instagram permaneça sem script */
+        .noticia-corpo iframe[src*="instagram"]:not(.instagram-media):not(.instagram-media-rendered) {
+          width: 100% !important;
+          max-width: 440px !important;
+          min-height: 780px !important;
+          border: none !important;
+          border-radius: 8px !important;
+          margin: 24px auto !important;
+          display: block !important;
+        }
+        @media (max-width: 640px) {
+          .noticia-corpo .ig-embed-container {
+            max-width: 100% !important;
+            margin: 18px auto !important;
+          }
+          .noticia-corpo .ig-embed-container .instagram-media,
+          .noticia-corpo .ig-embed-container .instagram-media-rendered,
+          .noticia-corpo iframe.instagram-media,
+          .noticia-corpo iframe.instagram-media-rendered {
+            max-width: 100% !important;
+            min-width: 0 !important;
+          }
         }
       `}</style>
     </div>

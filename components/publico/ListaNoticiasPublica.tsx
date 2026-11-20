@@ -5,6 +5,7 @@ import Link from 'next/link'
 
 import { formatarDataExtenso } from '@/lib/data-formatada'
 import { detectarOrigem } from '@/lib/social-origem'
+import SeloOrigemSocial from '@/components/publico/SeloOrigemSocial'
 
 export interface NoticiaItemPublico {
   id: string
@@ -276,50 +277,7 @@ export default function ListaNoticiasPublica({ noticiasIniciais }: ListaNoticias
                     </div>
                   )}
 
-                  {orig === 'youtube' && (
-                    <span
-                      style={{
-                        position: 'absolute',
-                        top: '10px',
-                        right: '10px',
-                        background: '#b91c1c',
-                        color: '#ffffff',
-                        fontSize: '10px',
-                        fontWeight: 800,
-                        padding: '3px 7px',
-                        borderRadius: '3px',
-                        letterSpacing: '0.4px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
-                      }}
-                    >
-                      ▶ VÍDEO
-                    </span>
-                  )}
-                  {orig === 'instagram' && (
-                    <span
-                      style={{
-                        position: 'absolute',
-                        top: '10px',
-                        right: '10px',
-                        background: '#be185d',
-                        color: '#ffffff',
-                        fontSize: '10px',
-                        fontWeight: 800,
-                        padding: '3px 7px',
-                        borderRadius: '3px',
-                        letterSpacing: '0.4px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
-                      }}
-                    >
-                      📷 INSTAGRAM
-                    </span>
-                  )}
+                  <SeloOrigemSocial origem={orig} variante="card" />
                 </div>
 
                 {/* Conteúdo ao lado */}

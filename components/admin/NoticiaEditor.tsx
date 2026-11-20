@@ -7,7 +7,6 @@ import type { Noticia, NoticiaFormData } from '@/app/admin/noticias/actions'
 import {
   criarNoticia,
   atualizarNoticia,
-  publicarNoticia,
   moverParaLixeira,
   retirarDoAr,
   uploadMidia,
@@ -18,11 +17,14 @@ import {
   OrigemNoticia,
   detectarOrigem,
   extrairYoutubeId,
-  extrairInstagramId,
+  parseInstagramUrl,
+  validarUrlInstagram,
   obterYoutubeThumb,
   gerarIframeYoutube,
-  gerarIframeInstagram,
+  inserirOuAtualizarEmbedInstagram,
 } from '@/lib/social-origem'
+import { IconePlataforma } from '@/components/publico/SeloOrigemSocial'
+import ImagemLightboxModal, { type ImagemLightboxDados } from '@/components/admin/ImagemLightboxModal'
 
 const RichEditor = dynamic(() => import('@/components/admin/RichEditor'), {
   ssr: false,
@@ -163,8 +165,8 @@ function StatusBadge({ status }: { status: string }) {
 const inputStyle: React.CSSProperties = {
   border: '1px solid #cbd7de',
   borderRadius: '5px',
-  padding: '11px 12px',
-  fontSize: '14px',
+  padding: '8px 10px',
+  fontSize: '13.5px',
   width: '100%',
   fontFamily: 'inherit',
   color: '#30252a',
@@ -175,17 +177,17 @@ const inputStyle: React.CSSProperties = {
 
 const labelStyle: React.CSSProperties = {
   display: 'block',
-  fontSize: '13px',
+  fontSize: '12.5px',
   fontWeight: 600,
   color: '#30252a',
-  marginBottom: '6px',
+  marginBottom: '4px',
 }
 
 const cardStyle: React.CSSProperties = {
   background: 'white',
   border: '1px solid #e4dce0',
-  borderRadius: '8px',
-  padding: '24px',
+  borderRadius: '7px',
+  padding: '14px 16px',
 }
 
 const btnNeutro: React.CSSProperties = {
@@ -193,8 +195,8 @@ const btnNeutro: React.CSSProperties = {
   background: 'white',
   color: '#30252a',
   borderRadius: '5px',
-  padding: '9px 14px',
-  fontSize: '13px',
+  padding: '7px 12px',
+  fontSize: '12.5px',
   cursor: 'pointer',
   fontFamily: 'inherit',
 }
@@ -204,8 +206,8 @@ const btnPrimario: React.CSSProperties = {
   color: 'white',
   border: 'none',
   borderRadius: '5px',
-  padding: '10px 16px',
-  fontSize: '14px',
+  padding: '8px 15px',
+  fontSize: '13.5px',
   fontWeight: 600,
   cursor: 'pointer',
   fontFamily: 'inherit',
@@ -249,10 +251,34 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
   const [alterado, setAlterado] = useState(false)
   const noticiaIdRef = useRef<string | null>(noticia?.id ?? null)
 
-  // Origem e Fast Track (Site | YouTube | Instagram)
+  // Origem e Automação Social (Site | YouTube | Instagram)
   const [origem, setOrigem] = useState<OrigemNoticia>(() => detectarOrigem(noticia?.url_referencia))
   const [socialInput, setSocialInput] = useState(() => noticia?.url_referencia ?? '')
   const [buscandoThumbInsta, setBuscandoThumbInsta] = useState(false)
+  const [igAutoStatus, setIgAutoStatus] = useState<{
+    tipo: 'processando' | 'ok' | 'aviso' | 'erro'
+    mensagem: string
+    detalheCapa?: string
+  } | null>(() => {
+    const infoInicial = parseInstagramUrl(noticia?.url_referencia)
+    if (!infoInicial) return null
+    return {
+      tipo: 'ok',
+      mensagem:
+        infoInicial.tipo === 'reel'
+          ? 'Reel do Instagram vinculado à matéria.'
+          : 'Publicação do Instagram vinculada à matéria.',
+    }
+  })
+  const [imagemAmpliada, setImagemAmpliada] = useState<ImagemLightboxDados | null>(null)
+  const ultimoIgProcessadoRef = useRef<string | null>(parseInstagramUrl(noticia?.url_referencia)?.id ?? null)
+  const capaManualRef = useRef<boolean>(
+    Boolean(noticia?.banner_url || (noticia?.fotos_json && noticia.fotos_json !== '[]'))
+  )
+  const capaAutoIgUrlRef = useRef<string | null>(null)
+  const igDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const igReqSeqRef = useRef(0)
+  const fotoInputRef = useRef<HTMLInputElement>(null)
 
   // Mais opções editoriais
   const [showMaisOpcoes, setShowMaisOpcoes] = useState(false)
@@ -361,6 +387,17 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
     setAlterado(true)
   }
 
+  const fotosRef = useRef<FotoItem[]>(fotos)
+  useEffect(() => {
+    fotosRef.current = fotos
+  }, [fotos])
+
+  useEffect(() => {
+    return () => {
+      if (igDebounceRef.current) clearTimeout(igDebounceRef.current)
+    }
+  }, [])
+
   function handleTrocarOrigem(novaOrigem: OrigemNoticia) {
     setOrigem(novaOrigem)
     markAlterado()
@@ -369,17 +406,172 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
     } else if (novaOrigem === 'instagram' && !chapeu) {
       setChapeu('Redes Sociais')
     }
+    if (novaOrigem !== 'instagram') {
+      setIgAutoStatus(null)
+    }
   }
+
+  const processarLinkInstagramAutomatico = useCallback(
+    async (rawUrl: string, opcoes?: { forcarCapa?: boolean }) => {
+      const limpo = rawUrl.trim()
+      if (!limpo) {
+        setIgAutoStatus(null)
+        return
+      }
+
+      const validacao = validarUrlInstagram(limpo)
+      if (!validacao.valido || !validacao.info) {
+        setIgAutoStatus({
+          tipo: 'erro',
+          mensagem: validacao.mensagem || 'Endereço inválido do Instagram.',
+        })
+        return
+      }
+
+      const info = validacao.info
+      setOrigem('instagram')
+      setUrlReferencia(info.permalink)
+      setChapeu((prev) => prev || 'Redes Sociais')
+
+      // 1) Incorpora automaticamente no corpo da notícia sem duplicar
+      const idAnterior = ultimoIgProcessadoRef.current
+      setCorpo((prev) => {
+        const res = inserirOuAtualizarEmbedInstagram(prev, info, idAnterior)
+        return res.html
+      })
+      ultimoIgProcessadoRef.current = info.id
+      markAlterado()
+
+      const rotuloTipo = info.tipo === 'reel' ? 'Reel do Instagram' : 'Publicação do Instagram'
+      const jaTemCapaManual =
+        capaManualRef.current && fotosRef.current.some((f) => Boolean(f.url || f.enviando))
+
+      // 2) Nunca sobrescrever capa selecionada intencionalmente pelo editor
+      if (jaTemCapaManual && !opcoes?.forcarCapa) {
+        setIgAutoStatus({
+          tipo: 'ok',
+          mensagem: `${rotuloTipo} reconhecido e incorporado automaticamente ao texto da matéria.`,
+          detalheCapa: 'A imagem de capa escolhida manualmente foi mantida.',
+        })
+        return
+      }
+
+      // 3) Recupera imagem de capa automaticamente via metadados públicos oficiais
+      const seq = ++igReqSeqRef.current
+      setBuscandoThumbInsta(true)
+      setIgAutoStatus({
+        tipo: 'processando',
+        mensagem: `${rotuloTipo} incorporado automaticamente. Recuperando imagem de capa…`,
+      })
+
+      try {
+        const res = await buscarThumbnailInstagram(info.permalink)
+        if (seq !== igReqSeqRef.current) return
+
+        if ('error' in res) {
+          setIgAutoStatus({
+            tipo: 'aviso',
+            mensagem: `${rotuloTipo} incorporado automaticamente ao texto da matéria.`,
+            detalheCapa: res.error,
+          })
+          return
+        }
+
+        // Reconfirma que o editor não adicionou uma capa manual durante o download
+        const adicionouManualDuranteBusca =
+          capaManualRef.current &&
+          fotosRef.current.some((f) => Boolean(f.url || f.enviando)) &&
+          !opcoes?.forcarCapa
+
+        if (adicionouManualDuranteBusca) {
+          setIgAutoStatus({
+            tipo: 'ok',
+            mensagem: `${rotuloTipo} incorporado automaticamente.`,
+            detalheCapa: 'Sua capa manual foi preservada.',
+          })
+          return
+        }
+
+        const novaFoto: FotoItem = {
+          url: res.url,
+          preview: res.url,
+          foco: 50,
+          legenda: info.tipo === 'reel' ? 'Reel do Instagram' : 'Publicação do Instagram',
+          credito: 'Instagram',
+          enviando: false,
+          erro: null,
+        }
+
+        const urlAutoAnterior = capaAutoIgUrlRef.current
+        capaAutoIgUrlRef.current = res.url
+        if (opcoes?.forcarCapa) {
+          capaManualRef.current = false
+        }
+
+        setFotos((prev) => {
+          const semAnteriorAuto = urlAutoAnterior
+            ? prev.filter((f) => f.url !== urlAutoAnterior)
+            : prev
+          const semDuplicada = semAnteriorAuto.filter((f) => f.url !== res.url)
+          return [novaFoto, ...semDuplicada].slice(0, 5)
+        })
+        markAlterado()
+        setIgAutoStatus({
+          tipo: 'ok',
+          mensagem: `${rotuloTipo} incorporado automaticamente e capa obtida com sucesso.`,
+        })
+      } catch (err) {
+        if (seq !== igReqSeqRef.current) return
+        console.error('Erro ao obter capa do Instagram:', err)
+        setIgAutoStatus({
+          tipo: 'aviso',
+          mensagem: `${rotuloTipo} incorporado automaticamente ao texto da matéria.`,
+          detalheCapa:
+            'Não foi possível recuperar a capa automaticamente agora. Você pode enviar uma imagem manualmente ou publicar com a capa padrão.',
+        })
+      } finally {
+        if (seq === igReqSeqRef.current) {
+          setBuscandoThumbInsta(false)
+        }
+      }
+    },
+    []
+  )
 
   function handleMudarSocialUrl(val: string) {
     setSocialInput(val)
     setUrlReferencia(val)
     markAlterado()
+
     const detectada = detectarOrigem(val)
-    if (detectada !== 'site' && detectada !== origem) {
-      setOrigem(detectada)
-      if (detectada === 'youtube' && !chapeu) setChapeu('Vídeo')
-      if (detectada === 'instagram' && !chapeu) setChapeu('Redes Sociais')
+    if (detectada === 'youtube') {
+      if (igDebounceRef.current) clearTimeout(igDebounceRef.current)
+      setOrigem('youtube')
+      setIgAutoStatus(null)
+      if (!chapeu) setChapeu('Vídeo')
+      return
+    }
+
+    const pareceInstagram =
+      detectada === 'instagram' ||
+      origem === 'instagram' ||
+      val.toLowerCase().includes('instagram.com')
+
+    if (pareceInstagram) {
+      if (detectada === 'instagram' && origem !== 'instagram') {
+        setOrigem('instagram')
+        if (!chapeu) setChapeu('Redes Sociais')
+      }
+      if (igDebounceRef.current) clearTimeout(igDebounceRef.current)
+      if (!val.trim()) {
+        setIgAutoStatus(null)
+        return
+      }
+      igDebounceRef.current = setTimeout(() => {
+        void processarLinkInstagramAutomatico(val)
+      }, 380)
+    } else if (!val.trim()) {
+      setIgAutoStatus(null)
     }
   }
 
@@ -399,9 +591,10 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
       enviando: false,
       erro: null,
     }
+    capaManualRef.current = true
     setFotos((prev) => [novaFoto, ...prev.filter((f) => f.url !== thumbUrl)].slice(0, 5))
     markAlterado()
-    showToast('Capa do YouTube definida como foto principal em 3:2!', 'sucesso')
+    showToast('Capa do YouTube definida como foto principal!', 'sucesso')
   }
 
   function handleInserirPlayerYoutube() {
@@ -418,53 +611,6 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
     })
     markAlterado()
     showToast('Player do YouTube inserido no texto da notícia!', 'sucesso')
-  }
-
-  function handleInserirEmbedInstagram() {
-    const instaId = extrairInstagramId(socialInput)
-    if (!instaId) {
-      showToast('Cole um link válido de post ou reel do Instagram.', 'erro')
-      return
-    }
-    const iframeHtml = gerarIframeInstagram(instaId)
-    setCorpo((prev) => {
-      const p = prev?.trim() || ''
-      if (!p || p === '<p></p>') return `<p>${iframeHtml}</p>`
-      return `${p}<p>${iframeHtml}</p>`
-    })
-    markAlterado()
-    showToast('Publicação do Instagram inserida no texto da notícia!', 'sucesso')
-  }
-
-  async function handleBuscarThumbInstagram() {
-    if (!socialInput.trim()) {
-      showToast('Informe o link do post do Instagram primeiro.', 'erro')
-      return
-    }
-    setBuscandoThumbInsta(true)
-    showToast('Buscando imagem da publicação no Instagram...')
-    const res = await buscarThumbnailInstagram(socialInput)
-    setBuscandoThumbInsta(false)
-    if ('error' in res) {
-      showToast(res.error, 'erro')
-    } else {
-      const novaFoto: FotoItem = {
-        url: res.url,
-        preview: res.url,
-        foco: 50,
-        legenda: 'Publicação do Instagram',
-        credito: 'Instagram',
-        enviando: false,
-        erro: null,
-      }
-      setFotos((prev) => {
-        if (prev.length === 0) return [novaFoto]
-        if (prev.length < 5) return [novaFoto, ...prev]
-        return [novaFoto, ...prev.slice(0, 4)]
-      })
-      markAlterado()
-      showToast('Foto do post capturada e definida como capa com sucesso!', 'sucesso')
-    }
   }
 
   function buildFormData(): NoticiaFormData {
@@ -632,6 +778,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                 )
                 showToast(result.error, 'erro')
               } else {
+                capaManualRef.current = true
                 setFotos((prev) =>
                   prev.map((f, fi) =>
                     fi === novoIndex
@@ -763,6 +910,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
         continue
       }
 
+      capaManualRef.current = true
       setFotos((prev) =>
         prev.map((f, fi) =>
           fi === idx
@@ -780,12 +928,20 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
   function removerFoto(idx: number) {
     if (!window.confirm('Remover esta foto da matéria? O arquivo no Storage não será apagado.'))
       return
-    setFotos((prev) => prev.filter((_, i) => i !== idx))
+    setFotos((prev) => {
+      const restante = prev.filter((_, i) => i !== idx)
+      if (restante.length === 0) {
+        capaManualRef.current = false
+        capaAutoIgUrlRef.current = null
+      }
+      return restante
+    })
     markAlterado()
   }
 
   function subirFoto(idx: number) {
     if (idx === 0) return
+    capaManualRef.current = true
     setFotos((prev) => {
       const arr = [...prev]
       ;[arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]
@@ -795,6 +951,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
   }
 
   function descerFoto(idx: number) {
+    capaManualRef.current = true
     setFotos((prev) => {
       if (idx >= prev.length - 1) return prev
       const arr = [...prev]
@@ -1004,14 +1161,34 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
         </div>
       )}
 
-      {/* ── Header ── */}
-      <div style={{ marginBottom: '28px' }}>
-        <p style={{ fontSize: '12px', letterSpacing: '1.7px', color: '#861e32', fontWeight: 700, margin: '0 0 4px' }}>
-          NOTÍCIAS
-        </p>
-        <h1 style={{ fontSize: '28px', lineHeight: '1.2', letterSpacing: '-0.6px', margin: '0', color: '#30252a' }}>
-          {noticia ? 'Editar notícia' : 'Nova notícia'}
-        </h1>
+      {/* ── Header compacto ── */}
+      <div
+        style={{
+          marginBottom: '14px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '8px',
+        }}
+      >
+        <div>
+          <p style={{ fontSize: '11px', letterSpacing: '1.5px', color: '#861e32', fontWeight: 700, margin: '0 0 2px' }}>
+            NOTÍCIAS
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <h1 style={{ fontSize: '23px', lineHeight: '1.2', letterSpacing: '-0.4px', margin: 0, color: '#30252a' }}>
+              {noticia ? 'Editar notícia' : 'Nova notícia'}
+            </h1>
+            <StatusBadge status={status} />
+          </div>
+        </div>
+        <a
+          href="/admin/noticias"
+          style={{ ...btnNeutro, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+        >
+          ← Voltar à lista
+        </a>
       </div>
 
       {/* ── Abas Táteis Superiores (Exclusivas Mobile) ── */}
@@ -1020,9 +1197,9 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
         style={{
           display: 'none',
           gap: '6px',
-          marginBottom: '18px',
+          marginBottom: '14px',
           background: '#ffffff',
-          padding: '6px',
+          padding: '5px',
           borderRadius: '8px',
           border: '1px solid #e4dce0',
           position: 'sticky',
@@ -1045,7 +1222,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
             }}
             style={{
               flex: 1,
-              padding: '11px 4px',
+              padding: '10px 4px',
               border: 'none',
               borderRadius: '6px',
               background: abaMobile === tab.id ? '#861e32' : 'transparent',
@@ -1062,365 +1239,408 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
         ))}
       </div>
 
-      {/* ── 2-column grid ── */}
-      <div className="noticia-editor-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '24px', alignItems: 'start' }}>
-
+      {/* ── 2-column grid (melhor aproveitamento horizontal) ── */}
+      <div
+        className="noticia-editor-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) 288px',
+          gap: '16px',
+          alignItems: 'start',
+        }}
+      >
         {/* ── Main column ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-          {/* ── ORIGEM DA NOTÍCIA & FAST TRACK (Cenário 4) ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: 0 }}>
+          {/* ── BLOCO COMPACTO: ORIGEM + CABEÇALHO EDITORIAL ── */}
           <div className="noticia-secao-redacao" style={cardStyle}>
-            <div style={{ marginBottom: '14px' }}>
-              <label style={{ ...labelStyle, fontSize: '14px', marginBottom: '4px' }}>
-                Origem da notícia
-              </label>
-              <p style={{ margin: 0, fontSize: '13px', color: '#71636a' }}>
-                Escolha se é uma matéria comum do site ou uma publicação expressa de vídeo/redes sociais.
-              </p>
+            {/* Linha 1: Origem + Link rápido de Instagram/YouTube */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                flexWrap: 'wrap',
+                paddingBottom: '12px',
+                marginBottom: '12px',
+                borderBottom: '1px solid #f0eaed',
+              }}
+            >
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => handleTrocarOrigem('site')}
+                  style={{
+                    padding: '6px 11px',
+                    borderRadius: '5px',
+                    border: origem === 'site' ? '2px solid #861e32' : '1px solid #cbd7de',
+                    background: origem === 'site' ? '#fdf5f6' : '#ffffff',
+                    color: origem === 'site' ? '#861e32' : '#30252a',
+                    fontWeight: origem === 'site' ? 700 : 500,
+                    fontSize: '12.5px',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Matéria do Site
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleTrocarOrigem('instagram')}
+                  style={{
+                    padding: '6px 11px',
+                    borderRadius: '5px',
+                    border: origem === 'instagram' ? '2px solid #ad1457' : '1px solid #cbd7de',
+                    background: origem === 'instagram' ? '#fce4ec' : '#ffffff',
+                    color: origem === 'instagram' ? '#ad1457' : '#30252a',
+                    fontWeight: origem === 'instagram' ? 700 : 500,
+                    fontSize: '12.5px',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  <IconePlataforma origem="instagram" tamanho={15} decorativo />
+                  <span>Instagram</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleTrocarOrigem('youtube')}
+                  style={{
+                    padding: '6px 11px',
+                    borderRadius: '5px',
+                    border: origem === 'youtube' ? '2px solid #c62828' : '1px solid #cbd7de',
+                    background: origem === 'youtube' ? '#ffebee' : '#ffffff',
+                    color: origem === 'youtube' ? '#c62828' : '#30252a',
+                    fontWeight: origem === 'youtube' ? 700 : 500,
+                    fontSize: '12.5px',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  <IconePlataforma origem="youtube" tamanho={16} decorativo />
+                  <span>YouTube</span>
+                </button>
+              </div>
+
+              {/* Campo direto para colar link do Instagram ou YouTube com detecção automática */}
+              <div style={{ flex: '1 1 250px', minWidth: '210px' }}>
+                <label htmlFor="social-url-input" className="sr-only">
+                  Link do Instagram ou YouTube
+                </label>
+                <input
+                  id="social-url-input"
+                  type="url"
+                  placeholder={
+                    origem === 'youtube'
+                      ? 'Cole o link do vídeo do YouTube (watch?v=... ou youtu.be/...)'
+                      : origem === 'instagram'
+                      ? 'Cole o link do post ou Reel do Instagram (incorporação automática)…'
+                      : 'Opcional: cole um link do Instagram ou YouTube para incorporar automaticamente…'
+                  }
+                  value={socialInput}
+                  onChange={(e) => handleMudarSocialUrl(e.target.value)}
+                  onBlur={() => {
+                    if (
+                      socialInput.trim() &&
+                      (origem === 'instagram' || socialInput.toLowerCase().includes('instagram.com'))
+                    ) {
+                      if (igDebounceRef.current) clearTimeout(igDebounceRef.current)
+                      void processarLinkInstagramAutomatico(socialInput)
+                    }
+                  }}
+                  style={{
+                    ...inputStyle,
+                    padding: '7px 10px',
+                    fontSize: '13px',
+                    borderColor:
+                      origem === 'instagram'
+                        ? '#f1a7c4'
+                        : origem === 'youtube'
+                        ? '#ef9a9a'
+                        : '#cbd7de',
+                  }}
+                />
+              </div>
             </div>
 
-            {/* Seletor de Origem (Pills) */}
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: origem !== 'site' ? '16px' : '0' }}>
-              <button
-                type="button"
-                onClick={() => handleTrocarOrigem('site')}
-                style={{
-                  padding: '9px 16px',
-                  borderRadius: '5px',
-                  border: origem === 'site' ? '2px solid #861e32' : '1px solid #cbd7de',
-                  background: origem === 'site' ? '#fdf5f6' : '#ffffff',
-                  color: origem === 'site' ? '#861e32' : '#30252a',
-                  fontWeight: origem === 'site' ? 700 : 500,
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontFamily: 'inherit',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span>🌐</span> Matéria do Site
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleTrocarOrigem('youtube')}
-                style={{
-                  padding: '9px 16px',
-                  borderRadius: '5px',
-                  border: origem === 'youtube' ? '2px solid #c62828' : '1px solid #cbd7de',
-                  background: origem === 'youtube' ? '#ffebee' : '#ffffff',
-                  color: origem === 'youtube' ? '#c62828' : '#30252a',
-                  fontWeight: origem === 'youtube' ? 700 : 500,
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontFamily: 'inherit',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span>🎥</span> Vídeo do YouTube
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleTrocarOrigem('instagram')}
-                style={{
-                  padding: '9px 16px',
-                  borderRadius: '5px',
-                  border: origem === 'instagram' ? '2px solid #ad1457' : '1px solid #cbd7de',
-                  background: origem === 'instagram' ? '#fce4ec' : '#ffffff',
-                  color: origem === 'instagram' ? '#ad1457' : '#30252a',
-                  fontWeight: origem === 'instagram' ? 700 : 500,
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontFamily: 'inherit',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span>📷</span> Post do Instagram
-              </button>
-            </div>
-
-            {/* Painel Fast Track YouTube */}
+            {/* Painel compacto: YouTube */}
             {origem === 'youtube' && (
               <div
                 style={{
                   background: '#fff8f9',
                   border: '1px solid #ffcdd2',
                   borderRadius: '6px',
-                  padding: '16px 18px',
+                  padding: '10px 12px',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '8px',
+                  flexWrap: 'wrap',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                  <span style={{ fontSize: '18px' }}>🎥</span>
-                  <strong style={{ fontSize: '13.5px', color: '#c62828' }}>Fast Track — Vídeo do YouTube</strong>
-                </div>
-                <label style={{ ...labelStyle, fontSize: '12.5px', marginBottom: '4px' }}>
-                  Link do vídeo (URL completa ou compartilhamento)
-                </label>
-                <input
-                  type="url"
-                  placeholder="Ex.: https://www.youtube.com/watch?v=... ou https://youtu.be/..."
-                  value={socialInput}
-                  onChange={(e) => handleMudarSocialUrl(e.target.value)}
-                  style={{ ...inputStyle, marginBottom: '10px', background: '#ffffff' }}
-                />
-
-                {/* Ações automáticas quando URL válida */}
                 {extrairYoutubeId(socialInput) ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', paddingTop: '4px' }}>
-                    <button
-                      type="button"
-                      onClick={handleUsarCapaYoutube}
-                      style={{
-                        background: '#861e32',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '8px 13px',
-                        fontSize: '12.5px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        fontFamily: 'inherit',
-                      }}
-                    >
-                      <span>📸</span> Definir capa automática do vídeo (3:2)
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={handleInserirPlayerYoutube}
-                      style={{
-                        background: '#ffffff',
-                        color: '#c62828',
-                        border: '1px solid #ffcdd2',
-                        borderRadius: '4px',
-                        padding: '8px 13px',
-                        fontSize: '12.5px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        fontFamily: 'inherit',
-                      }}
-                    >
-                      <span>▶</span> Inserir player no texto da matéria
-                    </button>
+                  <>
                     <span style={{ fontSize: '12px', color: '#2e7d32', fontWeight: 600 }}>
-                      ✓ Link válido do YouTube
+                      ✓ Link do YouTube reconhecido
                     </span>
-                  </div>
-                ) : (
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
-                    Cole o link do vídeo para habilitar a capa automática e o player incorporado.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Painel Fast Track Instagram */}
-            {origem === 'instagram' && (
-              <div
-                style={{
-                  background: '#fdf7f9',
-                  border: '1px solid #f8bbd0',
-                  borderRadius: '6px',
-                  padding: '16px 18px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                  <span style={{ fontSize: '18px' }}>📷</span>
-                  <strong style={{ fontSize: '13.5px', color: '#ad1457' }}>Fast Track — Publicação do Instagram</strong>
-                </div>
-                <label style={{ ...labelStyle, fontSize: '12.5px', marginBottom: '4px' }}>
-                  Link do post ou Reel
-                </label>
-                <input
-                  type="url"
-                  placeholder="Ex.: https://www.instagram.com/p/... ou https://www.instagram.com/reel/..."
-                  value={socialInput}
-                  onChange={(e) => handleMudarSocialUrl(e.target.value)}
-                  style={{ ...inputStyle, marginBottom: '10px', background: '#ffffff' }}
-                />
-
-                {/* Ações automáticas quando URL válida */}
-                {extrairInstagramId(socialInput) ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '4px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       <button
                         type="button"
-                        onClick={handleInserirEmbedInstagram}
-                        style={{
-                          background: '#ad1457',
-                          color: '#ffffff',
-                          border: 'none',
-                          borderRadius: '4px',
-                          padding: '8px 13px',
-                          fontSize: '12.5px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          fontFamily: 'inherit',
-                        }}
-                      >
-                        <span>📷</span> Inserir post do Instagram no texto da matéria
-                      </button>
-                      <button
-                        type="button"
-                        disabled={buscandoThumbInsta}
-                        onClick={handleBuscarThumbInstagram}
+                        onClick={handleUsarCapaYoutube}
                         style={{
                           background: '#861e32',
                           color: '#ffffff',
                           border: 'none',
                           borderRadius: '4px',
-                          padding: '8px 13px',
-                          fontSize: '12.5px',
+                          padding: '6px 10px',
+                          fontSize: '12px',
                           fontWeight: 600,
-                          cursor: buscandoThumbInsta ? 'wait' : 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
+                          cursor: 'pointer',
                           fontFamily: 'inherit',
-                          opacity: buscandoThumbInsta ? 0.7 : 1,
                         }}
                       >
-                        <span>🖼</span> {buscandoThumbInsta ? 'Buscando foto...' : 'Buscar foto da capa do post (1 clique)'}
+                        Usar capa do vídeo
                       </button>
-                      <span style={{ fontSize: '12px', color: '#2e7d32', fontWeight: 600 }}>
-                        ✓ Link válido do Instagram
-                      </span>
+                      <button
+                        type="button"
+                        onClick={handleInserirPlayerYoutube}
+                        style={{
+                          background: '#ffffff',
+                          color: '#c62828',
+                          border: '1px solid #ffcdd2',
+                          borderRadius: '4px',
+                          padding: '6px 10px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        ▶ Inserir player no texto
+                      </button>
                     </div>
-                    <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
-                      💡 A foto capturada aparecerá apenas na <strong>Home e nas listas de notícias</strong> (não duplica na página da matéria). Se não capturar foto, será exibida a imagem padrão do site. Você também pode colar uma imagem com <strong>Cmd+V</strong> / <strong>Ctrl+V</strong>.
-                    </p>
-                  </div>
+                  </>
                 ) : (
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
-                    Cole o link do post ou reel para habilitar a incorporação oficial e captura de imagem.
+                  <p style={{ margin: 0, fontSize: '12px', color: '#71636a' }}>
+                    Cole acima o link do vídeo do YouTube para habilitar capa automática e player incorporado.
                   </p>
                 )}
               </div>
             )}
-          </div>
 
-          {/* Chapéu */}
-          <div className="noticia-secao-redacao" style={cardStyle}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
-              <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="chapeu">
-                Chapéu / assunto{' '}
-                <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
-              </label>
-              <span style={{ fontSize: '12px', color: chapeu.length > 35 ? '#861e32' : '#71636a' }}>
-                {chapeu.length}/40
-              </span>
-            </div>
-            <input
-              id="chapeu"
-              type="text"
-              value={chapeu}
-              maxLength={40}
-              onChange={(e) => { if (e.target.value.length <= 40) { setChapeu(e.target.value); markAlterado() } }}
-              placeholder="Ex.: Negociação salarial, Saúde do trabalhador…"
-              style={inputStyle}
-            />
-            <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
-              Máximo 40 caracteres. Etiqueta curta sobre a categoria da matéria.
-            </p>
-          </div>
+            {/* Painel compacto: Instagram 100% automático */}
+            {origem === 'instagram' && (
+              <div
+                style={{
+                  background:
+                    igAutoStatus?.tipo === 'erro'
+                      ? '#fff5f5'
+                      : igAutoStatus?.tipo === 'aviso'
+                      ? '#fffbeb'
+                      : '#fdf7f9',
+                  border:
+                    igAutoStatus?.tipo === 'erro'
+                      ? '1px solid #f5b5b5'
+                      : igAutoStatus?.tipo === 'aviso'
+                      ? '1px solid #f2dfa9'
+                      : '1px solid #f8bbd0',
+                  borderRadius: '6px',
+                  padding: '10px 12px',
+                  marginBottom: '12px',
+                }}
+              >
+                {!igAutoStatus ? (
+                  <p style={{ margin: 0, fontSize: '12px', color: '#71636a' }}>
+                    Cole o link de um post (<code>/p/...</code>) ou Reel (<code>/reel/...</code>) do Instagram no campo acima. A incorporação no texto e a captura da imagem de capa ocorrem automaticamente.
+                  </p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+                      <span
+                        style={{
+                          fontSize: '12.5px',
+                          fontWeight: 600,
+                          color:
+                            igAutoStatus.tipo === 'erro'
+                              ? '#a11f2b'
+                              : igAutoStatus.tipo === 'aviso'
+                              ? '#825914'
+                              : '#23634e',
+                        }}
+                      >
+                        {igAutoStatus.tipo === 'processando' && '⏳ '}
+                        {igAutoStatus.tipo === 'ok' && '✓ '}
+                        {igAutoStatus.tipo === 'aviso' && '⚠ '}
+                        {igAutoStatus.tipo === 'erro' && '✕ '}
+                        {igAutoStatus.mensagem}
+                      </span>
 
-          {/* Título */}
-          <div className="noticia-secao-redacao" style={cardStyle}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
-              <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="titulo">
-                Título <span style={{ color: '#861e32' }}>*</span>
-              </label>
-              <span style={{ fontSize: '12px', color: titulo.length > 90 ? '#861e32' : '#71636a' }}>
-                {titulo.length}/100
-              </span>
-            </div>
-            <input
-              id="titulo"
-              type="text"
-              value={titulo}
-              maxLength={100}
-              onChange={(e) => { if (e.target.value.length <= 100) { setTitulo(e.target.value); markAlterado() } }}
-              placeholder="Digite o título da notícia…"
-              style={inputStyle}
-            />
-            <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
-              Máximo 100 caracteres. Obrigatório para publicar.
-            </p>
-          </div>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        {(igAutoStatus.tipo === 'aviso' || igAutoStatus.tipo === 'erro') && (
+                          <button
+                            type="button"
+                            onClick={() => fotoInputRef.current?.click()}
+                            style={{
+                              ...btnNeutro,
+                              padding: '4px 9px',
+                              fontSize: '11.5px',
+                              fontWeight: 600,
+                            }}
+                          >
+                            Enviar capa manual
+                          </button>
+                        )}
+                        {igAutoStatus.tipo === 'ok' &&
+                          Boolean(igAutoStatus.detalheCapa) &&
+                          parseInstagramUrl(socialInput) && (
+                            <button
+                              type="button"
+                              disabled={buscandoThumbInsta}
+                              onClick={() =>
+                                void processarLinkInstagramAutomatico(socialInput, { forcarCapa: true })
+                              }
+                              style={{
+                                ...btnNeutro,
+                                padding: '4px 9px',
+                                fontSize: '11.5px',
+                                opacity: buscandoThumbInsta ? 0.6 : 1,
+                              }}
+                            >
+                              {buscandoThumbInsta ? 'Buscando…' : 'Usar capa do Instagram'}
+                            </button>
+                          )}
+                      </div>
+                    </div>
 
-          {/* Subtítulo */}
-          <div className="noticia-secao-redacao" style={cardStyle}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
-              <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="subtitulo">
-                Subtítulo{' '}
-                <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
-              </label>
-              <span style={{ fontSize: '12px', color: subtitulo.length > 135 ? '#861e32' : '#71636a' }}>
-                {subtitulo.length}/150
-              </span>
-            </div>
-            <textarea
-              id="subtitulo"
-              value={subtitulo}
-              onChange={(e) => { if (e.target.value.length <= 150) { setSubtitulo(e.target.value); markAlterado() } }}
-              placeholder="Complemento do título exibido na notícia…"
-              rows={2}
-              maxLength={150}
-              style={{ ...inputStyle, resize: 'vertical' }}
-            />
-            <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
-              Máximo 150 caracteres. Exibido logo abaixo do título na notícia.
-            </p>
-          </div>
+                    {igAutoStatus.detalheCapa && (
+                      <p style={{ margin: 0, fontSize: '11.5px', color: '#5c4f55', lineHeight: 1.4 }}>
+                        {igAutoStatus.detalheCapa}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
-          {/* Resumo */}
-          <div className="noticia-secao-redacao" style={cardStyle}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
-              <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="resumo">
-                Resumo <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
-              </label>
-              <span style={{ fontSize: '12px', color: resumo.length > 285 ? '#861e32' : '#71636a' }}>
-                {resumo.length}/300
-              </span>
+            {/* Linha 2: Chapéu + Título lado a lado */}
+            <div
+              className="noticia-fields-chapeu-titulo"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'minmax(175px, 1fr) minmax(0, 2.3fr)',
+                gap: '12px',
+                marginBottom: '10px',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
+                  <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="chapeu">
+                    Chapéu / assunto <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
+                  </label>
+                  <span style={{ fontSize: '11px', color: chapeu.length > 35 ? '#861e32' : '#71636a' }}>
+                    {chapeu.length}/40
+                  </span>
+                </div>
+                <input
+                  id="chapeu"
+                  type="text"
+                  value={chapeu}
+                  maxLength={40}
+                  onChange={(e) => { if (e.target.value.length <= 40) { setChapeu(e.target.value); markAlterado() } }}
+                  placeholder="Ex.: Campanha salarial…"
+                  style={inputStyle}
+                />
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
+                  <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="titulo">
+                    Título <span style={{ color: '#861e32' }}>*</span>
+                  </label>
+                  <span style={{ fontSize: '11px', color: titulo.length > 90 ? '#861e32' : '#71636a' }}>
+                    {titulo.length}/100
+                  </span>
+                </div>
+                <input
+                  id="titulo"
+                  type="text"
+                  value={titulo}
+                  maxLength={100}
+                  onChange={(e) => { if (e.target.value.length <= 100) { setTitulo(e.target.value); markAlterado() } }}
+                  placeholder="Digite o título da notícia…"
+                  style={{ ...inputStyle, fontWeight: 600 }}
+                />
+              </div>
             </div>
-            <textarea
-              id="resumo"
-              value={resumo}
-              onChange={(e) => { if (e.target.value.length <= 300) { setResumo(e.target.value); markAlterado() } }}
-              placeholder="Breve descrição exibida nos cartões e nas redes sociais…"
-              rows={3}
-              maxLength={300}
-              style={{ ...inputStyle, resize: 'vertical' }}
-            />
-            <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
-              Máximo 300 caracteres. Usado nos cartões de listagem e no compartilhamento.
-            </p>
+
+            {/* Linha 3: Subtítulo + Resumo lado a lado */}
+            <div
+              className="noticia-fields-sub-resumo"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '12px',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
+                  <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="subtitulo">
+                    Subtítulo <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span>
+                  </label>
+                  <span style={{ fontSize: '11px', color: subtitulo.length > 135 ? '#861e32' : '#71636a' }}>
+                    {subtitulo.length}/150
+                  </span>
+                </div>
+                <textarea
+                  id="subtitulo"
+                  value={subtitulo}
+                  onChange={(e) => { if (e.target.value.length <= 150) { setSubtitulo(e.target.value); markAlterado() } }}
+                  placeholder="Complemento exibido abaixo do título…"
+                  rows={2}
+                  maxLength={150}
+                  style={{ ...inputStyle, resize: 'vertical' }}
+                />
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
+                  <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="resumo">
+                    Resumo <span style={{ color: '#71636a', fontWeight: 400 }}>(cartões e compartilhamento)</span>
+                  </label>
+                  <span style={{ fontSize: '11px', color: resumo.length > 285 ? '#861e32' : '#71636a' }}>
+                    {resumo.length}/300
+                  </span>
+                </div>
+                <textarea
+                  id="resumo"
+                  value={resumo}
+                  onChange={(e) => { if (e.target.value.length <= 300) { setResumo(e.target.value); markAlterado() } }}
+                  placeholder="Breve descrição exibida nos cartões e redes sociais…"
+                  rows={2}
+                  maxLength={300}
+                  style={{ ...inputStyle, resize: 'vertical' }}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Corpo */}
           <div className="noticia-secao-redacao" style={cardStyle}>
-            <label style={labelStyle}>
+            <label style={{ ...labelStyle, marginBottom: '6px' }}>
               Texto da notícia{' '}
               {origem === 'youtube' || origem === 'instagram' ? (
-                <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional — publicação embutida)</span>
+                <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional — publicação incorporada)</span>
               ) : (
                 <span style={{ color: '#861e32' }}>*</span>
               )}
@@ -1470,219 +1690,271 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
             </button>
           </div>
 
-          {/* ── Fotos ── */}
+          {/* ── Fotos (pré-visualização compacta com opção de ampliar) ── */}
           <div className="noticia-secao-fotos" style={cardStyle}>
-            <label style={{ ...labelStyle, marginBottom: '16px' }}>
-              Fotos <span style={{ color: '#71636a', fontWeight: 400 }}>(até 5)</span>
-            </label>
-
-            {/* Photo list */}
-            {fotosValidas.map((foto, idx) => (
-              <div
-                key={idx}
-                style={{
-                  border: '1px solid #e4dce0',
-                  borderRadius: '8px',
-                  padding: '16px',
-                  marginBottom: '16px',
-                  background: '#f7f5f6',
-                }}
-              >
-                {/* Principal badge */}
-                {idx === 0 && (
-                  <div style={{ marginBottom: '8px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#861e32', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                      Foto principal
-                    </span>
-                  </div>
-                )}
-
-                {/* Enviando spinner */}
-                {foto.enviando ? (
-                  <div
-                    style={{
-                      width: '100%',
-                      aspectRatio: '3 / 2',
-                      borderRadius: '6px',
-                      background: '#e4dce0',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#71636a',
-                      fontSize: '13px',
-                      marginBottom: '12px',
-                    }}
-                  >
-                    Enviando…
-                  </div>
-                ) : foto.erro ? (
-                  <div
-                    style={{
-                      width: '100%',
-                      aspectRatio: '3 / 2',
-                      borderRadius: '6px',
-                      background: '#fce4ea',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#861e32',
-                      fontSize: '13px',
-                      marginBottom: '12px',
-                    }}
-                  >
-                    {foto.erro}
-                  </div>
-                ) : (
-                  <>
-                    {/* Image preview 3:2 with focus */}
-                    <div
-                      style={{
-                        width: '100%',
-                        aspectRatio: '3 / 2',
-                        borderRadius: '6px',
-                        overflow: 'hidden',
-                        marginBottom: '12px',
-                        border: '1px solid #e4dce0',
-                      }}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={foto.preview}
-                        alt={`Foto ${idx + 1}`}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          objectPosition: `50% ${foto.foco}%`,
-                          display: 'block',
-                        }}
-                      />
-                    </div>
-
-                    {/* Focus slider */}
-                    <div style={{ marginBottom: '12px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#30252a' }}>
-                          Posição da foto
-                        </label>
-                        <button
-                          onClick={() => atualizarFoto(idx, { foco: 50 })}
-                          style={{ ...btnNeutro, padding: '3px 10px', fontSize: '11px' }}
-                        >
-                          Centralizar
-                        </button>
-                      </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={foto.foco}
-                        onChange={(e) => atualizarFoto(idx, { foco: Number(e.target.value) })}
-                        style={{ width: '100%', accentColor: '#861e32' }}
-                      />
-                      <p style={{ fontSize: '11px', color: '#71636a', margin: '4px 0 0' }}>
-                        Arraste o controle para definir qual parte da foto aparece nos recortes.
-                      </p>
-                    </div>
-
-                    {/* Legenda + crédito */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
-                      <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
-                          <label style={{ fontSize: '12px', fontWeight: 600, color: '#30252a', marginBottom: 0 }}>
-                            Legenda
-                          </label>
-                          <span style={{ fontSize: '11px', color: foto.legenda.length > 135 ? '#861e32' : '#71636a' }}>
-                            {foto.legenda.length}/150
-                          </span>
-                        </div>
-                        <input
-                          type="text"
-                          value={foto.legenda}
-                          maxLength={150}
-                          onChange={(e) => { if (e.target.value.length <= 150) atualizarFoto(idx, { legenda: e.target.value }) }}
-                          placeholder="Descreva a foto…"
-                          style={{ ...inputStyle, fontSize: '12px', padding: '7px 10px' }}
-                        />
-                      </div>
-                      <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
-                          <label style={{ fontSize: '12px', fontWeight: 600, color: '#30252a', marginBottom: 0 }}>
-                            Crédito
-                          </label>
-                          <span style={{ fontSize: '11px', color: foto.credito.length > 50 ? '#861e32' : '#71636a' }}>
-                            {foto.credito.length}/60
-                          </span>
-                        </div>
-                        <input
-                          type="text"
-                          value={foto.credito}
-                          maxLength={60}
-                          onChange={(e) => { if (e.target.value.length <= 60) atualizarFoto(idx, { credito: e.target.value }) }}
-                          placeholder="Fotógrafo / fonte…"
-                          style={{ ...inputStyle, fontSize: '12px', padding: '7px 10px' }}
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Actions row */}
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    onClick={() => subirFoto(idx)}
-                    disabled={idx === 0}
-                    style={{ ...btnNeutro, opacity: idx === 0 ? 0.4 : 1, cursor: idx === 0 ? 'default' : 'pointer' }}
-                  >
-                    ↑ Subir
-                  </button>
-                  <button
-                    onClick={() => descerFoto(idx)}
-                    disabled={idx === fotosValidas.length - 1}
-                    style={{ ...btnNeutro, opacity: idx === fotosValidas.length - 1 ? 0.4 : 1, cursor: idx === fotosValidas.length - 1 ? 'default' : 'pointer' }}
-                  >
-                    ↓ Descer
-                  </button>
-                  <button
-                    onClick={() => removerFoto(idx)}
-                    style={{ ...btnNeutro, color: '#861e32', borderColor: '#e8c8ce', marginLeft: 'auto' }}
-                  >
-                    Remover
-                  </button>
-                </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+              <div>
+                <label style={{ ...labelStyle, marginBottom: 0 }}>
+                  Fotos <span style={{ color: '#71636a', fontWeight: 400 }}>(até 5 · Ctrl+V também cola imagem)</span>
+                </label>
               </div>
-            ))}
-
-            {/* Add photos button */}
-            {fotosValidas.length < 5 && (
-              <>
+              {fotosValidas.length < 5 && (
                 <label
                   htmlFor="fotos-upload"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '8px',
+                    gap: '6px',
                     ...btnNeutro,
+                    padding: '6px 11px',
+                    fontWeight: 600,
                     cursor: 'pointer',
                   }}
                 >
-                  {fotosValidas.length === 0 ? '🖼️ Escolher fotos' : '+ Adicionar fotos'}
+                  {fotosValidas.length === 0 ? '+ Escolher fotos' : '+ Adicionar fotos'}
                 </label>
-                <input
-                  id="fotos-upload"
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleFotosChange}
-                  style={{ display: 'none' }}
-                />
-                <p style={{ fontSize: '12px', color: '#71636a', margin: '8px 0 0' }}>
-                  JPG, PNG, WebP ou GIF · Até {5 - fotosValidas.length} foto{5 - fotosValidas.length !== 1 ? 's' : ''} restante{5 - fotosValidas.length !== 1 ? 's' : ''} · Imagens são comprimidas automaticamente antes do envio
-                </p>
-              </>
+              )}
+              <input
+                ref={fotoInputRef}
+                id="fotos-upload"
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleFotosChange}
+                style={{ display: 'none' }}
+              />
+            </div>
+
+            {/* Photo list — layout horizontal compacto preservando proporção original */}
+            {fotosValidas.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {fotosValidas.map((foto, idx) => (
+                  <div
+                    key={idx}
+                    className="noticia-foto-row"
+                    style={{
+                      border: '1px solid #e4dce0',
+                      borderRadius: '6px',
+                      padding: '10px 12px',
+                      background: '#faf8f9',
+                      display: 'flex',
+                      gap: '12px',
+                      alignItems: 'flex-start',
+                    }}
+                  >
+                    {/* Miniatura compacta preservando proporção real (sem recorte destrutivo) */}
+                    {foto.enviando ? (
+                      <div
+                        style={{
+                          width: '124px',
+                          height: '88px',
+                          borderRadius: '5px',
+                          background: '#e4dce0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#71636a',
+                          fontSize: '12px',
+                          flexShrink: 0,
+                        }}
+                      >
+                        Enviando…
+                      </div>
+                    ) : foto.erro ? (
+                      <div
+                        style={{
+                          width: '124px',
+                          height: '88px',
+                          borderRadius: '5px',
+                          background: '#fce4ea',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#861e32',
+                          fontSize: '11.5px',
+                          padding: '6px',
+                          textAlign: 'center',
+                          flexShrink: 0,
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        {foto.erro}
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setImagemAmpliada({
+                            url: foto.url || foto.preview,
+                            titulo: idx === 0 ? 'Foto principal da notícia' : `Foto ${idx + 1}`,
+                            subtitulo: [foto.legenda, foto.credito].filter(Boolean).join(' · ') || undefined,
+                          })
+                        }
+                        aria-label={`Ampliar ${idx === 0 ? 'foto principal' : `foto ${idx + 1}`}`}
+                        title="Clique para visualizar em tamanho maior"
+                        style={{
+                          width: '124px',
+                          height: '88px',
+                          padding: '3px',
+                          borderRadius: '5px',
+                          background: '#efebed',
+                          border: '1px solid #d9ced3',
+                          cursor: 'zoom-in',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          position: 'relative',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={foto.preview}
+                          alt={`Miniatura da foto ${idx + 1}`}
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            width: 'auto',
+                            height: 'auto',
+                            objectFit: 'contain',
+                            display: 'block',
+                          }}
+                        />
+                        {idx === 0 && (
+                          <span
+                            style={{
+                              position: 'absolute',
+                              top: '3px',
+                              left: '3px',
+                              background: '#861e32',
+                              color: '#ffffff',
+                              fontSize: '9.5px',
+                              fontWeight: 700,
+                              padding: '1px 5px',
+                              borderRadius: '3px',
+                              letterSpacing: '0.4px',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            Capa
+                          </span>
+                        )}
+                      </button>
+                    )}
+
+                    {/* Campos e ações compactos ao lado da miniatura */}
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: idx === 0 ? '#861e32' : '#30252a' }}>
+                          {idx === 0 ? 'Foto principal' : `Foto ${idx + 1}`}
+                        </span>
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                          {!foto.enviando && !foto.erro && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setImagemAmpliada({
+                                  url: foto.url || foto.preview,
+                                  titulo: idx === 0 ? 'Foto principal da notícia' : `Foto ${idx + 1}`,
+                                  subtitulo: [foto.legenda, foto.credito].filter(Boolean).join(' · ') || undefined,
+                                })
+                              }
+                              style={{ ...btnNeutro, padding: '3px 8px', fontSize: '11.5px', color: '#183b4b', fontWeight: 600 }}
+                            >
+                              Ampliar
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => subirFoto(idx)}
+                            disabled={idx === 0}
+                            title="Subir posição"
+                            style={{ ...btnNeutro, padding: '3px 7px', fontSize: '11.5px', opacity: idx === 0 ? 0.4 : 1, cursor: idx === 0 ? 'default' : 'pointer' }}
+                          >
+                            ↑
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => descerFoto(idx)}
+                            disabled={idx === fotosValidas.length - 1}
+                            title="Descer posição"
+                            style={{ ...btnNeutro, padding: '3px 7px', fontSize: '11.5px', opacity: idx === fotosValidas.length - 1 ? 0.4 : 1, cursor: idx === fotosValidas.length - 1 ? 'default' : 'pointer' }}
+                          >
+                            ↓
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removerFoto(idx)}
+                            style={{ ...btnNeutro, padding: '3px 8px', fontSize: '11.5px', color: '#861e32', borderColor: '#e8c8ce' }}
+                          >
+                            Remover
+                          </button>
+                        </div>
+                      </div>
+
+                      {!foto.enviando && !foto.erro && (
+                        <>
+                          {/* Legenda + crédito */}
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                            <input
+                              type="text"
+                              value={foto.legenda}
+                              maxLength={150}
+                              onChange={(e) => { if (e.target.value.length <= 150) atualizarFoto(idx, { legenda: e.target.value }) }}
+                              placeholder="Legenda da foto (opcional)…"
+                              aria-label={`Legenda da foto ${idx + 1}`}
+                              style={{ ...inputStyle, fontSize: '12px', padding: '6px 8px' }}
+                            />
+                            <input
+                              type="text"
+                              value={foto.credito}
+                              maxLength={60}
+                              onChange={(e) => { if (e.target.value.length <= 60) atualizarFoto(idx, { credito: e.target.value }) }}
+                              placeholder="Crédito / fotógrafo (opcional)…"
+                              aria-label={`Crédito da foto ${idx + 1}`}
+                              style={{ ...inputStyle, fontSize: '12px', padding: '6px 8px' }}
+                            />
+                          </div>
+
+                          {/* Foco vertical compacto */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            <label
+                              htmlFor={`foco-foto-${idx}`}
+                              style={{ fontSize: '11.5px', color: '#71636a', whiteSpace: 'nowrap' }}
+                            >
+                              Enquadramento nos cartões ({foto.foco}%):
+                            </label>
+                            <input
+                              id={`foco-foto-${idx}`}
+                              type="range"
+                              min="0"
+                              max="100"
+                              value={foto.foco}
+                              onChange={(e) => atualizarFoto(idx, { foco: Number(e.target.value) })}
+                              style={{ flex: '1 1 110px', accentColor: '#861e32' }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => atualizarFoto(idx, { foco: 50 })}
+                              style={{ ...btnNeutro, padding: '2px 7px', fontSize: '11px' }}
+                            >
+                              50%
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p style={{ fontSize: '12px', color: '#71636a', margin: 0 }}>
+                JPG, PNG, WebP ou GIF · Sem foto selecionada, o site exibirá a imagem institucional padrão.
+              </p>
             )}
             {fotosValidas.length >= 5 && (
-              <p style={{ fontSize: '12px', color: '#71636a', margin: '0' }}>
+              <p style={{ fontSize: '11.5px', color: '#71636a', margin: '8px 0 0' }}>
                 Limite de 5 fotos atingido.
               </p>
             )}
@@ -1690,10 +1962,38 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
 
           {/* ── Documentos ── */}
           <div className="noticia-secao-fotos" style={cardStyle}>
-            <label style={{ ...labelStyle, marginBottom: '16px' }}>Documentos</label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: documentos.length > 0 ? '10px' : '0' }}>
+              <div>
+                <label style={{ ...labelStyle, marginBottom: 0 }}>Documentos anexos</label>
+                <span style={{ fontSize: '11.5px', color: '#71636a' }}>PDF, DOCX ou ZIP (máx. 20 MB)</span>
+              </div>
+              <label
+                htmlFor="doc-upload"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  ...btnNeutro,
+                  padding: '6px 11px',
+                  fontWeight: 600,
+                  cursor: enviandoDoc ? 'not-allowed' : 'pointer',
+                  opacity: enviandoDoc ? 0.6 : 1,
+                }}
+              >
+                {enviandoDoc ? 'Enviando…' : '+ Anexar documento'}
+              </label>
+              <input
+                id="doc-upload"
+                type="file"
+                accept=".pdf,.docx,.zip"
+                onChange={handleDocumentoChange}
+                disabled={enviandoDoc}
+                style={{ display: 'none' }}
+              />
+            </div>
 
             {documentos.length > 0 && (
-              <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {documentos.map((doc, idx) => (
                   <div
                     key={idx}
@@ -1701,32 +2001,30 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '10px',
-                      background: '#f7f5f6',
+                      background: '#faf8f9',
                       border: '1px solid #e4dce0',
-                      borderRadius: '6px',
-                      padding: '10px 14px',
+                      borderRadius: '5px',
+                      padding: '7px 10px',
                     }}
                   >
-                    <span style={{ fontSize: '18px' }}>{doc.tipo === 'pdf' ? '📄' : doc.tipo === 'docx' ? '📝' : '📦'}</span>
+                    <span style={{ fontSize: '16px' }}>{doc.tipo === 'pdf' ? '📄' : doc.tipo === 'docx' ? '📝' : '📦'}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#30252a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#30252a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {doc.nome}
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#71636a' }}>
-                        {doc.tipo === 'pdf' ? 'Abrirá no navegador' : 'Download'}
                       </div>
                     </div>
                     <a
                       href={doc.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ fontSize: '12px', color: '#861e32', textDecoration: 'none' }}
+                      style={{ fontSize: '12px', color: '#861e32', textDecoration: 'none', fontWeight: 600 }}
                     >
-                      Ver
+                      Ver ↗
                     </a>
                     <button
+                      type="button"
                       onClick={() => removerDocumento(idx)}
-                      style={{ ...btnNeutro, padding: '4px 10px', fontSize: '12px', color: '#861e32', borderColor: '#e8c8ce' }}
+                      style={{ ...btnNeutro, padding: '3px 8px', fontSize: '11.5px', color: '#861e32', borderColor: '#e8c8ce' }}
                     >
                       Remover
                     </button>
@@ -1734,31 +2032,6 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                 ))}
               </div>
             )}
-
-            <label
-              htmlFor="doc-upload"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                ...btnNeutro,
-                cursor: enviandoDoc ? 'not-allowed' : 'pointer',
-                opacity: enviandoDoc ? 0.6 : 1,
-              }}
-            >
-              {enviandoDoc ? 'Enviando…' : '+ Adicionar documento'}
-            </label>
-            <input
-              id="doc-upload"
-              type="file"
-              accept=".pdf,.docx,.zip"
-              onChange={handleDocumentoChange}
-              disabled={enviandoDoc}
-              style={{ display: 'none' }}
-            />
-            <p style={{ fontSize: '12px', color: '#71636a', margin: '8px 0 0' }}>
-              PDF, DOCX ou ZIP · Tamanho máximo: 20 MB
-            </p>
           </div>
 
           {/* Botão de avanço mobile de Fotos para Publicação */}
@@ -1887,13 +2160,13 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
             </button>
 
             {showMaisOpcoes && (
-              <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }} className="noticia-fields-sub-resumo">
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
                     <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="url-referencia">
                       URL de referência
                     </label>
-                    <span style={{ fontSize: '12px', color: urlReferencia.length > 230 ? '#861e32' : '#71636a' }}>
+                    <span style={{ fontSize: '11px', color: urlReferencia.length > 230 ? '#861e32' : '#71636a' }}>
                       {urlReferencia.length}/250
                     </span>
                   </div>
@@ -1902,20 +2175,21 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                     type="url"
                     value={urlReferencia}
                     maxLength={250}
-                    onChange={(e) => { if (e.target.value.length <= 250) { setUrlReferencia(e.target.value); markAlterado() } }}
+                    onChange={(e) => {
+                      if (e.target.value.length <= 250) {
+                        handleMudarSocialUrl(e.target.value)
+                      }
+                    }}
                     placeholder="https://…"
                     style={inputStyle}
                   />
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
-                    Máximo 250 caracteres. Link para a matéria original ou fonte.
-                  </p>
                 </div>
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
                     <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="credito">
                       Crédito / fonte
                     </label>
-                    <span style={{ fontSize: '12px', color: credito.length > 50 ? '#861e32' : '#71636a' }}>
+                    <span style={{ fontSize: '11px', color: credito.length > 50 ? '#861e32' : '#71636a' }}>
                       {credito.length}/60
                     </span>
                   </div>
@@ -1928,9 +2202,6 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                     placeholder="Nome do veículo ou autor"
                     style={inputStyle}
                   />
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#71636a' }}>
-                    Máximo 60 caracteres.
-                  </p>
                 </div>
               </div>
             )}
@@ -1939,13 +2210,14 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
           {/* ── Endereço e prévia do link ── */}
           <div className="noticia-secao-publicacao" style={cardStyle}>
             <button
+              type="button"
               onClick={() => setShowPrevia((v) => !v)}
               style={{
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
                 fontFamily: 'inherit',
-                fontSize: '14px',
+                fontSize: '13.5px',
                 fontWeight: 600,
                 color: '#30252a',
                 padding: 0,
@@ -1958,38 +2230,53 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
             </button>
 
             {showPrevia && (
-              <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {/* Slug */}
                 <div>
-                  <label style={labelStyle}>Slug (endereço)</label>
+                  <label style={labelStyle}>Slug (endereço gerado a partir do título)</label>
                   <input
                     type="text"
                     value={slug}
                     readOnly
                     style={{ ...inputStyle, background: '#f7f5f6', color: '#71636a', cursor: 'default' }}
                   />
-                  <p style={{ fontSize: '12px', color: '#71636a', margin: '5px 0 0' }}>
-                    Gerado automaticamente a partir do título
-                  </p>
                 </div>
 
-                {/* Prévia de compartilhamento */}
+                {/* Prévia compacta de compartilhamento */}
                 <div
                   style={{
-                    background: '#f0f4f8',
+                    background: '#f5f8fb',
                     border: '1px solid #cbd7de',
                     borderRadius: '6px',
-                    padding: '14px',
+                    padding: '10px 12px',
+                    display: 'flex',
+                    gap: '12px',
+                    alignItems: 'center',
                   }}
                 >
                   {fotos[0]?.url ? (
-                    <div
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setImagemAmpliada({
+                          url: fotos[0].url,
+                          titulo: titulo || 'Prévia de compartilhamento',
+                        })
+                      }
+                      aria-label="Ampliar imagem da prévia"
                       style={{
-                        width: '100%',
-                        aspectRatio: '3 / 2',
+                        width: '108px',
+                        height: '74px',
+                        padding: '2px',
                         borderRadius: '4px',
+                        background: '#e7edf2',
+                        border: '1px solid #cbd7de',
                         overflow: 'hidden',
-                        marginBottom: '10px',
+                        flexShrink: 0,
+                        cursor: 'zoom-in',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1997,53 +2284,59 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                         src={fotos[0].url}
                         alt="Prévia"
                         style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          objectPosition: `50% ${fotos[0].foco ?? 50}%`,
+                          maxWidth: '100%',
+                          maxHeight: '100%',
+                          width: 'auto',
+                          height: 'auto',
+                          objectFit: 'contain',
                           display: 'block',
                         }}
                       />
-                    </div>
+                    </button>
                   ) : (
                     <div
                       style={{
-                        width: '100%',
-                        aspectRatio: '3 / 2',
+                        width: '108px',
+                        height: '74px',
                         borderRadius: '4px',
                         background: '#dde5ed',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         color: '#71636a',
-                        fontSize: '12px',
-                        marginBottom: '10px',
+                        fontSize: '11px',
+                        textAlign: 'center',
+                        padding: '6px',
+                        flexShrink: 0,
+                        boxSizing: 'border-box',
                       }}
                     >
-                      Sem foto — será usada imagem institucional padrão
+                      Imagem padrão
                     </div>
                   )}
-                  <div style={{ fontWeight: 700, fontSize: '14px', color: '#30252a', marginBottom: '4px' }}>
-                    {titulo || '(sem título)'}
-                  </div>
-                  {resumoPrevia && (
-                    <div style={{ fontSize: '13px', color: '#71636a', marginBottom: '6px' }}>
-                      {resumoPrevia}
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: '13.5px', color: '#30252a', marginBottom: '3px' }}>
+                      {titulo || '(sem título)'}
                     </div>
-                  )}
-                  <div style={{ fontSize: '12px', color: '#71636a' }}>
-                    {status === 'publicado' && slug ? (
-                      <a
-                        href={`/noticias/${slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: '#861e32', fontWeight: 600, textDecoration: 'underline' }}
-                      >
-                        quimicosjc.org.br/noticias/{slug} ↗ (Ver no site)
-                      </a>
-                    ) : (
-                      `quimicosjc.org.br/noticias/${slug || '…'}`
+                    {resumoPrevia && (
+                      <div style={{ fontSize: '12px', color: '#71636a', marginBottom: '4px', lineHeight: 1.35 }}>
+                        {resumoPrevia}
+                      </div>
                     )}
+                    <div style={{ fontSize: '11.5px', color: '#71636a', wordBreak: 'break-all' }}>
+                      {status === 'publicado' && slug ? (
+                        <a
+                          href={`/noticias/${slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: '#861e32', fontWeight: 600, textDecoration: 'underline' }}
+                        >
+                          quimicosjc.org.br/noticias/{slug} ↗
+                        </a>
+                      ) : (
+                        `quimicosjc.org.br/noticias/${slug || '…'}`
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2051,25 +2344,29 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
           </div>
         </div>
 
-        {/* ── Sidebar ── */}
-        <div className="noticia-sidebar-column noticia-secao-publicacao" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-          {/* Status */}
-          <div style={{ ...cardStyle, padding: '20px' }}>
-            <div style={{ fontWeight: 600, color: '#71636a', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.8px', fontSize: '11px' }}>
-              Situação
+        {/* ── Sidebar unificada e compacta ── */}
+        <div
+          className="noticia-sidebar-column noticia-secao-publicacao"
+          style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: '14px' }}
+        >
+          {/* Situação */}
+          <div style={{ paddingBottom: '12px', borderBottom: '1px solid #f0eaed' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+              <span style={{ fontWeight: 700, color: '#71636a', textTransform: 'uppercase', letterSpacing: '0.7px', fontSize: '11px' }}>
+                Situação
+              </span>
+              <StatusBadge status={status} />
             </div>
-            <StatusBadge status={status} />
             {status === 'programado' && publicadoEm && (
-              <p style={{ fontSize: '12px', color: '#365786', margin: '8px 0 0' }}>
+              <p style={{ fontSize: '11.5px', color: '#365786', margin: '6px 0 0' }}>
                 Programada para {new Date(publicadoEm).toLocaleString('pt-BR')}
               </p>
             )}
           </div>
 
           {/* Destaque */}
-          <div style={{ ...cardStyle, padding: '20px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '14px', color: '#30252a' }}>
+          <div style={{ paddingBottom: '12px', borderBottom: '1px solid #f0eaed' }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '13.5px', color: '#30252a' }}>
               <input
                 type="checkbox"
                 checked={destaque}
@@ -2077,22 +2374,22 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                   setDestaque(e.target.checked)
                   markAlterado()
                   if (e.target.checked) {
-                    showToast('Ao salvar, esta notícia estará em 1ª posição nos destaques.')
+                    showToast('Ao salvar, esta notícia ficará fixada em destaque na homepage.')
                   }
                 }}
-                style={{ width: '16px', height: '16px', accentColor: '#861e32', cursor: 'pointer' }}
+                style={{ width: '16px', height: '16px', marginTop: '2px', accentColor: '#861e32', cursor: 'pointer' }}
               />
               <div>
                 <div style={{ fontWeight: 600 }}>Destacar na homepage</div>
-                <div style={{ fontSize: '12px', color: '#71636a', marginTop: '2px' }}>
-                  Até 5 notícias em destaque (1 manchete + 4 chamadas). Marcar coloca em 1º lugar.
+                <div style={{ fontSize: '11.5px', color: '#71636a', marginTop: '2px', lineHeight: 1.4 }}>
+                  Novas publicações assumem automaticamente o 1º destaque. Marque para fixar manualmente.
                 </div>
               </div>
             </label>
           </div>
 
           {/* Data e hora da notícia */}
-          <div style={{ ...cardStyle, padding: '20px' }}>
+          <div style={status !== 'publicado' ? { paddingBottom: '12px', borderBottom: '1px solid #f0eaed' } : undefined}>
             <label style={labelStyle} htmlFor="publicado-em">Data e hora da notícia</label>
             <input
               id="publicado-em"
@@ -2102,23 +2399,24 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
               style={inputStyle}
             />
             {publicadoEm && (
-              <p style={{ fontSize: '12px', color: '#71636a', margin: '6px 0 4px' }}>
+              <p style={{ fontSize: '11.5px', color: '#71636a', margin: '5px 0 2px' }}>
                 {formatDatetimeLocal(publicadoEm)}
               </p>
             )}
-            <p style={{ fontSize: '12px', color: '#71636a', margin: '4px 0 0' }}>
-              Exibida na notícia. Não programa a publicação.
+            <p style={{ fontSize: '11.5px', color: '#71636a', margin: 0 }}>
+              Define a ordem cronológica no site.
             </p>
           </div>
 
           {/* Programar */}
           {status !== 'publicado' && (
-            <div style={{ ...cardStyle, padding: '20px' }}>
-              <div style={{ fontWeight: 600, color: '#71636a', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.8px', fontSize: '11px' }}>
+            <div>
+              <div style={{ fontWeight: 700, color: '#71636a', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.7px', fontSize: '11px' }}>
                 Programação
               </div>
               {status === 'programado' ? (
                 <button
+                  type="button"
                   onClick={cancelarProgramacao}
                   disabled={isPending}
                   style={{ ...btnNeutro, width: '100%', textAlign: 'center', color: '#861e32', borderColor: '#e8c8ce' }}
@@ -2127,6 +2425,7 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                 </button>
               ) : (
                 <button
+                  type="button"
                   onClick={() => setShowAgendarDialog(true)}
                   disabled={isPending}
                   style={{ ...btnNeutro, width: '100%', textAlign: 'center' }}
@@ -2139,17 +2438,17 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
         </div>
       </div>
 
-      {/* ── Savebar ── */}
+      {/* ── Savebar compacta ── */}
       <div
         className="noticia-savebar"
         style={{
           position: 'sticky',
-          bottom: '20px',
-          marginTop: '32px',
+          bottom: '12px',
+          marginTop: '16px',
           background: 'white',
           border: '1px solid #e4dce0',
           borderRadius: '6px',
-          padding: '16px 20px',
+          padding: '10px 16px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -2375,6 +2674,12 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
         </div>
       )}
 
+      {/* ── Lightbox de visualização ampliada ── */}
+      <ImagemLightboxModal
+        imagem={imagemAmpliada}
+        onClose={() => setImagemAmpliada(null)}
+      />
+
       {/* ── Toast ── */}
       {toast && (
         <div
@@ -2402,13 +2707,29 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
 
       {/* ── ESTILOS RESPONSIVOS MOBILE DO EDITOR ── */}
       <style>{`
+        .sr-only {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border: 0;
+        }
         @media (max-width: 960px) {
           .noticia-editor-grid {
             grid-template-columns: 1fr !important;
-            gap: 16px !important;
+            gap: 14px !important;
           }
         }
         @media (max-width: 768px) {
+          .noticia-fields-chapeu-titulo,
+          .noticia-fields-sub-resumo {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+          }
           .noticia-mobile-tabs {
             display: flex !important;
           }
@@ -2448,6 +2769,11 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
           textarea,
           select {
             font-size: 16px !important;
+          }
+        }
+        @media (max-width: 540px) {
+          .noticia-foto-row {
+            flex-direction: column !important;
           }
         }
         @media (min-width: 769px) {

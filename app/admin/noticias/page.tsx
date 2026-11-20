@@ -1,7 +1,8 @@
 import { Metadata } from 'next'
-import { getUsuarioLogado } from '@/lib/supabase/auth'
+import { getUsuarioLogado, temPermissao } from '@/lib/supabase/auth'
 import { listarNoticias } from './actions'
 import AdminLayout from '@/components/admin/AdminLayout'
+import AcessoRestritoAdmin from '@/components/admin/AcessoRestritoAdmin'
 import NoticiaLista from '@/components/admin/NoticiaLista'
 
 export const metadata: Metadata = {
@@ -11,6 +12,18 @@ export const metadata: Metadata = {
 
 export default async function NoticiasPage() {
   const usuario = await getUsuarioLogado()
+
+  if (!temPermissao(usuario, 'noticias', 'consultar')) {
+    return (
+      <AdminLayout usuario={usuario} breadcrumb="Notícias" activeHref="/admin/noticias">
+        <AcessoRestritoAdmin
+          titulo="Acesso restrito a Notícias"
+          descricao="Sua conta não possui autorização para consultar ou gerenciar o módulo de notícias."
+        />
+      </AdminLayout>
+    )
+  }
+
   const noticias = await listarNoticias({})
 
   return (

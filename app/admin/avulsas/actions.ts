@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { getUsuarioLogado } from '@/lib/supabase/auth'
+import { getUsuarioLogado, temPermissao } from '@/lib/supabase/auth'
 
 export interface PaginaAvulsa {
   id: string
@@ -58,6 +58,10 @@ export async function listarPaginasAvulsas(filtro: {
   status?: string
   busca?: string
 }): Promise<PaginaAvulsa[]> {
+  const usuario = await getUsuarioLogado()
+  if (!temPermissao(usuario, 'paginas', 'consultar')) {
+    return []
+  }
   const supabase = await createClient()
 
   let query = supabase
@@ -86,6 +90,10 @@ export async function listarPaginasAvulsas(filtro: {
 }
 
 export async function obterPaginaAvulsa(id: string): Promise<PaginaAvulsa | null> {
+  const usuario = await getUsuarioLogado()
+  if (!temPermissao(usuario, 'paginas', 'consultar')) {
+    return null
+  }
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -106,7 +114,16 @@ export async function criarPaginaAvulsa(
   data: PaginaAvulsaFormData
 ): Promise<{ id: string } | { error: string }> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'paginas', 'criar')) {
+      return { error: 'Você não tem permissão para criar páginas avulsas.' }
+    }
+    if (
+      (data.status === 'publicado' || data.status === 'programado') &&
+      !temPermissao(usuario, 'paginas', 'publicar')
+    ) {
+      return { error: 'Você não tem permissão para publicar páginas avulsas.' }
+    }
     const supabase = await createClient()
 
     const tituloBase = data.titulo?.trim() || 'pagina-sem-titulo'
@@ -183,7 +200,16 @@ export async function atualizarPaginaAvulsa(
   data: Partial<PaginaAvulsaFormData>
 ): Promise<{ ok: boolean } | { error: string }> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'paginas', 'editar')) {
+      return { error: 'Você não tem permissão para editar páginas avulsas.' }
+    }
+    if (
+      (data.status === 'publicado' || data.status === 'programado') &&
+      !temPermissao(usuario, 'paginas', 'publicar')
+    ) {
+      return { error: 'Você não tem permissão para publicar páginas avulsas.' }
+    }
     const supabase = await createClient()
 
     const updates: Record<string, unknown> = {
@@ -243,7 +269,10 @@ export async function publicarPaginaAvulsa(
   id: string
 ): Promise<{ ok: boolean } | { error: string }> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'paginas', 'publicar')) {
+      return { error: 'Você não tem permissão para publicar páginas avulsas.' }
+    }
     const supabase = await createClient()
 
     const { error } = await supabase
@@ -272,7 +301,10 @@ export async function retirarDoAr(
   id: string
 ): Promise<{ ok: boolean } | { error: string }> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'paginas', 'publicar') && !temPermissao(usuario, 'paginas', 'editar')) {
+      return { error: 'Você não tem permissão para retirar páginas do ar.' }
+    }
     const supabase = await createClient()
 
     const { error } = await supabase
@@ -300,7 +332,10 @@ export async function moverParaLixeira(
   id: string
 ): Promise<{ ok: boolean } | { error: string }> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'paginas', 'excluir')) {
+      return { error: 'Você não tem permissão para excluir páginas avulsas.' }
+    }
     const supabase = await createClient()
 
     const { error } = await supabase
@@ -331,7 +366,10 @@ export async function uploadMidia(
   formData: FormData
 ): Promise<{ url: string } | { error: string }> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'paginas', 'criar') && !temPermissao(usuario, 'paginas', 'editar')) {
+      return { error: 'Você não tem permissão para enviar arquivos em páginas avulsas.' }
+    }
 
     const arquivo = formData.get('arquivo') as File | null
     if (!arquivo || typeof arquivo === 'string') {
@@ -391,7 +429,10 @@ export async function uploadDocumento(
   formData: FormData
 ): Promise<{ url: string; nome: string; tipo: string } | { error: string }> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'paginas', 'criar') && !temPermissao(usuario, 'paginas', 'editar')) {
+      return { error: 'Você não tem permissão para anexar documentos em páginas avulsas.' }
+    }
 
     const arquivo = formData.get('arquivo') as File | null
     if (!arquivo || typeof arquivo === 'string') {

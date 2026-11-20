@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
-import { getUsuarioLogado } from '@/lib/supabase/auth'
+import { getUsuarioLogado, temPermissao } from '@/lib/supabase/auth'
 import AdminLayout from '@/components/admin/AdminLayout'
+import AcessoRestritoAdmin from '@/components/admin/AcessoRestritoAdmin'
 import PaginasHub from '@/components/admin/paginas/PaginasHub'
 import { listarPaginasInstitucionais } from './actions'
 
@@ -11,6 +12,18 @@ export const metadata: Metadata = {
 
 export default async function PaginasSitePage() {
   const usuario = await getUsuarioLogado()
+
+  if (!temPermissao(usuario, 'paginas', 'consultar')) {
+    return (
+      <AdminLayout usuario={usuario} breadcrumb="Páginas do site" activeHref="/admin/paginas">
+        <AcessoRestritoAdmin
+          titulo="Acesso restrito a Páginas do Site"
+          descricao="Sua conta não possui autorização para consultar ou editar páginas institucionais."
+        />
+      </AdminLayout>
+    )
+  }
+
   const paginas = await listarPaginasInstitucionais()
 
   return (

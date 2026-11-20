@@ -1,14 +1,17 @@
 'use client'
 
 import { useState, useTransition, useMemo } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import type { PublicacaoJornal, EdicaoJornal, EdicaoFormData } from '@/app/admin/jornais/actions'
 import {
   criarEdicao,
   atualizarEdicao,
   excluirEdicao,
   criarPublicacao,
+  criarUrlUploadJornal,
   uploadArquivoJornal,
 } from '@/app/admin/jornais/actions'
+import ImagemLightboxModal, { type ImagemLightboxDados } from '@/components/admin/ImagemLightboxModal'
 
 interface Props {
   publicacoesIniciais: PublicacaoJornal[]
@@ -39,6 +42,7 @@ export default function JornaisGerenciador({
   const [showPubModal, setShowPubModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [edicaoParaExcluir, setEdicaoParaExcluir] = useState<EdicaoJornal | null>(null)
+  const [imagemAmpliada, setImagemAmpliada] = useState<ImagemLightboxDados | null>(null)
 
   // Estado do formulário de edição
   const [formPubId, setFormPubId] = useState(publicacoes[0]?.id || '')
@@ -111,46 +115,149 @@ export default function JornaisGerenciador({
   }
 
   async function handleUploadPdf(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+    const input = e.target
+    const file = input.files?.[0]
     if (!file) return
 
-    if (file.type !== 'application/pdf') {
-      showFeedback('Selecione um arquivo PDF válido.', 'erro')
+    const ehPdf =
+      file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+    if (!ehPdf) {
+      showFeedback('Selecione um arquivo PDF válido (.pdf).', 'erro')
+      input.value = ''
+      return
+    }
+
+    if (file.size > 50 * 1024 * 1024) {
+      showFeedback('O arquivo PDF excede o limite de 50 MB.', 'erro')
+      input.value = ''
       return
     }
 
     setUploadingPdf(true)
-    const formData = new FormData()
-    formData.append('arquivo', file)
+    try {
+      const contentType = 'application/pdf'
+      const prep = await criarUrlUploadJornal({
+        tipo: 'pdf',
+        nomeArquivo: file.name,
+        contentType,
+        tamanhoBytes: file.size,
+      })
 
-    const res = await uploadArquivoJornal(formData, 'pdf')
-    setUploadingPdf(false)
+      if ('error' in prep) {
+        showFeedback(prep.error, 'erro')
+        return
+      }
 
-    if ('error' in res) {
-      showFeedback(res.error, 'erro')
-    } else {
-      setFormPdfUrl(res.url)
-      setFormPdfNome(res.nome)
+      const supabase = createClient()
+      const { error: uploadError } = await supabase.storage
+        .from('midias')
+        .uploadToSignedUrl(prep.path, prep.token, file, {
+          contentType,
+        })
+
+      if (uploadError) {
+        // Fallback via Server Action apenas para arquivos pequenos (<= 4 MB)
+        if (file.size <= 4 * 1024 * 1024) {
+          const formData = new FormData()
+          formData.append('arquivo', file)
+          const res = await uploadArquivoJornal(formData, 'pdf')
+          if ('error' in res) {
+            showFeedback(res.error, 'erro')
+            return
+          }
+          setFormPdfUrl(res.url)
+          setFormPdfNome(res.nome)
+          showFeedback('PDF carregado com sucesso!')
+          return
+        }
+        showFeedback(`Falha ao enviar o PDF ao armazenamento: ${uploadError.message}`, 'erro')
+        return
+      }
+
+      setFormPdfUrl(prep.publicUrl)
+      setFormPdfNome(prep.nome)
       showFeedback('PDF carregado com sucesso!')
+    } catch (err) {
+      console.error('Erro ao enviar PDF do jornal:', err)
+      showFeedback(
+        'Não foi possível concluir o envio do PDF. Verifique sua conexão e tente novamente.',
+        'erro'
+      )
+    } finally {
+      setUploadingPdf(false)
+      input.value = ''
     }
   }
 
   async function handleUploadCapa(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+    const input = e.target
+    const file = input.files?.[0]
     if (!file) return
 
+    const ext = file.name.split('.').pop()?.toLowerCase() || ''
+    const ehImagem =
+      ['image/jpeg', 'image/png', 'image/webp'].includes(file.type) ||
+      ['jpg', 'jpeg', 'png', 'webp'].includes(ext)
+    if (!ehImagem) {
+      showFeedback('Formato inválido. Envie uma imagem JPG, PNG ou WebP.', 'erro')
+      input.value = ''
+      return
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      showFeedback('A imagem de capa excede o limite de 10 MB.', 'erro')
+      input.value = ''
+      return
+    }
+
     setUploadingCapa(true)
-    const formData = new FormData()
-    formData.append('arquivo', file)
+    try {
+      const contentType =
+        file.type || (ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg')
+      const prep = await criarUrlUploadJornal({
+        tipo: 'capa',
+        nomeArquivo: file.name,
+        contentType,
+        tamanhoBytes: file.size,
+      })
 
-    const res = await uploadArquivoJornal(formData, 'capa')
-    setUploadingCapa(false)
+      if ('error' in prep) {
+        showFeedback(prep.error, 'erro')
+        return
+      }
 
-    if ('error' in res) {
-      showFeedback(res.error, 'erro')
-    } else {
-      setFormCapaUrl(res.url)
+      const supabase = createClient()
+      const { error: uploadError } = await supabase.storage
+        .from('midias')
+        .uploadToSignedUrl(prep.path, prep.token, file, {
+          contentType,
+        })
+
+      if (uploadError) {
+        if (file.size <= 4 * 1024 * 1024) {
+          const formData = new FormData()
+          formData.append('arquivo', file)
+          const res = await uploadArquivoJornal(formData, 'capa')
+          if ('error' in res) {
+            showFeedback(res.error, 'erro')
+            return
+          }
+          setFormCapaUrl(res.url)
+          showFeedback('Capa personalizada carregada!')
+          return
+        }
+        showFeedback(`Falha ao enviar a capa: ${uploadError.message}`, 'erro')
+        return
+      }
+
+      setFormCapaUrl(prep.publicUrl)
       showFeedback('Capa personalizada carregada!')
+    } catch (err) {
+      console.error('Erro ao enviar capa do jornal:', err)
+      showFeedback('Não foi possível concluir o envio da capa. Tente novamente.', 'erro')
+    } finally {
+      setUploadingCapa(false)
+      input.value = ''
     }
   }
 
@@ -478,8 +585,8 @@ export default function JornaisGerenciador({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-            gap: '20px',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(215px, 1fr))',
+            gap: '16px',
             marginBottom: '32px',
           }}
         >
@@ -499,35 +606,68 @@ export default function JornaisGerenciador({
                   transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                 }}
               >
-                {/* Capa com Proporção Física de Jornal (1:1.42) */}
+                {/* Prévia compacta preservando proporção original */}
                 <div
                   style={{
                     width: '100%',
-                    aspectRatio: '1 / 1.42',
-                    background: '#2b1b22',
+                    height: '205px',
+                    background: edicao.capa_url ? '#f4f0f2' : '#2b1b22',
                     position: 'relative',
                     overflow: 'hidden',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    padding: edicao.capa_url ? '8px' : '0',
+                    boxSizing: 'border-box',
                   }}
                 >
                   {edicao.capa_url ? (
-                    <img
-                      src={edicao.capa_url}
-                      alt={`Capa da edição ${edicao.numero}`}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setImagemAmpliada({
+                          url: edicao.capa_url!,
+                          titulo: `${edicao.publicacao_nome || 'Jornal'} — Edição nº ${edicao.numero}`,
+                          subtitulo: edicao.complemento || undefined,
+                        })
+                      }
+                      aria-label={`Ampliar capa da edição ${edicao.numero}`}
+                      style={{
+                        border: 'none',
+                        background: 'transparent',
+                        padding: 0,
+                        width: '100%',
+                        height: '100%',
+                        cursor: 'zoom-in',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <img
+                        src={edicao.capa_url}
+                        alt={`Capa da edição ${edicao.numero}`}
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: '100%',
+                          width: 'auto',
+                          height: 'auto',
+                          objectFit: 'contain',
+                          borderRadius: '3px',
+                        }}
+                      />
+                    </button>
                   ) : (
                     /* Capa Gráfica Padrão quando sem imagem */
                     <div
                       style={{
-                        padding: '24px 20px',
+                        padding: '18px 16px',
                         textAlign: 'center',
                         color: 'white',
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
+                        width: '100%',
                         height: '100%',
                         boxSizing: 'border-box',
                         background: `linear-gradient(145deg, ${corTag}, #20070e)`,
@@ -545,20 +685,20 @@ export default function JornaisGerenciador({
                       </div>
 
                       <div>
-                        <div style={{ fontSize: '15px', fontWeight: 600, opacity: 0.9 }}>
+                        <div style={{ fontSize: '13px', fontWeight: 600, opacity: 0.9 }}>
                           EDIÇÃO
                         </div>
-                        <div style={{ fontSize: '42px', fontWeight: 900, lineHeight: 1.1 }}>
+                        <div style={{ fontSize: '36px', fontWeight: 900, lineHeight: 1.1 }}>
                           {edicao.numero}
                         </div>
                         {edicao.complemento && (
-                          <div style={{ fontSize: '13px', marginTop: '4px', opacity: 0.85 }}>
+                          <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.85 }}>
                             {edicao.complemento}
                           </div>
                         )}
                       </div>
 
-                      <div style={{ fontSize: '12px', opacity: 0.75 }}>
+                      <div style={{ fontSize: '11.5px', opacity: 0.75 }}>
                         {edicao.data_edicao
                           ? new Date(edicao.data_edicao + 'T12:00:00Z').toLocaleDateString('pt-BR')
                           : 'Sem data'}
@@ -959,7 +1099,7 @@ export default function JornaisGerenciador({
 
                 <input
                   type="file"
-                  accept="application/pdf"
+                  accept=".pdf,application/pdf"
                   onChange={handleUploadPdf}
                   disabled={uploadingPdf}
                   style={{ fontSize: '13px' }}
@@ -967,7 +1107,7 @@ export default function JornaisGerenciador({
                 <small style={{ display: 'block', marginTop: '6px', color: '#71636a' }}>
                   {uploadingPdf
                     ? 'Enviando arquivo PDF…'
-                    : 'Arquivo PDF original da edição diagramada.'}
+                    : 'Arquivo PDF original da edição diagramada (até 50 MB).'}
                 </small>
               </div>
 
@@ -986,22 +1126,66 @@ export default function JornaisGerenciador({
 
                 {formCapaUrl ? (
                   <div style={{ display: 'flex', gap: '14px', alignItems: 'center', marginBottom: '10px' }}>
-                    <img
-                      src={formCapaUrl}
-                      alt="Prévia da capa"
-                      style={{ width: '60px', height: '80px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #cbd7de' }}
-                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setImagemAmpliada({
+                          url: formCapaUrl,
+                          titulo: formTitulo || `Capa da edição ${formNumero || ''}`.trim(),
+                        })
+                      }
+                      aria-label="Ampliar prévia da capa"
+                      style={{
+                        width: '68px',
+                        height: '88px',
+                        padding: '3px',
+                        background: '#f4f0f2',
+                        borderRadius: '4px',
+                        border: '1px solid #cbd7de',
+                        cursor: 'zoom-in',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <img
+                        src={formCapaUrl}
+                        alt="Prévia da capa"
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: '100%',
+                          width: 'auto',
+                          height: 'auto',
+                          objectFit: 'contain',
+                        }}
+                      />
+                    </button>
                     <div>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#30252a' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#30252a', marginBottom: '4px' }}>
                         Capa carregada
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setFormCapaUrl('')}
-                        style={{ border: 'none', background: 'transparent', color: '#861e32', fontSize: '12px', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}
-                      >
-                        Remover imagem personalizada
-                      </button>
+                      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setImagemAmpliada({
+                              url: formCapaUrl,
+                              titulo: formTitulo || `Capa da edição ${formNumero || ''}`.trim(),
+                            })
+                          }
+                          style={{ border: 'none', background: 'transparent', color: '#183b4b', fontSize: '12px', padding: 0, cursor: 'pointer', textDecoration: 'underline', fontWeight: 600 }}
+                        >
+                          Ampliar imagem
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormCapaUrl('')}
+                          style={{ border: 'none', background: 'transparent', color: '#861e32', fontSize: '12px', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                          Remover imagem personalizada
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : null}
@@ -1209,6 +1393,12 @@ export default function JornaisGerenciador({
           </div>
         </div>
       )}
+
+      {/* ── Lightbox de visualização ampliada ────────────────────────────── */}
+      <ImagemLightboxModal
+        imagem={imagemAmpliada}
+        onClose={() => setImagemAmpliada(null)}
+      />
 
       {/* ── Toast de Feedback ────────────────────────────────────────────── */}
       {toast && (

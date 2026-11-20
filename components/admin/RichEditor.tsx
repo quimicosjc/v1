@@ -44,9 +44,11 @@ const Iframe = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
+    const src = String(HTMLAttributes.src || '')
+    const isInstagram = src.includes('instagram.com')
     return [
       'div',
-      { class: 'iframe-wrapper' },
+      { class: isInstagram ? 'iframe-wrapper iframe-wrapper-instagram' : 'iframe-wrapper' },
       ['iframe', HTMLAttributes],
     ]
   },
@@ -100,11 +102,12 @@ function sanitizeIframe(raw: string): string | null {
     return `<iframe src="https://player.vimeo.com/video/${videoId}" width="100%" height="360" title="Vídeo do Vimeo" frameborder="0" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"></iframe>`
   }
 
-  // 3. Instagram direct URLs (instagram.com/p/ID or instagram.com/reel/ID)
-  const instaMatch = trimmed.match(/(?:https?:\/\/)?(?:www\.)?instagram\.com\/(?:p|reel)\/([a-zA-Z0-9_-]+)/i)
+  // 3. Instagram direct URLs (instagram.com/p/ID, /reel/ID, /reels/ID, /<user>/reel/ID)
+  const instaMatch = trimmed.match(/(?:https?:\/\/)?(?:www\.|m\.)?instagram\.com\/(?:[^\/\s"'<>]+\/)?(p|reel|reels|tv)\/([a-zA-Z0-9_-]+)/i)
   if (instaMatch) {
-    const postId = instaMatch[1]
-    return `<iframe src="https://www.instagram.com/p/${postId}/embed/" width="100%" height="480" title="Publicação do Instagram" frameborder="0" allowfullscreen></iframe>`
+    const tipo = instaMatch[1].toLowerCase().startsWith('reel') ? 'reel' : 'p'
+    const postId = instaMatch[2]
+    return `<iframe src="https://www.instagram.com/${tipo}/${postId}/embed/captioned/" width="100%" title="Publicação do Instagram" frameborder="0" allowfullscreen></iframe>`
   }
 
   // 4. Existing <iframe> code
@@ -434,6 +437,8 @@ export default function RichEditor({
         .ProseMirror iframe { width: 100%; aspect-ratio: 16 / 9; border: none; border-radius: 4px; margin: 16px 0; display: block; }
         .ProseMirror .iframe-wrapper { position: relative; width: 100%; aspect-ratio: 16 / 9; margin: 16px 0; border-radius: 4px; overflow: hidden; background: #000; }
         .ProseMirror .iframe-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; margin: 0; }
+        .ProseMirror .iframe-wrapper.iframe-wrapper-instagram { aspect-ratio: auto; max-width: 360px; min-height: 460px; margin: 12px auto; background: #faf8f9; border: 1px solid #e4dce0; }
+        .ProseMirror .iframe-wrapper.iframe-wrapper-instagram iframe { position: relative; width: 100%; height: 460px; aspect-ratio: auto; }
         .ProseMirror table { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 16px 0; }
         .ProseMirror th, .ProseMirror td { border: 1px solid #cbd7de; padding: 10px 12px; text-align: left; vertical-align: top; min-width: 80px; }
         .ProseMirror th { background: #f8fafb; font-weight: 600; color: #30252a; }

@@ -1,7 +1,12 @@
 'use server'
 
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { getUsuarioLogado, temPermissao } from '@/lib/supabase/auth'
+import {
+  getUsuarioLogado,
+  obterSlugsSolicitacoesPermitidos,
+  podeAcessarSolicitacaoPorSlug,
+  temPermissao,
+} from '@/lib/supabase/auth'
 import { enviarAvisoRecebimento, enviarAvisoDenuncia } from '@/lib/email/resend'
 
 export interface SolicitacaoItem {
@@ -22,6 +27,7 @@ export interface SolicitacaoItem {
   nota_interna?: string
   aviso_email?: 'enviado' | 'pendente' | 'falhou'
   criado_em: string
+  pode_editar?: boolean
 }
 
 export interface FiltroSolicitacoes {
@@ -38,13 +44,27 @@ function getSupabaseAdmin() {
 }
 
 /**
+ * Neutraliza caracteres de fórmula no CSV (proteção contra CSV Injection)
+ */
+function sanitizarCelulaCSV(valor: unknown): string {
+  const s = String(valor ?? '').replace(/"/g, '""')
+  if (/^[=+\-@\t\r]/.test(s)) {
+    return `"'${s}"`
+  }
+  return `"${s}"`
+}
+
+/**
  * Obtém a contagem de solicitações pendentes para o badge no menu.
- * Proteção de sigilo (S04): se o usuário não tiver pode_denuncias, denúncias não são contabilizadas.
+ * Respeita estritamente as categorias para as quais o usuário possui autorização.
  */
 export async function obterContagemPendentes(): Promise<number> {
   try {
     const usuarioLogado = await getUsuarioLogado()
-    const podeVerDenuncias = usuarioLogado.papel === 'admin_ti' || !!usuarioLogado.pode_denuncias
+    const slugsPermitidos = obterSlugsSolicitacoesPermitidos(usuarioLogado, 'consultar')
+    if (slugsPermitidos.length === 0) return 0
+
+    const permitidosSet = new Set(slugsPermitidos)
     const supabaseAdmin = getSupabaseAdmin()
 
     const { data, error } = await supabaseAdmin
@@ -54,8 +74,8 @@ export async function obterContagemPendentes(): Promise<number> {
     if (error || !data) return 0
 
     return data.filter((item: any) => {
-      const fSlug = item.formularios?.slug || item.dados?.tipo
-      if (!podeVerDenuncias && fSlug === 'denuncia') return false
+      const fSlug = item.formularios?.slug || item.dados?.tipo || 'contato'
+      if (!permitidosSet.has(fSlug)) return false
 
       if (item.processado === false) return true
       const situacao = item.dados?.situacao
@@ -68,22 +88,31 @@ export async function obterContagemPendentes(): Promise<number> {
 
 /**
  * Lista as solicitações recebidas com filtros.
- * Proteção de sigilo (S04): aplica verificação estrita de pode_denuncias antes de entregar os dados.
+ * Controle estrito no servidor: entrega apenas registros cujas categorias o usuário
+ * possui permissão explícita para consultar.
  */
 export async function listarSolicitacoes(
   filtro: FiltroSolicitacoes = {}
 ): Promise<SolicitacaoItem[]> {
   try {
     const usuarioLogado = await getUsuarioLogado()
-    const podeVerDenuncias = usuarioLogado.papel === 'admin_ti' || !!usuarioLogado.pode_denuncias
-    const supabaseAdmin = getSupabaseAdmin()
+    const slugsPermitidos = obterSlugsSolicitacoesPermitidos(usuarioLogado, 'consultar')
 
-    // Se usuário sem permissão pedir especificamente tipo denuncia, rejeita
-    if (!podeVerDenuncias && filtro.tipo === 'denuncia') {
+    if (slugsPermitidos.length === 0) {
       return []
     }
 
-    // Busca recebimentos com os dados do formulário
+    const permitidosSet = new Set(slugsPermitidos)
+
+    // Se o cliente pedir explicitamente um tipo não autorizado, rejeita imediatamente
+    if (filtro.tipo && filtro.tipo !== 'todas' && filtro.tipo !== 'outras') {
+      if (!permitidosSet.has(filtro.tipo)) {
+        return []
+      }
+    }
+
+    const supabaseAdmin = getSupabaseAdmin()
+
     const { data, error } = await supabaseAdmin
       .from('recebimentos')
       .select(`
@@ -106,81 +135,70 @@ export async function listarSolicitacoes(
       return []
     }
 
-    let itens: SolicitacaoItem[] = data.map((row: any) => {
-      const fSlug = row.formularios?.slug || 'contato'
-      const fNome = row.formularios?.nome || 'Formulário'
-      const d = row.dados || {}
-
-      const protocolo = d.protocolo || `PROT-${row.id.substring(0, 8).toUpperCase()}`
-      const situacao = d.situacao || (row.processado ? 'concluida' : (fSlug === 'sindicalizacao' ? 'recebida' : 'nova'))
-
-      return {
-        id: row.id,
-        formulario_id: row.formulario_id,
-        formulario_slug: fSlug,
-        formulario_nome: fNome,
-        protocolo,
-        situacao,
-        processado: !!row.processado,
-        nome: d.nome || d.campos?.nome || d.campos?.['Nome Completo'] || d.campos?.['Nome'],
-        email: d.email || d.campos?.email || d.campos?.['E-mail'] || d.campos?.['Email'],
-        telefone: d.telefone || d.campos?.telefone || d.campos?.celular || d.campos?.['Celular / WhatsApp'],
-        empresa: d.empresa || d.campos?.empresa || d.campos?.['Empresa / Fábrica'] || d.campos?.['Empresa'],
-        cidade: d.cidade || d.campos?.cidade || d.campos?.['Cidade'],
-        campos: d.campos || d,
-        anexos: Array.isArray(d.anexos) ? d.anexos : [],
-        nota_interna: d.nota_interna || '',
-        aviso_email: d.aviso_email || 'enviado',
-        criado_em: row.criado_em,
-      }
-    })
-
-    // Blindagem de sigilo (S04): remove integralmente denúncias caso o usuário não tenha permissão
-    if (!podeVerDenuncias) {
-      itens = itens.filter((i) => i.formulario_slug !== 'denuncia')
-    }
-
-    // Processar assinaturas temporárias seguras de anexos privados (S03)
-    itens = await Promise.all(
-      itens.map(async (item) => {
-        let novosAnexos = item.anexos
-        if (novosAnexos && novosAnexos.length > 0) {
-          novosAnexos = await Promise.all(
-            novosAnexos.map(async (anexo) => {
-              if (anexo.path) {
-                const { data: signData } = await supabaseAdmin.storage
-                  .from('privado')
-                  .createSignedUrl(anexo.path, 3600)
-                return {
-                  ...anexo,
-                  url: signData?.signedUrl || anexo.url || '',
-                }
-              }
-              return anexo
-            })
-          )
-        }
-
-        let novosCampos = item.campos
-        if (novosCampos && (novosCampos.foto_path || novosCampos.foto_url)) {
-          if (novosCampos.foto_path) {
-            const { data: signData } = await supabaseAdmin.storage
-              .from('privado')
-              .createSignedUrl(novosCampos.foto_path, 3600)
-            novosCampos = {
-              ...novosCampos,
-              foto_url: signData?.signedUrl || novosCampos.foto_url,
-            }
-          }
-        }
-
-        return { ...item, anexos: novosAnexos, campos: novosCampos }
+    let itens: SolicitacaoItem[] = data
+      .filter((row: any) => {
+        const fSlug = row.formularios?.slug || row.dados?.tipo || 'contato'
+        return permitidosSet.has(fSlug)
       })
-    )
+      .map((row: any) => {
+        const fSlug = row.formularios?.slug || row.dados?.tipo || 'contato'
+        const fNome = row.formularios?.nome || 'Formulário'
+        const d = row.dados || {}
+
+        const protocolo = d.protocolo || `PROT-${row.id.substring(0, 8).toUpperCase()}`
+        const situacao =
+          d.situacao ||
+          (row.processado ? 'concluida' : fSlug === 'sindicalizacao' ? 'recebida' : 'nova')
+
+        const anexosLimpos = Array.isArray(d.anexos)
+          ? d.anexos.map((a: any) => ({
+              nome: String(a.nome || 'Arquivo'),
+              url: '', // Anexos privados são resolvidos sob demanda com URL temporária segura
+              tipo: a.tipo,
+              tamanho: a.tamanho,
+              path: a.path,
+            }))
+          : []
+
+        const camposBase = d.campos && typeof d.campos === 'object' ? { ...d.campos } : { ...d }
+        // Nunca expor URLs diretas de fotos privadas na listagem; usar assinatura sob demanda
+        if (camposBase.foto_path) {
+          camposBase.foto_url = null
+        }
+
+        return {
+          id: row.id,
+          formulario_id: row.formulario_id,
+          formulario_slug: fSlug,
+          formulario_nome: fNome,
+          protocolo,
+          situacao,
+          processado: !!row.processado,
+          nome: d.nome || d.campos?.nome || d.campos?.['Nome Completo'] || d.campos?.['Nome'],
+          email: d.email || d.campos?.email || d.campos?.['E-mail'] || d.campos?.['Email'],
+          telefone:
+            d.telefone || d.campos?.telefone || d.campos?.celular || d.campos?.['Celular / WhatsApp'],
+          empresa:
+            d.empresa || d.campos?.empresa || d.campos?.['Empresa / Fábrica'] || d.campos?.['Empresa'],
+          cidade: d.cidade || d.campos?.cidade || d.campos?.['Cidade'],
+          campos: camposBase,
+          anexos: anexosLimpos,
+          nota_interna: d.nota_interna || '',
+          aviso_email: d.aviso_email || 'enviado',
+          criado_em: row.criado_em,
+          pode_editar: podeAcessarSolicitacaoPorSlug(usuarioLogado, fSlug, 'editar'),
+        }
+      })
 
     // Filtro por tipo (formulário)
     if (filtro.tipo && filtro.tipo !== 'todas') {
-      itens = itens.filter((i) => i.formulario_slug === filtro.tipo)
+      if (filtro.tipo === 'outras') {
+        itens = itens.filter(
+          (i) => i.formulario_slug === 'juridico' || i.formulario_slug === 'contato'
+        )
+      } else {
+        itens = itens.filter((i) => i.formulario_slug === filtro.tipo)
+      }
     }
 
     // Filtro por situação
@@ -216,32 +234,95 @@ export async function listarSolicitacoes(
 }
 
 /**
- * Atualiza a situação de atendimento de uma solicitação
+ * Gera URL temporária assinada (validade curta de 120 segundos) para acesso a anexos
+ * ou fotos armazenadas no bucket privado (conformidade LGPD / anti-IDOR).
+ */
+export async function obterUrlAnexoPrivado(
+  solicitacaoId: string,
+  path: string
+): Promise<{ url: string } | { error: string }> {
+  try {
+    const usuario = await getUsuarioLogado()
+    if (!solicitacaoId || !path || path.includes('..')) {
+      return { error: 'Referência de arquivo inválida.' }
+    }
+
+    const supabaseAdmin = getSupabaseAdmin()
+    const { data: row, error: buscaErr } = await supabaseAdmin
+      .from('recebimentos')
+      .select('id, dados, formularios(slug)')
+      .eq('id', solicitacaoId)
+      .single()
+
+    if (buscaErr || !row) {
+      return { error: 'Solicitação não encontrada.' }
+    }
+
+    const fSlug = (row.formularios as any)?.slug || row.dados?.tipo || 'contato'
+    if (!podeAcessarSolicitacaoPorSlug(usuario, fSlug, 'consultar')) {
+      return { error: 'Acesso negado: você não possui autorização para abrir arquivos desta categoria.' }
+    }
+
+    // Valida estritamente que o caminho solicitado pertence a este registro (anti-IDOR)
+    const d = row.dados || {}
+    const caminhosDoRegistro = new Set<string>()
+    if (typeof d.foto_path === 'string' && d.foto_path) caminhosDoRegistro.add(d.foto_path)
+    if (typeof d.campos?.foto_path === 'string' && d.campos.foto_path) {
+      caminhosDoRegistro.add(d.campos.foto_path)
+    }
+    if (Array.isArray(d.anexos)) {
+      for (const a of d.anexos) {
+        if (typeof a?.path === 'string' && a.path) caminhosDoRegistro.add(a.path)
+      }
+    }
+
+    if (!caminhosDoRegistro.has(path)) {
+      return { error: 'O arquivo informado não pertence a esta solicitação.' }
+    }
+
+    const { data: signData, error: signErr } = await supabaseAdmin.storage
+      .from('privado')
+      .createSignedUrl(path, 120)
+
+    if (signErr || !signData?.signedUrl) {
+      return { error: 'Não foi possível gerar o link temporário seguro para o arquivo.' }
+    }
+
+    return { url: signData.signedUrl }
+  } catch (err) {
+    return { error: `Erro ao acessar arquivo: ${err instanceof Error ? err.message : String(err)}` }
+  }
+}
+
+/**
+ * Atualiza a situação de atendimento de uma solicitação.
+ * Sempre consulta o registro original no banco e valida permissão por categoria no servidor.
  */
 export async function atualizarSituacaoSolicitacao(
   id: string,
   novaSituacao: 'recebida' | 'em_atendimento' | 'concluida' | 'nova' | 'tratada',
-  notaInterna?: string,
-  dadosAtuais?: Record<string, any>
+  notaInterna?: string
 ): Promise<{ ok: boolean } | { error: string }> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
     const supabaseAdmin = getSupabaseAdmin()
 
-    let baseDados = dadosAtuais
-    if (!baseDados) {
-      const { data: atual, error: buscaErr } = await supabaseAdmin
-        .from('recebimentos')
-        .select('dados')
-        .eq('id', id)
-        .single()
+    const { data: atual, error: buscaErr } = await supabaseAdmin
+      .from('recebimentos')
+      .select('dados, formularios(slug)')
+      .eq('id', id)
+      .single()
 
-      if (buscaErr || !atual) {
-        return { error: 'Solicitação não encontrada.' }
-      }
-      baseDados = atual.dados || {}
+    if (buscaErr || !atual) {
+      return { error: 'Solicitação não encontrada.' }
     }
 
+    const fSlug = (atual.formularios as any)?.slug || atual.dados?.tipo || 'contato'
+    if (!podeAcessarSolicitacaoPorSlug(usuario, fSlug, 'editar')) {
+      return { error: 'Você não tem permissão para alterar a situação desta categoria de solicitação.' }
+    }
+
+    const baseDados = atual.dados && typeof atual.dados === 'object' ? atual.dados : {}
     const novosDados: Record<string, any> = {
       ...baseDados,
       situacao: novaSituacao,
@@ -272,29 +353,33 @@ export async function atualizarSituacaoSolicitacao(
 }
 
 /**
- * Salva anotação interna na solicitação
+ * Salva anotação interna na solicitação.
+ * Sempre consulta o registro original no banco e valida permissão por categoria no servidor.
  */
 export async function salvarNotaInterna(
   id: string,
-  nota: string,
-  dadosAtuais?: Record<string, any>
+  nota: string
 ): Promise<{ ok: boolean } | { error: string }> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
     const supabaseAdmin = getSupabaseAdmin()
 
-    let baseDados = dadosAtuais
-    if (!baseDados) {
-      const { data: atual, error: buscaErr } = await supabaseAdmin
-        .from('recebimentos')
-        .select('dados')
-        .eq('id', id)
-        .single()
+    const { data: atual, error: buscaErr } = await supabaseAdmin
+      .from('recebimentos')
+      .select('dados, formularios(slug)')
+      .eq('id', id)
+      .single()
 
-      if (buscaErr || !atual) return { error: 'Solicitação não encontrada.' }
-      baseDados = atual.dados || {}
+    if (buscaErr || !atual) {
+      return { error: 'Solicitação não encontrada.' }
     }
 
+    const fSlug = (atual.formularios as any)?.slug || atual.dados?.tipo || 'contato'
+    if (!podeAcessarSolicitacaoPorSlug(usuario, fSlug, 'editar')) {
+      return { error: 'Você não tem permissão para adicionar notas nesta categoria de solicitação.' }
+    }
+
+    const baseDados = atual.dados && typeof atual.dados === 'object' ? atual.dados : {}
     const novosDados: Record<string, any> = {
       ...baseDados,
       nota_interna: nota,
@@ -330,17 +415,15 @@ export async function reenviarAvisoEmail(
 
     if (!row) return { error: 'Solicitação não encontrada.' }
 
-    const fSlug = (row.formularios as any)?.slug || 'contato'
+    const fSlug = (row.formularios as any)?.slug || row.dados?.tipo || 'contato'
     const fNome = (row.formularios as any)?.nome || 'Formulário'
     const d = row.dados || {}
 
-    // Se for denúncia, checa se usuário tem autorização
-    if (fSlug === 'denuncia') {
-      const temAcesso = usuario.papel === 'admin_ti' || !!usuario.pode_denuncias
-      if (!temAcesso) {
-        return { error: 'Você não tem permissão para gerenciar ou reenviar denúncias.' }
-      }
+    if (!podeAcessarSolicitacaoPorSlug(usuario, fSlug, 'editar')) {
+      return { error: 'Você não tem permissão para reenviar avisos desta categoria.' }
+    }
 
+    if (fSlug === 'denuncia') {
       const resEmail = await enviarAvisoDenuncia({
         protocolo: d.protocolo || 'PROT-DEN',
         empresa: d.empresa || 'Empresa não informada',
@@ -365,7 +448,6 @@ export async function reenviarAvisoEmail(
       return { ok: true }
     }
 
-    // Demais formulários
     const resEmail = await enviarAvisoRecebimento({
       protocolo: d.protocolo || 'PROT',
       formularioNome: fNome,
@@ -413,32 +495,41 @@ export async function excluirSolicitacao(id: string): Promise<{ ok: boolean } | 
 }
 
 /**
- * Exporta solicitações em formato CSV
- * REGRA DE OURO (Sugestão 2): Denúncias NUNCA entram em exportação geral por padrão.
- * Somente serão exportadas se o filtro tipo === 'denuncia' for explicitamente solicitado.
+ * Exporta solicitações em formato CSV respeitando permissões granulares no servidor.
+ * REGRA DE OURO: Denúncias NUNCA entram em exportação geral por padrão.
+ * Somente serão exportadas se `filtroTipo === 'denuncia'` E o usuário possuir permissão explícita para denúncias.
  */
 export async function exportarSolicitacoesCSV(filtroTipo?: string): Promise<string> {
+  const usuario = await getUsuarioLogado()
+
+  if (filtroTipo && filtroTipo !== 'todas' && filtroTipo !== 'outras') {
+    if (!podeAcessarSolicitacaoPorSlug(usuario, filtroTipo, 'consultar')) {
+      return ''
+    }
+  }
+
   const itens = await listarSolicitacoes({ tipo: filtroTipo })
 
-  // Filtro de segurança: remove denúncias caso não seja a aba exclusiva de denúncias
   const filtrados = itens.filter((item) => {
     if (item.formulario_slug === 'denuncia') {
-      return filtroTipo === 'denuncia'
+      return filtroTipo === 'denuncia' && podeAcessarSolicitacaoPorSlug(usuario, 'denuncia', 'consultar')
     }
     return true
   })
 
   const colunas = ['Protocolo', 'Tipo', 'Data', 'Solicitante', 'E-mail', 'Telefone', 'Empresa', 'Cidade', 'Situação']
   const linhas = filtrados.map((i) => [
-    `"${i.protocolo}"`,
-    `"${i.formulario_nome}"`,
-    `"${new Date(i.criado_em).toLocaleDateString('pt-BR')} ${new Date(i.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}"`,
-    `"${(i.nome || (i.formulario_slug === 'denuncia' ? 'Sigiloso / Anônimo' : '')).replace(/"/g, '""')}"`,
-    `"${(i.email || '').replace(/"/g, '""')}"`,
-    `"${(i.telefone || '').replace(/"/g, '""')}"`,
-    `"${(i.empresa || '').replace(/"/g, '""')}"`,
-    `"${(i.cidade || '').replace(/"/g, '""')}"`,
-    `"${i.situacao.toUpperCase()}"`,
+    sanitizarCelulaCSV(i.protocolo),
+    sanitizarCelulaCSV(i.formulario_nome),
+    sanitizarCelulaCSV(
+      `${new Date(i.criado_em).toLocaleDateString('pt-BR')} ${new Date(i.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+    ),
+    sanitizarCelulaCSV(i.nome || (i.formulario_slug === 'denuncia' ? 'Sigiloso / Anônimo' : '')),
+    sanitizarCelulaCSV(i.email || ''),
+    sanitizarCelulaCSV(i.telefone || ''),
+    sanitizarCelulaCSV(i.empresa || ''),
+    sanitizarCelulaCSV(i.cidade || ''),
+    sanitizarCelulaCSV(i.situacao.toUpperCase()),
   ])
 
   return [colunas.join(';'), ...linhas.map((l) => l.join(';'))].join('\n')

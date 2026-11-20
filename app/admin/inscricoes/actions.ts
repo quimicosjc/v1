@@ -30,7 +30,10 @@ export async function listarInscricoes(
   filtro: FiltroInscricoes = {}
 ): Promise<InscricaoItem[]> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'inscricoes', 'consultar')) {
+      return []
+    }
     const supabaseAdmin = getSupabaseAdmin()
 
     let query = supabaseAdmin
@@ -69,7 +72,10 @@ export async function alternarStatusInscricao(
   novoAtivo: boolean
 ): Promise<{ ok: boolean } | { error: string }> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'inscricoes', 'editar')) {
+      return { error: 'Você não tem permissão para alterar cadastros de notícias.' }
+    }
     const supabaseAdmin = getSupabaseAdmin()
 
     const { error } = await supabaseAdmin
@@ -120,7 +126,10 @@ export async function excluirInscricao(
  */
 export async function obterEmailsAtivos(): Promise<string[]> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'inscricoes', 'consultar')) {
+      return []
+    }
     const supabaseAdmin = getSupabaseAdmin()
 
     const { data, error } = await supabaseAdmin

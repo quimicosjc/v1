@@ -1,5 +1,6 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { getUsuarioLogado, temPermissao } from '@/lib/supabase/auth'
 
@@ -41,11 +42,24 @@ export interface EdicaoFormData {
   status: 'rascunho' | 'publicado'
 }
 
+const BUCKET_MIDIAS = 'midias'
+const MAX_PDF_BYTES = 50 * 1024 * 1024 // 50 MB (via signed upload direto ao Storage)
+const MAX_CAPA_BYTES = 10 * 1024 * 1024 // 10 MB
+const EXT_CAPA_PERMITIDAS = ['jpg', 'jpeg', 'png', 'webp']
+const MIME_CAPA_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp']
+
 function getSupabaseAdmin() {
   return createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
+}
+
+function extrairCorHex(descricao?: string | null): string {
+  if (descricao && /^#[0-9a-fA-F]{6}$/.test(descricao.trim())) {
+    return descricao.trim()
+  }
+  return '#65172A'
 }
 
 /**
@@ -65,7 +79,10 @@ const PUBLICACAO_PADRAO: PublicacaoJornal = {
  */
 export async function listarPublicacoes(): Promise<PublicacaoJornal[]> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'jornais', 'consultar')) {
+      return []
+    }
     const supabaseAdmin = getSupabaseAdmin()
 
     const { data, error } = await supabaseAdmin
@@ -80,7 +97,7 @@ export async function listarPublicacoes(): Promise<PublicacaoJornal[]> {
     return data.map((item: any, idx: number) => ({
       id: item.id,
       nome: item.nome,
-      cor_hex: '#65172A',
+      cor_hex: extrairCorHex(item.descricao),
       ativo: true,
       ordem: idx + 1,
       criado_em: item.criado_em,
@@ -100,8 +117,8 @@ export async function criarPublicacao(data: {
 }): Promise<{ ok: boolean; id?: string } | { error: string }> {
   try {
     const usuario = await getUsuarioLogado()
-    if (usuario.papel === 'operador') {
-      return { error: 'Apenas Gestores ou Administradores podem cadastrar publicações.' }
+    if (usuario.papel === 'operador' || !temPermissao(usuario, 'jornais', 'criar')) {
+      return { error: 'Apenas Gestores ou Administradores autorizados podem cadastrar publicações.' }
     }
 
     if (!data.nome?.trim()) {
@@ -124,6 +141,8 @@ export async function criarPublicacao(data: {
       return { error: `Erro ao salvar publicação: ${error.message}` }
     }
 
+    revalidatePath('/jornais')
+    revalidatePath('/')
     return { ok: true, id: pub.id }
   } catch (err) {
     return { error: `Erro inesperado: ${err instanceof Error ? err.message : String(err)}` }
@@ -139,7 +158,10 @@ export async function listarEdicoes(filtro: {
   busca?: string
 }): Promise<EdicaoJornal[]> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'jornais', 'consultar')) {
+      return []
+    }
     const supabaseAdmin = getSupabaseAdmin()
 
     let query = supabaseAdmin
@@ -156,7 +178,8 @@ export async function listarEdicoes(filtro: {
         criado_em,
         atualizado_em,
         publicacoes_jornal (
-          nome
+          nome,
+          descricao
         )
       `)
       .order('criado_em', { ascending: false })
@@ -183,11 +206,12 @@ export async function listarEdicoes(filtro: {
 
     return (data || []).map((item: any) => {
       const pubNome = item.publicacoes_jornal?.nome || 'Boca no Trombone'
+      const pubCor = extrairCorHex(item.publicacoes_jornal?.descricao)
       return {
         id: item.id,
         publicacao_id: item.publicacao_id,
         publicacao_nome: pubNome,
-        publicacao_cor: '#65172A',
+        publicacao_cor: pubCor,
         numero: item.numero,
         complemento: item.mes_ano || '',
         data_edicao: item.data_publicacao || item.criado_em?.split('T')[0] || null,
@@ -213,7 +237,13 @@ export async function criarEdicao(
   data: EdicaoFormData
 ): Promise<{ ok: boolean; id?: string } | { error: string }> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'jornais', 'criar')) {
+      return { error: 'Você não tem permissão para adicionar edições de jornal.' }
+    }
+    if (data.status === 'publicado' && !temPermissao(usuario, 'jornais', 'publicar')) {
+      return { error: 'Você não tem permissão para publicar edições de jornal.' }
+    }
     const supabaseAdmin = getSupabaseAdmin()
 
     if (!data.publicacao_id) {
@@ -225,10 +255,8 @@ export async function criarEdicao(
       return { error: 'Informe o número da edição.' }
     }
 
-    if (data.status === 'publicado') {
-      if (!data.pdf_url) {
-        return { error: 'O arquivo PDF da edição é obrigatório para publicar.' }
-      }
+    if (data.status === 'publicado' && !data.pdf_url) {
+      return { error: 'O arquivo PDF da edição é obrigatório para publicar.' }
     }
 
     // Calcula mes_ano
@@ -261,6 +289,8 @@ export async function criarEdicao(
       return { error: `Erro no banco de dados: ${error.message}` }
     }
 
+    revalidatePath('/')
+    revalidatePath('/jornais')
     return { ok: true, id: novaEdicao.id }
   } catch (err) {
     console.error('Erro inesperado em criarEdicao:', err)
@@ -276,7 +306,13 @@ export async function atualizarEdicao(
   data: Partial<EdicaoFormData>
 ): Promise<{ ok: boolean } | { error: string }> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'jornais', 'editar')) {
+      return { error: 'Você não tem permissão para editar edições de jornal.' }
+    }
+    if (data.status === 'publicado' && !temPermissao(usuario, 'jornais', 'publicar')) {
+      return { error: 'Você não tem permissão para publicar edições de jornal.' }
+    }
     const supabaseAdmin = getSupabaseAdmin()
 
     if (data.status === 'publicado') {
@@ -307,6 +343,8 @@ export async function atualizarEdicao(
       return { error: `Erro ao salvar: ${error.message}` }
     }
 
+    revalidatePath('/')
+    revalidatePath('/jornais')
     return { ok: true }
   } catch (err) {
     return { error: `Erro inesperado: ${err instanceof Error ? err.message : String(err)}` }
@@ -334,6 +372,8 @@ export async function excluirEdicao(id: string): Promise<{ ok: boolean } | { err
       return { error: `Erro ao excluir: ${error.message}` }
     }
 
+    revalidatePath('/')
+    revalidatePath('/jornais')
     return { ok: true }
   } catch (err) {
     return { error: `Erro: ${err instanceof Error ? err.message : String(err)}` }
@@ -341,31 +381,123 @@ export async function excluirEdicao(id: string): Promise<{ ok: boolean } | { err
 }
 
 /**
- * Upload de arquivo PDF ou Imagem de Capa para Supabase Storage
+ * Gera URL assinada de upload direto para o bucket `midias` no Supabase Storage.
+ * Permite enviar PDFs grandes (até 50 MB) sem esbarrar no limite de payload de Server Actions / Vercel (4,5 MB).
+ */
+export async function criarUrlUploadJornal(params: {
+  tipo: 'pdf' | 'capa'
+  nomeArquivo: string
+  contentType: string
+  tamanhoBytes: number
+}): Promise<{ path: string; token: string; publicUrl: string; nome: string } | { error: string }> {
+  try {
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'jornais', 'criar') && !temPermissao(usuario, 'jornais', 'editar')) {
+      return { error: 'Você não tem permissão para enviar arquivos de jornais.' }
+    }
+
+    const { tipo, nomeArquivo, contentType, tamanhoBytes } = params
+    if (!nomeArquivo?.trim()) {
+      return { error: 'Nome de arquivo inválido.' }
+    }
+
+    const ext = nomeArquivo.split('.').pop()?.toLowerCase() || ''
+
+    if (tipo === 'pdf') {
+      const ehPdf = ext === 'pdf' || contentType === 'application/pdf'
+      if (!ehPdf) {
+        return { error: 'Selecione um arquivo PDF válido (.pdf).' }
+      }
+      if (tamanhoBytes <= 0 || tamanhoBytes > MAX_PDF_BYTES) {
+        return { error: 'O arquivo PDF deve ter no máximo 50 MB.' }
+      }
+    } else {
+      const ehImagem = EXT_CAPA_PERMITIDAS.includes(ext) || MIME_CAPA_PERMITIDOS.includes(contentType)
+      if (!ehImagem) {
+        return { error: 'Formato de capa inválido. Use JPG, PNG ou WebP.' }
+      }
+      if (tamanhoBytes <= 0 || tamanhoBytes > MAX_CAPA_BYTES) {
+        return { error: 'A imagem de capa deve ter no máximo 10 MB.' }
+      }
+    }
+
+    const supabaseAdmin = getSupabaseAdmin()
+    const timestamp = Date.now()
+    const random = Math.random().toString(36).substring(2, 8)
+    const extSegura = tipo === 'pdf' ? 'pdf' : (EXT_CAPA_PERMITIDAS.includes(ext) ? ext : 'jpg')
+    const pasta = tipo === 'pdf' ? 'jornais/pdf' : 'jornais/capas'
+    const caminho = `${pasta}/${timestamp}-${random}.${extSegura}`
+
+    const { data, error } = await supabaseAdmin.storage
+      .from(BUCKET_MIDIAS)
+      .createSignedUploadUrl(caminho)
+
+    if (error || !data?.token) {
+      console.error('Erro ao gerar URL assinada de upload de jornal:', error)
+      return { error: `Falha ao preparar o upload no Storage: ${error?.message || 'erro desconhecido'}` }
+    }
+
+    const { data: publicUrlData } = supabaseAdmin.storage
+      .from(BUCKET_MIDIAS)
+      .getPublicUrl(caminho)
+
+    return {
+      path: data.path,
+      token: data.token,
+      publicUrl: publicUrlData.publicUrl,
+      nome: nomeArquivo,
+    }
+  } catch (err) {
+    console.error('Erro em criarUrlUploadJornal:', err)
+    return { error: `Erro ao preparar upload: ${err instanceof Error ? err.message : String(err)}` }
+  }
+}
+
+/**
+ * Fallback de upload via servidor para arquivos menores (PDF ou Capa) no bucket `midias`.
  */
 export async function uploadArquivoJornal(
   formData: FormData,
   tipo: 'pdf' | 'capa'
 ): Promise<{ url: string; nome: string } | { error: string }> {
   try {
-    await getUsuarioLogado()
+    const usuario = await getUsuarioLogado()
+    if (!temPermissao(usuario, 'jornais', 'criar') && !temPermissao(usuario, 'jornais', 'editar')) {
+      return { error: 'Você não tem permissão para enviar arquivos de jornais.' }
+    }
+
     const file = formData.get('arquivo') as File | null
     if (!file) return { error: 'Nenhum arquivo enviado.' }
+
+    const ext = file.name.split('.').pop()?.toLowerCase() || (tipo === 'pdf' ? 'pdf' : 'jpg')
+    if (tipo === 'pdf') {
+      if (ext !== 'pdf' && file.type !== 'application/pdf') {
+        return { error: 'Selecione um arquivo PDF válido (.pdf).' }
+      }
+      if (file.size > MAX_PDF_BYTES) {
+        return { error: 'O arquivo PDF deve ter no máximo 50 MB.' }
+      }
+    } else {
+      if (!EXT_CAPA_PERMITIDAS.includes(ext) && !MIME_CAPA_PERMITIDOS.includes(file.type)) {
+        return { error: 'Formato de capa inválido. Use JPG, PNG ou WebP.' }
+      }
+      if (file.size > MAX_CAPA_BYTES) {
+        return { error: 'A imagem de capa deve ter no máximo 10 MB.' }
+      }
+    }
 
     const supabaseAdmin = getSupabaseAdmin()
     const timestamp = Date.now()
     const random = Math.random().toString(36).substring(2, 8)
-    const ext = file.name.split('.').pop()?.toLowerCase() || (tipo === 'pdf' ? 'pdf' : 'jpg')
+    const extSegura = tipo === 'pdf' ? 'pdf' : (EXT_CAPA_PERMITIDAS.includes(ext) ? ext : 'jpg')
     const pasta = tipo === 'pdf' ? 'jornais/pdf' : 'jornais/capas'
-    const caminho = `${pasta}/${timestamp}-${random}.${ext}`
+    const caminho = `${pasta}/${timestamp}-${random}.${extSegura}`
 
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
-    const bucketName = 'midia'
-
     const { error } = await supabaseAdmin.storage
-      .from(bucketName)
+      .from(BUCKET_MIDIAS)
       .upload(caminho, buffer, {
         contentType: file.type || (tipo === 'pdf' ? 'application/pdf' : 'image/jpeg'),
         upsert: false,
@@ -377,7 +509,7 @@ export async function uploadArquivoJornal(
     }
 
     const { data: publicUrlData } = supabaseAdmin.storage
-      .from(bucketName)
+      .from(BUCKET_MIDIAS)
       .getPublicUrl(caminho)
 
     return { url: publicUrlData.publicUrl, nome: file.name }

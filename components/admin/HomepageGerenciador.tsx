@@ -3,6 +3,13 @@
 import { useState, useTransition } from 'react'
 import type { HomepageConfig, BannerItem } from '@/app/admin/homepage/actions'
 import { salvarConfigHomepage, uploadBanner } from '@/app/admin/homepage/actions'
+import {
+  TEMPO_BANNER_MAX_SEG,
+  TEMPO_BANNER_MIN_SEG,
+  TEMPO_BANNER_PADRAO_SEG,
+  sanitizarTempoBannerSegundos,
+} from '@/lib/banner-config'
+import ImagemLightboxModal, { type ImagemLightboxDados } from '@/components/admin/ImagemLightboxModal'
 
 interface Props {
   configInicial: HomepageConfig
@@ -31,6 +38,7 @@ export default function HomepageGerenciador({ configInicial, usuarioLogado }: Pr
   const [formBannerAtivo, setFormBannerAtivo] = useState(true)
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [uploadingBannerMobile, setUploadingBannerMobile] = useState(false)
+  const [imagemAmpliada, setImagemAmpliada] = useState<ImagemLightboxDados | null>(null)
 
   function showFeedback(msg: string, tipo: 'sucesso' | 'erro' = 'sucesso') {
     setToast({ msg, tipo })
@@ -110,40 +118,56 @@ export default function HomepageGerenciador({ configInicial, usuarioLogado }: Pr
   }
 
   async function handleUploadBannerImg(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+    const input = e.target
+    const file = input.files?.[0]
     if (!file) return
 
     setUploadingBanner(true)
-    const formData = new FormData()
-    formData.append('arquivo', file)
+    try {
+      const formData = new FormData()
+      formData.append('arquivo', file)
 
-    const res = await uploadBanner(formData)
-    setUploadingBanner(false)
+      const res = await uploadBanner(formData)
 
-    if ('error' in res) {
-      showFeedback(res.error, 'erro')
-    } else {
-      setFormBannerImagem(res.url)
-      showFeedback('Imagem do banner carregada com sucesso!')
+      if ('error' in res) {
+        showFeedback(res.error, 'erro')
+      } else {
+        setFormBannerImagem(res.url)
+        showFeedback('Imagem do banner carregada com sucesso!')
+      }
+    } catch (err) {
+      console.error('Erro ao enviar banner:', err)
+      showFeedback('Não foi possível enviar a imagem do banner. Tente novamente.', 'erro')
+    } finally {
+      setUploadingBanner(false)
+      input.value = ''
     }
   }
 
   async function handleUploadBannerImgMobile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+    const input = e.target
+    const file = input.files?.[0]
     if (!file) return
 
     setUploadingBannerMobile(true)
-    const formData = new FormData()
-    formData.append('arquivo', file)
+    try {
+      const formData = new FormData()
+      formData.append('arquivo', file)
 
-    const res = await uploadBanner(formData)
-    setUploadingBannerMobile(false)
+      const res = await uploadBanner(formData)
 
-    if ('error' in res) {
-      showFeedback(res.error, 'erro')
-    } else {
-      setFormBannerImagemMobile(res.url)
-      showFeedback('Imagem para celular carregada com sucesso!')
+      if ('error' in res) {
+        showFeedback(res.error, 'erro')
+      } else {
+        setFormBannerImagemMobile(res.url)
+        showFeedback('Imagem para celular carregada com sucesso!')
+      }
+    } catch (err) {
+      console.error('Erro ao enviar banner mobile:', err)
+      showFeedback('Não foi possível enviar a imagem para celular. Tente novamente.', 'erro')
+    } finally {
+      setUploadingBannerMobile(false)
+      input.value = ''
     }
   }
 
@@ -803,7 +827,7 @@ export default function HomepageGerenciador({ configInicial, usuarioLogado }: Pr
           }}
         >
           <div style={{ fontSize: '13px', color: '#7a5a10', lineHeight: 1.5 }}>
-            📌 <strong>Gestão de Destaques:</strong> A escolha de quais 4 notícias aparecem no bloco e sua ordem exata (1ª a 4ª) são administradas diretamente na tela de <strong>Notícias</strong>.
+            📌 <strong>Destaques automáticos + controle manual:</strong> Por padrão, a notícia publicada mais recentemente assume automaticamente o destaque principal em ordem cronológica. Caso deseje alterar posições manualmente, use <strong>Organizar destaques</strong> na tela de <strong>Notícias</strong>.
           </div>
           <a
             href="/admin/noticias"
@@ -840,6 +864,83 @@ export default function HomepageGerenciador({ configInicial, usuarioLogado }: Pr
           </button>
         </div>
 
+        {/* Configuração do tempo de exibição por banner */}
+        <div
+          style={{
+            background: '#f8fafb',
+            border: '1px solid #e4dce0',
+            borderRadius: '6px',
+            padding: '14px 16px',
+            marginBottom: '16px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '14px',
+          }}
+        >
+          <div style={{ flex: '1 1 280px' }}>
+            <label
+              htmlFor="banner-tempo-segundos"
+              style={{ fontSize: '13.5px', fontWeight: 700, color: '#30252a', display: 'block', marginBottom: '4px' }}
+            >
+              Tempo de exibição de cada banner (segundos)
+            </label>
+            <p style={{ margin: 0, fontSize: '12px', color: '#71636a', lineHeight: 1.45 }}>
+              Define quanto tempo cada banner permanece na tela antes de girar automaticamente ({TEMPO_BANNER_MIN_SEG}s a {TEMPO_BANNER_MAX_SEG}s). Padrão aprovado: <strong>{TEMPO_BANNER_PADRAO_SEG}s</strong> (1s acima da referência de 10s da Folha de S.Paulo). A rotação pausa automaticamente durante a interação do leitor.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <input
+              id="banner-tempo-segundos"
+              type="number"
+              min={TEMPO_BANNER_MIN_SEG}
+              max={TEMPO_BANNER_MAX_SEG}
+              step={1}
+              value={config.bannerTempoSegundos ?? TEMPO_BANNER_PADRAO_SEG}
+              onChange={(e) => {
+                const val = Number(e.target.value)
+                setConfig((prev) => ({
+                  ...prev,
+                  bannerTempoSegundos: Number.isFinite(val) ? val : TEMPO_BANNER_PADRAO_SEG,
+                }))
+              }}
+              onBlur={(e) => {
+                const sanitizado = sanitizarTempoBannerSegundos(Number(e.target.value))
+                setConfig((prev) => ({ ...prev, bannerTempoSegundos: sanitizado }))
+              }}
+              style={{ ...inputStyle, width: '84px', textAlign: 'center', fontWeight: 700, padding: '8px 10px' }}
+            />
+            <span style={{ fontSize: '13px', color: '#71636a', fontWeight: 600 }}>seg</span>
+            <div style={{ display: 'flex', gap: '4px', marginLeft: '4px' }}>
+              {[7, 11, 15].map((seg) => {
+                const ativo = (config.bannerTempoSegundos ?? TEMPO_BANNER_PADRAO_SEG) === seg
+                return (
+                  <button
+                    key={seg}
+                    type="button"
+                    onClick={() => setConfig((prev) => ({ ...prev, bannerTempoSegundos: seg }))}
+                    style={{
+                      border: ativo ? '1px solid #861e32' : '1px solid #ced9df',
+                      background: ativo ? '#fdf2f4' : 'white',
+                      color: ativo ? '#861e32' : '#4a3d43',
+                      borderRadius: '4px',
+                      padding: '5px 8px',
+                      fontSize: '12px',
+                      fontWeight: ativo ? 700 : 500,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    {seg}s{seg === TEMPO_BANNER_PADRAO_SEG ? ' (Padrão)' : ''}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
         {config.banners.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {config.banners.map((banner, idx) => (
@@ -855,23 +956,39 @@ export default function HomepageGerenciador({ configInicial, usuarioLogado }: Pr
                   borderRadius: '6px',
                 }}
               >
-                {/* Miniatura 9:2 */}
-                <div
+                {/* Miniatura compacta clicável preservando proporção */}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setImagemAmpliada({
+                      url: banner.imagem,
+                      titulo: banner.titulo,
+                      subtitulo: banner.link ? `Link: ${banner.link}` : undefined,
+                    })
+                  }
+                  aria-label={`Ampliar imagem do banner ${banner.titulo}`}
+                  title="Clique para visualizar em tamanho maior"
                   style={{
                     width: '135px',
-                    height: '30px',
-                    background: '#30252a',
+                    height: '38px',
+                    padding: '2px',
+                    background: '#f0ecee',
+                    border: '1px solid #d9ced3',
                     borderRadius: '4px',
                     overflow: 'hidden',
                     flexShrink: 0,
+                    cursor: 'zoom-in',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
                   <img
                     src={banner.imagem}
                     alt={banner.titulo}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', objectFit: 'contain' }}
                   />
-                </div>
+                </button>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1044,9 +1161,11 @@ export default function HomepageGerenciador({ configInicial, usuarioLogado }: Pr
             style={{
               background: 'white',
               borderRadius: '8px',
-              padding: '28px',
+              padding: '24px',
               maxWidth: '520px',
               width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
               boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
             }}
             onClick={(e) => e.stopPropagation()}
@@ -1097,30 +1216,58 @@ export default function HomepageGerenciador({ configInicial, usuarioLogado }: Pr
                 </label>
 
                 {formBannerImagem ? (
-                  <div style={{ marginBottom: '10px' }}>
-                    <div
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setImagemAmpliada({
+                          url: formBannerImagem,
+                          titulo: formBannerTitulo || 'Prévia do banner panorâmico',
+                        })
+                      }
+                      aria-label="Ampliar prévia do banner panorâmico"
                       style={{
-                        width: '100%',
-                        aspectRatio: '9 / 2',
-                        background: '#30252a',
+                        width: '210px',
+                        height: '58px',
+                        padding: '4px',
+                        background: '#f0ecee',
+                        border: '1px solid #cbd7de',
                         borderRadius: '4px',
                         overflow: 'hidden',
-                        marginBottom: '6px',
+                        cursor: 'zoom-in',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
                       }}
                     >
                       <img
                         src={formBannerImagem}
                         alt="Prévia do banner"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', objectFit: 'contain' }}
                       />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setFormBannerImagem('')}
-                      style={{ border: 'none', background: 'transparent', color: '#861e32', fontSize: '12px', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}
-                    >
-                      Trocar imagem do banner
                     </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setImagemAmpliada({
+                            url: formBannerImagem,
+                            titulo: formBannerTitulo || 'Prévia do banner panorâmico',
+                          })
+                        }
+                        style={{ border: 'none', background: 'transparent', color: '#183b4b', fontSize: '12px', padding: 0, cursor: 'pointer', textDecoration: 'underline', fontWeight: 600, textAlign: 'left' }}
+                      >
+                        Ampliar imagem
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormBannerImagem('')}
+                        style={{ border: 'none', background: 'transparent', color: '#861e32', fontSize: '12px', padding: 0, cursor: 'pointer', textDecoration: 'underline', textAlign: 'left' }}
+                      >
+                        Trocar imagem do banner
+                      </button>
+                    </div>
                   </div>
                 ) : null}
 
@@ -1152,30 +1299,58 @@ export default function HomepageGerenciador({ configInicial, usuarioLogado }: Pr
                 </label>
 
                 {formBannerImagemMobile ? (
-                  <div style={{ marginBottom: '10px' }}>
-                    <div
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setImagemAmpliada({
+                          url: formBannerImagemMobile,
+                          titulo: `${formBannerTitulo || 'Banner'} (versão celular)`,
+                        })
+                      }
+                      aria-label="Ampliar prévia do banner para celular"
                       style={{
-                        width: '160px',
-                        aspectRatio: '4 / 3',
-                        background: '#30252a',
+                        width: '104px',
+                        height: '78px',
+                        padding: '4px',
+                        background: '#f0ecee',
+                        border: '1px solid #cbd7de',
                         borderRadius: '4px',
                         overflow: 'hidden',
-                        marginBottom: '6px',
+                        cursor: 'zoom-in',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
                       }}
                     >
                       <img
                         src={formBannerImagemMobile}
                         alt="Prévia do banner para celular"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', objectFit: 'contain' }}
                       />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setFormBannerImagemMobile('')}
-                      style={{ border: 'none', background: 'transparent', color: '#861e32', fontSize: '12px', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}
-                    >
-                      Remover imagem de celular
                     </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setImagemAmpliada({
+                            url: formBannerImagemMobile,
+                            titulo: `${formBannerTitulo || 'Banner'} (versão celular)`,
+                          })
+                        }
+                        style={{ border: 'none', background: 'transparent', color: '#183b4b', fontSize: '12px', padding: 0, cursor: 'pointer', textDecoration: 'underline', fontWeight: 600, textAlign: 'left' }}
+                      >
+                        Ampliar imagem
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormBannerImagemMobile('')}
+                        style={{ border: 'none', background: 'transparent', color: '#861e32', fontSize: '12px', padding: 0, cursor: 'pointer', textDecoration: 'underline', textAlign: 'left' }}
+                      >
+                        Remover imagem de celular
+                      </button>
+                    </div>
                   </div>
                 ) : null}
 
@@ -1220,6 +1395,12 @@ export default function HomepageGerenciador({ configInicial, usuarioLogado }: Pr
           </div>
         </div>
       )}
+
+      {/* ── Lightbox de visualização ampliada ────────────────────────────── */}
+      <ImagemLightboxModal
+        imagem={imagemAmpliada}
+        onClose={() => setImagemAmpliada(null)}
+      />
 
       {/* ── Toast de Feedback ────────────────────────────────────────────── */}
       {toast && (

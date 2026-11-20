@@ -10,6 +10,14 @@ import AtalhosServicos from '@/components/publico/AtalhosServicos'
 import BannerRotativo, { BannerItemData } from '@/components/publico/BannerRotativo'
 import BlocoJornal, { EdicaoJornalHome } from '@/components/publico/BlocoJornal'
 import { CORES, CONTAINER_STYLE } from '@/lib/design'
+import {
+  TEMPO_BANNER_PADRAO_SEG,
+  sanitizarTempoBannerSegundos,
+} from '@/lib/banner-config'
+import {
+  resolverOrdemDestaquesHome,
+  type ConfigDestaquesHome,
+} from '@/lib/destaques-home'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,6 +31,7 @@ interface NoticiaItem {
   banner_url?: string | null
   imagem_y?: number | null
   publicado_em?: string | null
+  criado_em?: string | null
   fotos_json?: string | null
   url_referencia?: string | null
 }
@@ -112,6 +121,7 @@ export default async function HomePage() {
   let shortcuts = ['fique-socio', 'denuncia', 'colonia', 'juridico']
   let model: 'A' | 'B' = 'B' // Padrão B com 1 manchete + 4 secundárias
   let posicaoServicos: 'entre' | 'acima' | 'abaixo' = 'entre'
+  let bannerTempoSegundos: number = TEMPO_BANNER_PADRAO_SEG
   let banners: BannerItemData[] = BANNERS_PADRAO
   let footerTexto: string | null = null
 
@@ -131,6 +141,9 @@ export default async function HomePage() {
       if (v.posicaoServicos === 'entre' || v.posicaoServicos === 'acima' || v.posicaoServicos === 'abaixo') {
         posicaoServicos = v.posicaoServicos
       }
+      if (v.bannerTempoSegundos !== undefined) {
+        bannerTempoSegundos = sanitizarTempoBannerSegundos(v.bannerTempoSegundos)
+      }
       if (Array.isArray(v.banners) && v.banners.length > 0) {
         banners = v.banners.map((b: any, idx: number) => ({
           id: b.id || `b-${idx}`,
@@ -147,53 +160,61 @@ export default async function HomePage() {
     console.error('Erro ao ler configuração da homepage:', err)
   }
 
-  // 2. Busca ordem dos slots de destaque (até 5 posições)
-  let slotsIds: string[] = []
+  // 2. Busca configuração de destaques (automático por padrão, com suporte a ordenação manual)
+  let configDestaques: ConfigDestaquesHome | null = null
   try {
     const { data: destaquesData } = await supabase
       .from('site_config')
-      .select('valor')
+      .select('valor, atualizado_em')
       .eq('chave', 'destaques')
       .maybeSingle()
 
-    if (destaquesData?.valor?.slots && Array.isArray(destaquesData.valor.slots)) {
-      slotsIds = destaquesData.valor.slots
+    if (destaquesData?.valor && typeof destaquesData.valor === 'object') {
+      const v = destaquesData.valor as any
+      configDestaques = {
+        slots: Array.isArray(v.slots) ? v.slots : [],
+        modo: v.modo === 'manual' ? 'manual' : 'automatico',
+        atualizado_em: v.atualizado_em || destaquesData.atualizado_em || null,
+      }
     }
   } catch {}
 
-  // 3. Busca notícias publicadas no Supabase
+  // 3. Busca notícias publicadas no Supabase em ordem cronológica (mais recente primeiro)
   const { data: dbNews } = await supabase
     .from('conteudos')
-    .select('id, titulo, slug, chapeu, resumo, corpo, banner_url, imagem_y, publicado_em, fotos_json, destaque, url_referencia')
+    .select('id, titulo, slug, chapeu, resumo, corpo, banner_url, imagem_y, publicado_em, criado_em, fotos_json, destaque, url_referencia')
     .eq('tipo', 'noticia')
     .eq('status', 'publicado')
     .order('publicado_em', { ascending: false })
-    .limit(10)
+    .order('criado_em', { ascending: false })
+    .limit(30)
 
-  // Organiza notícias respeitando a ordem dos slots de destaque
-  const rawList: NoticiaItem[] = (dbNews as any[]) || []
-  let orderedNews: NoticiaItem[] = []
+  let rawList: NoticiaItem[] = (dbNews as any[]) || []
 
-  if (slotsIds.length > 0) {
-    for (const sid of slotsIds) {
-      const found = rawList.find((n) => n.id === sid)
-      if (found && !orderedNews.some((x) => x.id === found.id)) {
-        orderedNews.push(found)
+  // Se houver slots manuais apontando para notícias publicadas mais antigas fora do top 30, inclui-as
+  if (configDestaques?.modo === 'manual' && configDestaques.slots && configDestaques.slots.length > 0) {
+    const idsPresentes = new Set(rawList.map((n) => n.id))
+    const idsFaltantes = configDestaques.slots.filter((id) => !idsPresentes.has(id))
+    if (idsFaltantes.length > 0) {
+      const { data: extras } = await supabase
+        .from('conteudos')
+        .select('id, titulo, slug, chapeu, resumo, corpo, banner_url, imagem_y, publicado_em, criado_em, fotos_json, destaque, url_referencia')
+        .eq('tipo', 'noticia')
+        .eq('status', 'publicado')
+        .in('id', idsFaltantes)
+      if (extras && extras.length > 0) {
+        rawList = [...rawList, ...(extras as any[])]
       }
     }
   }
 
-  // Adiciona as demais notícias publicadas
-  for (const n of rawList) {
-    if (!orderedNews.some((x) => x.id === n.id)) {
-      orderedNews.push(n)
-    }
-  }
+  // Organiza notícias: destaque automático cronológico + suporte a reordenação manual sem duplicações
+  const orderedNews: NoticiaItem[] = resolverOrdemDestaquesHome(rawList, configDestaques)
 
-  // Complementa com notícias demo se houver menos de 5 para manter o visual completo
+  // Complementa com notícias demo somente se o banco tiver menos de 5 publicadas
   for (const d of NOTICIAS_DEMO) {
     if (orderedNews.length >= 5) break
-    if (!orderedNews.some((x) => x.slug === d.slug)) {
+    if (!orderedNews.some((x) => x.slug === d.slug || x.id === d.id)) {
       orderedNews.push(d)
     }
   }
@@ -372,23 +393,27 @@ export default async function HomePage() {
                         </div>
                       )}
 
-                      {/* Link Outras notícias conforme especificação */}
-                      <div style={{ textAlign: 'right', marginTop: '16px' }}>
+                      {/* Botão OUTRAS NOTÍCIAS de alta visibilidade e acessibilidade */}
+                      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px' }}>
                         <Link
                           href="/noticias"
-                          style={{
-                            fontSize: '13.5px',
-                            fontWeight: 700,
-                            color: CORES.action,
-                            textDecoration: 'none',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                          }}
-                          className="link-outras-noticias"
+                          className="btn-outras-noticias"
                         >
-                          <span>Outras notícias</span>
-                          <span>→</span>
+                          <span>OUTRAS NOTÍCIAS</span>
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                          </svg>
                         </Link>
                       </div>
                     </section>
@@ -441,23 +466,27 @@ export default async function HomePage() {
                       </div>
                     )}
 
-                    {/* Link Outras notícias */}
-                    <div style={{ textAlign: 'right', marginTop: '16px' }}>
+                    {/* Botão OUTRAS NOTÍCIAS de alta visibilidade e acessibilidade */}
+                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px' }}>
                       <Link
                         href="/noticias"
-                        style={{
-                          fontSize: '13.5px',
-                          fontWeight: 700,
-                          color: CORES.action,
-                          textDecoration: 'none',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                        }}
-                        className="link-outras-noticias"
+                        className="btn-outras-noticias"
                       >
-                        <span>Outras notícias</span>
-                        <span>→</span>
+                        <span>OUTRAS NOTÍCIAS</span>
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                          <polyline points="12 5 19 12 12 19" />
+                        </svg>
                       </Link>
                     </div>
                   </section>
@@ -473,7 +502,7 @@ export default async function HomePage() {
               if (nomeBloco === 'Banners rotativos') {
                 return (
                   <section key={nomeBloco} aria-label="Banners institucionais">
-                    <BannerRotativo banners={banners} />
+                    <BannerRotativo banners={banners} duracaoSegundos={bannerTempoSegundos} />
                   </section>
                 )
               }
@@ -494,10 +523,38 @@ export default async function HomePage() {
       {/* ── 3. RODAPÉ INSTITUCIONAL (COLUNA ÚNICA §13.7) ── */}
       <FooterPublico textoRodape={footerTexto} />
 
-      {/* Estilos responsivos das grades */}
+      {/* Estilos responsivos das grades e botão OUTRAS NOTÍCIAS */}
       <style>{`
-        .link-outras-noticias:hover {
-          text-decoration: underline !important;
+        .btn-outras-noticias {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          min-height: 48px;
+          padding: 13px 34px;
+          background: ${CORES.action};
+          color: #FFFFFF;
+          font-family: var(--font-condensed), sans-serif;
+          font-size: 16.5px;
+          font-weight: 800;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+          text-decoration: none;
+          border-radius: 6px;
+          border: 2px solid ${CORES.action};
+          box-shadow: 0 3px 12px rgba(134, 30, 50, 0.22);
+          transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .btn-outras-noticias:hover {
+          background: ${CORES.actionHover};
+          border-color: ${CORES.actionHover};
+          transform: translateY(-1px);
+          box-shadow: 0 6px 18px rgba(101, 23, 42, 0.28);
+          text-decoration: none !important;
+        }
+        .btn-outras-noticias:focus-visible {
+          outline: 3px solid ${CORES.action};
+          outline-offset: 3px;
         }
         @media (max-width: 960px) {
           .grade-secundarias-4 {
@@ -513,6 +570,11 @@ export default async function HomePage() {
           .grade-secundarias-4 {
             grid-template-columns: 1fr !important;
             gap: 12px !important;
+          }
+          .btn-outras-noticias {
+            width: 100%;
+            min-height: 50px;
+            font-size: 16px;
           }
         }
       `}</style>

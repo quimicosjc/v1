@@ -7,8 +7,8 @@ import type { PaginaInstitucional } from '@/app/admin/paginas/actions'
 import {
   salvarPaginaInstitucional,
   uploadMidiaInstitucional,
-  uploadDocumentoInstitucional,
 } from '@/app/admin/paginas/actions'
+import ImagemLightboxModal, { type ImagemLightboxDados } from '@/components/admin/ImagemLightboxModal'
 
 const RichEditor = dynamic(() => import('@/components/admin/RichEditor'), {
   ssr: false,
@@ -39,6 +39,7 @@ export default function EditorTextoInstitucional({ pagina }: EditorTextoProps) {
   const [salvando, setSalvando] = useState(false)
   const [alterado, setAlterado] = useState(false)
   const [toastMsg, setToastMsg] = useState<{ texto: string; tipo: 'ok' | 'erro' } | null>(null)
+  const [imagemAmpliada, setImagemAmpliada] = useState<ImagemLightboxDados | null>(null)
 
   const bannerInputRef = useRef<HTMLInputElement>(null)
 
@@ -286,52 +287,90 @@ export default function EditorTextoInstitucional({ pagina }: EditorTextoProps) {
           </div>
 
           {bannerUrl && (
-            <div style={{ marginTop: '14px' }}>
-              <div
+            <div style={{ marginTop: '12px', display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() =>
+                  setImagemAmpliada({
+                    url: bannerUrl,
+                    titulo: titulo || 'Imagem de cabeçalho',
+                  })
+                }
+                aria-label="Ampliar imagem de cabeçalho"
+                title="Clique para visualizar em tamanho maior"
                 style={{
-                  width: '100%',
-                  aspectRatio: '3 / 2',
-                  maxHeight: '360px',
+                  width: '144px',
+                  height: '98px',
+                  padding: '4px',
                   borderRadius: '6px',
                   overflow: 'hidden',
-                  background: '#f0f0f0',
-                  border: '1px solid #e4dce0',
+                  background: '#f2eef0',
+                  border: '1px solid #d9ced3',
+                  cursor: 'zoom-in',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
                 }}
               >
                 <img
                   src={bannerUrl}
                   alt={titulo}
                   style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    objectPosition: `50% ${imagemY}%`,
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    width: 'auto',
+                    height: 'auto',
+                    objectFit: 'contain',
                     display: 'block',
                   }}
                 />
-              </div>
+              </button>
 
-              {/* Slider de Foco */}
-              <div style={{ marginTop: '12px', background: '#f8fafb', padding: '12px 16px', borderRadius: '6px', border: '1px solid #e4dce0' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+              {/* Slider de Foco + botão ampliar */}
+              <div style={{ flex: '1 1 240px', background: '#f8fafb', padding: '10px 14px', borderRadius: '6px', border: '1px solid #e4dce0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap', marginBottom: '6px' }}>
                   <span style={{ fontSize: '12px', fontWeight: 600, color: '#30252a' }}>
                     Ponto de foco vertical: {imagemY}%
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => { setImagemY(50); setAlterado(true) }}
-                    style={{
-                      border: 'none',
-                      background: 'transparent',
-                      color: '#861e32',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      padding: 0,
-                    }}
-                  >
-                    Centralizar (50%)
-                  </button>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setImagemAmpliada({
+                          url: bannerUrl,
+                          titulo: titulo || 'Imagem de cabeçalho',
+                        })
+                      }
+                      style={{
+                        border: 'none',
+                        background: 'transparent',
+                        color: '#183b4b',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        padding: 0,
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      Ampliar imagem
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setImagemY(50); setAlterado(true) }}
+                      style={{
+                        border: 'none',
+                        background: 'transparent',
+                        color: '#861e32',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        padding: 0,
+                      }}
+                    >
+                      Centralizar (50%)
+                    </button>
+                  </div>
                 </div>
                 <input
                   type="range"
@@ -439,6 +478,12 @@ export default function EditorTextoInstitucional({ pagina }: EditorTextoProps) {
           </button>
         </div>
       </div>
+
+      {/* Lightbox */}
+      <ImagemLightboxModal
+        imagem={imagemAmpliada}
+        onClose={() => setImagemAmpliada(null)}
+      />
 
       {/* Toast */}
       {toastMsg && (

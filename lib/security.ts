@@ -3,8 +3,8 @@
  * Previne ataques de Cross-Site Scripting (XSS) e injeção de tags perigosas.
  */
 
-// Domínios confiáveis permitidos em iframes incorporados
-const DOMINIOS_IFRAME_PERMITIDOS = [
+// Hostnames confiáveis permitidos em iframes incorporados
+const HOSTS_IFRAME_PERMITIDOS = new Set([
   'youtube.com',
   'www.youtube.com',
   'youtube-nocookie.com',
@@ -13,10 +13,23 @@ const DOMINIOS_IFRAME_PERMITIDOS = [
   'instagram.com',
   'www.instagram.com',
   'player.vimeo.com',
-  'google.com/maps',
-  'www.google.com/maps',
   'maps.google.com',
-]
+])
+
+function iframeSrcPermitido(srcUrl: string): boolean {
+  try {
+    const parsed = new URL(srcUrl)
+    if (parsed.protocol !== 'https:') return false
+    const host = parsed.hostname.toLowerCase()
+    if (HOSTS_IFRAME_PERMITIDOS.has(host)) return true
+    if ((host === 'google.com' || host === 'www.google.com') && parsed.pathname.startsWith('/maps')) {
+      return true
+    }
+    return false
+  } catch {
+    return false
+  }
+}
 
 /**
  * Remove resíduos de scraping do site legado (imagens duplicadas de capa,
@@ -84,21 +97,25 @@ export function sanitizarHtml(htmlBruto: string): string {
   // 3. Remove esquemas de URL perigosos (javascript:, vbscript:, data:text/html)
   limpo = limpo.replace(/\s+(href|src)\s*=\s*['\"]\s*(javascript:|vbscript:|data:text\/html)[^'\"]*['\"]/gi, ' $1="#"')
 
-  // 4. Validação e sanitização estrita de iframes (apenas origens confiáveis)
-  limpo = limpo.replace(/<iframe([\s\S]*?)<\/iframe>/gi, (match, attrs) => {
+  // 4. Validação e sanitização estrita de iframes (apenas hostnames oficiais HTTPS)
+  limpo = limpo.replace(/<iframe([\s\S]*?)<\/iframe>/gi, (_match, inner) => {
+    const closeIdx = inner.indexOf('>')
+    const attrs = closeIdx >= 0 ? inner.slice(0, closeIdx) : inner
     const srcMatch = attrs.match(/src\s*=\s*['\"]([^'\"]+)['\"]/i)
     if (!srcMatch || !srcMatch[1]) return ''
 
-    const srcUrl = srcMatch[1]
-    const ehPermitido = DOMINIOS_IFRAME_PERMITIDOS.some((dominio) => srcUrl.includes(dominio))
-
-    if (!ehPermitido) {
-      // Bloqueia iframe não autorizado
+    const srcUrl = srcMatch[1].trim()
+    if (!iframeSrcPermitido(srcUrl)) {
       return ''
     }
 
-    // Retorna iframe com sandbox e referrer-policy seguros
-    return `<iframe${attrs} loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>`
+    // Remove atributo obsoleto scrolling="no" (WCAG 1.4.4 / 1.4.10) e evita duplicação de loading/referrerpolicy
+    const attrsLimpos = attrs
+      .replace(/\s+scrolling\s*=\s*(['\"][^'\"]*['\"]|[^\s>]+)/gi, '')
+      .replace(/\s+loading\s*=\s*(['\"][^'\"]*['\"]|[^\s>]+)/gi, '')
+      .replace(/\s+referrerpolicy\s*=\s*(['\"][^'\"]*['\"]|[^\s>]+)/gi, '')
+
+    return `<iframe${attrsLimpos} loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>`
   })
 
   // 5. Converte links soltos de YouTube / Shorts em players embutidos responsivos
@@ -113,14 +130,11 @@ export function sanitizarHtml(htmlBruto: string): string {
 export function converterVideosEmEmbed(html: string): string {
   if (!html || typeof html !== 'string') return ''
 
-  // Links soltos em parágrafos ou tags âncora isoladas:
-  // Ex: <p><a href="https://youtu.be/xyz">...</a></p> ou <p>https://youtu.be/xyz</p>
   const padraoYoutube = /<p>\s*(?:<a[^>]*href=["\'])?(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[^\s<"'\&]*)?(?:["\'][^>]*>.*?<\/a>)?\s*<\/p>/gi
 
-  let processado = html.replace(padraoYoutube, (_match, videoId) => {
-    return `<div class="iframe-wrapper"><iframe src="https://www.youtube.com/embed/${videoId}" title="Vídeo do YouTube" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`
+  const processado = html.replace(padraoYoutube, (_match, videoId) => {
+    return `<div class="iframe-wrapper"><iframe src="https://www.youtube-nocookie.com/embed/${videoId}" title="Vídeo do YouTube" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`
   })
 
   return processado
 }
-

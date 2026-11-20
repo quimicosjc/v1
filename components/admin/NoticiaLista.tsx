@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation'
 import type { Noticia } from '@/app/admin/noticias/actions'
 import {
   moverParaLixeira,
-  atualizarNoticia,
-  obterOrdemDestaques,
+  obterConfigDestaques,
+  restaurarOrdemAutomaticaDestaques,
   salvarOrdemDestaques,
 } from '@/app/admin/noticias/actions'
 import { detectarOrigem, OrigemNoticia } from '@/lib/social-origem'
+import { IconePlataforma } from '@/components/publico/SeloOrigemSocial'
 
 type Tab = 'todos' | 'rascunho' | 'publicado' | 'programado'
 
@@ -59,40 +60,48 @@ function BadgeOrigem({ origem }: { origem: OrigemNoticia }) {
   if (origem === 'youtube') {
     return (
       <span
+        aria-label="Origem: YouTube"
+        title="YouTube"
         style={{
-          background: '#fee2e2',
+          background: '#fef2f2',
           color: '#b91c1c',
+          border: '1px solid #fecaca',
           borderRadius: '4px',
           padding: '3px 8px',
           fontSize: '11px',
           fontWeight: 700,
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '4px',
+          gap: '5px',
           whiteSpace: 'nowrap',
         }}
       >
-        🎥 YouTube
+        <IconePlataforma origem="youtube" tamanho={16} decorativo />
+        <span>YouTube</span>
       </span>
     )
   }
   if (origem === 'instagram') {
     return (
       <span
+        aria-label="Origem: Instagram"
+        title="Instagram"
         style={{
-          background: '#fce7f3',
+          background: '#fdf2f8',
           color: '#be185d',
+          border: '1px solid #fbcfe8',
           borderRadius: '4px',
           padding: '3px 8px',
           fontSize: '11px',
           fontWeight: 700,
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '4px',
+          gap: '5px',
           whiteSpace: 'nowrap',
         }}
       >
-        📷 Instagram
+        <IconePlataforma origem="instagram" tamanho={14} decorativo />
+        <span>Instagram</span>
       </span>
     )
   }
@@ -101,6 +110,7 @@ function BadgeOrigem({ origem }: { origem: OrigemNoticia }) {
       style={{
         background: '#f1f5f9',
         color: '#475569',
+        border: '1px solid #e2e8f0',
         borderRadius: '4px',
         padding: '3px 8px',
         fontSize: '11px',
@@ -111,7 +121,7 @@ function BadgeOrigem({ origem }: { origem: OrigemNoticia }) {
         whiteSpace: 'nowrap',
       }}
     >
-      🌐 Site
+      Site
     </span>
   )
 }
@@ -211,6 +221,7 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
   const [destaquesSlots, setDestaquesSlots] = useState<string[]>(() => {
     return noticiasProp.filter((n) => n.destaque).map((n) => n.id).slice(0, 5)
   })
+  const [modoDestaques, setModoDestaques] = useState<'automatico' | 'manual'>('automatico')
   const [showDestaquesModal, setShowDestaquesModal] = useState(false)
   const [slotAdicionarId, setSlotAdicionarId] = useState('')
   const [salvandoDestaques, setSalvandoDestaques] = useState(false)
@@ -221,12 +232,13 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
     setTimeout(() => setToastFeedback(null), 3500)
   }
 
-  // Carrega a ordem salva no Supabase ao montar
+  // Carrega a configuração efetiva salva no Supabase ao montar
   useEffect(() => {
-    obterOrdemDestaques().then((slots) => {
-      if (slots && slots.length > 0) {
-        setDestaquesSlots(slots)
+    obterConfigDestaques().then((cfg) => {
+      if (cfg.slots.length > 0) {
+        setDestaquesSlots(cfg.slots)
       }
+      setModoDestaques(cfg.modo)
     })
   }, [])
 
@@ -263,14 +275,34 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
     if ('error' in res) {
       showToast(res.error)
     } else {
+      setModoDestaques('manual')
       setLista((prev) =>
         prev.map((n) => ({
           ...n,
           destaque: destaquesSlots.includes(n.id),
         }))
       )
-      showToast('Ordem dos destaques da Homepage salva com sucesso!')
+      showToast('Ordem manual dos destaques da Homepage salva com sucesso!')
       setShowDestaquesModal(false)
+    }
+  }
+
+  async function handleRestaurarAutomatico() {
+    setSalvandoDestaques(true)
+    const res = await restaurarOrdemAutomaticaDestaques()
+    setSalvandoDestaques(false)
+    if ('error' in res) {
+      showToast(res.error)
+    } else {
+      setDestaquesSlots(res.slots)
+      setModoDestaques('automatico')
+      setLista((prev) =>
+        prev.map((n) => ({
+          ...n,
+          destaque: res.slots.includes(n.id),
+        }))
+      )
+      showToast('Ordem automática (cronológica) restaurada com sucesso!')
     }
   }
 
@@ -291,22 +323,32 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
     const jaEhDestaque = destaquesSlots.includes(noticiaId)
     if (jaEhDestaque) {
       const novosSlots = destaquesSlots.filter((id) => id !== noticiaId)
+      const res = await salvarOrdemDestaques(novosSlots)
+      if ('error' in res) {
+        showToast(res.error)
+        return
+      }
       setDestaquesSlots(novosSlots)
+      setModoDestaques('manual')
       setLista((prev) => prev.map((n) => (n.id === noticiaId ? { ...n, destaque: false } : n)))
-      await salvarOrdemDestaques(novosSlots)
       showToast('Notícia retirada dos destaques.')
     } else {
       // Entra como 1º destaque e desloca o último se exceder 5 posições
       const novosSlots = [noticiaId, ...destaquesSlots.filter((id) => id !== noticiaId)].slice(0, 5)
+      const res = await salvarOrdemDestaques(novosSlots)
+      if ('error' in res) {
+        showToast(res.error)
+        return
+      }
       setDestaquesSlots(novosSlots)
+      setModoDestaques('manual')
       setLista((prev) =>
         prev.map((n) => ({
           ...n,
           destaque: novosSlots.includes(n.id),
         }))
       )
-      await salvarOrdemDestaques(novosSlots)
-      showToast('Notícia adicionada como 1º destaque da Homepage!')
+      showToast('Notícia posicionada como 1º destaque da Homepage!')
     }
   }
 
@@ -379,7 +421,17 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
     setConfirmDelete(null)
     const result = await moverParaLixeira(id)
     if ('ok' in result) {
-      setLista((prev) => prev.filter((n) => n.id !== id))
+      const cfg = await obterConfigDestaques()
+      setDestaquesSlots(cfg.slots)
+      setModoDestaques(cfg.modo)
+      setLista((prev) =>
+        prev
+          .filter((n) => n.id !== id)
+          .map((n) => ({ ...n, destaque: cfg.slots.includes(n.id) }))
+      )
+      showToast('Notícia movida para a lixeira e destaques reorganizados.')
+    } else if ('error' in result) {
+      showToast(result.error)
     }
   }
 
@@ -694,7 +746,7 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
                           title={
                             isDestaque
                               ? `Posição ${pos + 1} nos destaques da Homepage. Clique para remover.`
-                              : 'Clique para destacar na Homepage (máximo 4)'
+                              : 'Clique para posicionar como 1º destaque na Homepage (até 5 posições)'
                           }
                           style={{
                             background: isDestaque ? '#fff2df' : 'transparent',
@@ -912,21 +964,70 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
               <div>
                 <h2 style={{ fontSize: '19px', fontWeight: 800, color: '#30252a', margin: '0 0 4px 0' }}>
                   ★ Organizar destaques da Homepage
                 </h2>
                 <p style={{ margin: 0, fontSize: '13px', color: '#71636a' }}>
-                  Arraste os cards para reordenar ou use as setas ↑ ↓. As alterações serão salvas na Homepage.
+                  Por padrão, a notícia publicada mais recentemente assume o destaque principal automaticamente. Você também pode reordenar manualmente arrastando ou usando ↑ ↓.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowDestaquesModal(false)}
+                aria-label="Fechar janela de organização de destaques"
                 style={{ border: 'none', background: 'transparent', fontSize: '20px', cursor: 'pointer', color: '#71636a' }}
               >
                 ✕
+              </button>
+            </div>
+
+            {/* Indicador de Modo Automático vs Ordem Manual */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '10px',
+                flexWrap: 'wrap',
+                padding: '10px 12px',
+                borderRadius: '6px',
+                background: modoDestaques === 'automatico' ? '#e9f3ef' : '#fff8eb',
+                border: modoDestaques === 'automatico' ? '1px solid #cce3da' : '1px solid #f2dfa9',
+                marginBottom: '14px',
+              }}
+            >
+              <div style={{ fontSize: '12.5px', color: modoDestaques === 'automatico' ? '#1f5a46' : '#7a5a10', lineHeight: 1.4 }}>
+                <strong>
+                  {modoDestaques === 'automatico'
+                    ? 'Modo Automático (cronológico) ativo'
+                    : 'Ordem Manual ativa'}
+                </strong>
+                <div>
+                  {modoDestaques === 'automatico'
+                    ? 'As 5 notícias mais recentes aparecem em ordem cronológica na capa.'
+                    : 'Ao publicar uma nova matéria, ela entra automaticamente em 1º lugar sem perder o restante da sequência.'}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleRestaurarAutomatico}
+                disabled={salvandoDestaques}
+                style={{
+                  border: '1px solid #ced9df',
+                  background: 'white',
+                  color: '#30252a',
+                  borderRadius: '5px',
+                  padding: '6px 10px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                ↺ Restaurar ordem automática
               </button>
             </div>
 
@@ -1077,7 +1178,7 @@ export default function NoticiaLista({ noticias: noticiasProp }: NoticiaListaPro
             </div>
 
             {/* Adicionar notícia na vaga */}
-            {destaquesSlots.length < 4 && (
+            {destaquesSlots.length < 5 && (
               <div
                 style={{
                   background: '#f8fafb',
