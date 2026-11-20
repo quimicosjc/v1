@@ -372,10 +372,10 @@ export async function atualizarNoticia(
 
     const supabase = await createClient()
 
-    // Lê estado anterior para detectar mudanças de status ou data de publicação
+    // Lê estado anterior para detectar mudanças reais de status, data de publicação ou destaque
     const { data: anterior } = await supabase
       .from('conteudos')
-      .select('status, publicado_em, slug')
+      .select('status, publicado_em, slug, destaque')
       .eq('id', id)
       .eq('tipo', 'noticia')
       .maybeSingle()
@@ -416,9 +416,20 @@ export async function atualizarNoticia(
 
     const statusAnterior = anterior?.status
     const statusNovo = data.status ?? statusAnterior
-    const mudouDataPublicacao =
-      data.publicado_em !== undefined &&
-      (data.publicado_em || null) !== (anterior?.publicado_em || null)
+    const mudouDataPublicacao = (() => {
+      if (data.publicado_em === undefined) return false
+      const novaStr = data.publicado_em || null
+      const antStr = anterior?.publicado_em || null
+      if (!novaStr && !antStr) return false
+      if (!novaStr || !antStr) return true
+      const novaMs = new Date(novaStr).getTime()
+      const antMs = new Date(antStr).getTime()
+      if (isNaN(novaMs) || isNaN(antMs)) return novaStr !== antStr
+      // Tolera diferença < 60s causada pelo input datetime-local (que omite segundos)
+      return Math.abs(novaMs - antMs) >= 60_000
+    })()
+    const mudouDestaque =
+      data.destaque !== undefined && data.destaque !== Boolean(anterior?.destaque)
 
     if (statusAnterior !== 'publicado' && statusNovo === 'publicado') {
       // Acabou de ser publicada -> assume automaticamente o destaque principal
@@ -429,9 +440,9 @@ export async function atualizarNoticia(
     } else if (statusNovo === 'publicado' && mudouDataPublicacao) {
       // Teve data de publicação alterada -> reorganiza cronologicamente
       await sincronizarDestaquesHome({ dataPublicacaoAlterada: true })
-    } else if (data.destaque === true) {
+    } else if (mudouDestaque && data.destaque === true) {
       await adicionarDestaqueSlots(id)
-    } else if (data.destaque === false) {
+    } else if (mudouDestaque && data.destaque === false) {
       await removerDestaqueSlots(id)
     }
 

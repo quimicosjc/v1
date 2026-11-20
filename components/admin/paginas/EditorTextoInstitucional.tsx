@@ -287,7 +287,7 @@ export default function EditorTextoInstitucional({ pagina }: EditorTextoProps) {
           </div>
 
           {bannerUrl && (
-            <div style={{ marginTop: '12px', display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ marginTop: '12px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 onClick={() =>
@@ -297,19 +297,18 @@ export default function EditorTextoInstitucional({ pagina }: EditorTextoProps) {
                   })
                 }
                 aria-label="Ampliar imagem de cabeçalho"
-                title="Clique para visualizar em tamanho maior"
+                title="Clique para visualizar a foto inteira em tamanho maior"
                 style={{
-                  width: '144px',
-                  height: '98px',
-                  padding: '4px',
+                  width: '290px',
+                  maxWidth: '100%',
+                  aspectRatio: '3 / 2',
+                  padding: 0,
                   borderRadius: '6px',
                   overflow: 'hidden',
                   background: '#f2eef0',
                   border: '1px solid #d9ced3',
                   cursor: 'zoom-in',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  display: 'block',
                   flexShrink: 0,
                 }}
               >
@@ -317,11 +316,10 @@ export default function EditorTextoInstitucional({ pagina }: EditorTextoProps) {
                   src={bannerUrl}
                   alt={titulo}
                   style={{
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                    width: 'auto',
-                    height: 'auto',
-                    objectFit: 'contain',
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    objectPosition: `50% ${imagemY}%`,
                     display: 'block',
                   }}
                 />

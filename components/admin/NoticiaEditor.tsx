@@ -752,7 +752,6 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
             }
             showToast('Processando foto colada da área de transferência…')
             const preview = URL.createObjectURL(file)
-            const novoIndex = fotos.length
             setFotos((prev) => [
               ...prev,
               {
@@ -772,16 +771,16 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
               const result = await uploadMidia(formData)
               if ('error' in result) {
                 setFotos((prev) =>
-                  prev.map((f, fi) =>
-                    fi === novoIndex ? { ...f, enviando: false, erro: result.error } : f,
+                  prev.map((f) =>
+                    f.preview === preview ? { ...f, enviando: false, erro: result.error } : f,
                   ),
                 )
                 showToast(result.error, 'erro')
               } else {
                 capaManualRef.current = true
                 setFotos((prev) =>
-                  prev.map((f, fi) =>
-                    fi === novoIndex
+                  prev.map((f) =>
+                    f.preview === preview
                       ? { ...f, url: result.url, preview: result.url, enviando: false, erro: null }
                       : f,
                   ),
@@ -791,10 +790,11 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
               }
             } catch {
               setFotos((prev) =>
-                prev.map((f, fi) =>
-                  fi === novoIndex ? { ...f, enviando: false, erro: 'Falha ao processar' } : f,
+                prev.map((f) =>
+                  f.preview === preview ? { ...f, enviando: false, erro: 'Falha ao processar' } : f,
                 ),
               )
+              showToast('Falha ao enviar a foto colada. Tente novamente.', 'erro')
             }
             break
           }
@@ -866,7 +866,6 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
       }
 
       const preview = URL.createObjectURL(file)
-      const idx = fotos.length + i // approximate; we use functional updates below
       setFotos((prev) => [
         ...prev,
         {
@@ -888,40 +887,50 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
         compressed = await comprimirImagem(file)
       } catch {
         setFotos((prev) =>
-          prev.map((f, fi) =>
-            fi === fotos.length + i ? { ...f, enviando: false, erro: 'Falha ao comprimir' } : f,
+          prev.map((f) =>
+            f.preview === preview ? { ...f, enviando: false, erro: 'Falha ao comprimir' } : f,
           ),
         )
+        showToast(`Não foi possível processar "${file.name}".`, 'erro')
         continue
       }
 
       const compressedSize = compressed.size
-      const formData = new FormData()
-      formData.append('arquivo', compressed)
-      const result = await uploadMidia(formData)
+      try {
+        const formData = new FormData()
+        formData.append('arquivo', compressed)
+        const result = await uploadMidia(formData)
 
-      if ('error' in result) {
+        if ('error' in result) {
+          setFotos((prev) =>
+            prev.map((f) =>
+              f.preview === preview ? { ...f, enviando: false, erro: result.error } : f,
+            ),
+          )
+          showToast(result.error, 'erro')
+          continue
+        }
+
+        capaManualRef.current = true
         setFotos((prev) =>
-          prev.map((f, fi) =>
-            fi === idx ? { ...f, enviando: false, erro: result.error } : f,
+          prev.map((f) =>
+            f.preview === preview
+              ? { ...f, url: result.url, preview: result.url, enviando: false, erro: null }
+              : f,
           ),
         )
-        showToast(result.error, 'erro')
-        continue
+        markAlterado()
+        showToast(
+          `Foto enviada (${formatBytes(originalSize)} → ${formatBytes(compressedSize)})`,
+        )
+      } catch {
+        setFotos((prev) =>
+          prev.map((f) =>
+            f.preview === preview ? { ...f, enviando: false, erro: 'Erro de conexão ao enviar' } : f,
+          ),
+        )
+        showToast('Erro de conexão ao enviar a foto. Tente novamente.', 'erro')
       }
-
-      capaManualRef.current = true
-      setFotos((prev) =>
-        prev.map((f, fi) =>
-          fi === idx
-            ? { ...f, url: result.url, preview: result.url, enviando: false, erro: null }
-            : f,
-        ),
-      )
-      markAlterado()
-      showToast(
-        `Foto enviada (${formatBytes(originalSize)} → ${formatBytes(compressedSize)})`,
-      )
     }
   }
 
@@ -1725,36 +1734,38 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
               />
             </div>
 
-            {/* Photo list — layout horizontal compacto preservando proporção original */}
-            {fotosValidas.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {fotosValidas.map((foto, idx) => (
+            {/* Photo list — prévia 3:2 (~40% do tamanho original) com recorte vertical ao vivo */}
+            {fotos.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {fotos.map((foto, idx) => (
                   <div
-                    key={idx}
+                    key={foto.preview || idx}
                     className="noticia-foto-row"
                     style={{
                       border: '1px solid #e4dce0',
-                      borderRadius: '6px',
-                      padding: '10px 12px',
+                      borderRadius: '7px',
+                      padding: '12px 14px',
                       background: '#faf8f9',
                       display: 'flex',
-                      gap: '12px',
+                      gap: '16px',
                       alignItems: 'flex-start',
                     }}
                   >
-                    {/* Miniatura compacta preservando proporção real (sem recorte destrutivo) */}
+                    {/* Prévia 3:2 proporcional (~290x193px ≈ 40% do tamanho anterior) refletindo o recorte vertical em tempo real */}
                     {foto.enviando ? (
                       <div
+                        className="noticia-foto-preview-box"
                         style={{
-                          width: '124px',
-                          height: '88px',
-                          borderRadius: '5px',
+                          width: '290px',
+                          maxWidth: '100%',
+                          aspectRatio: '3 / 2',
+                          borderRadius: '6px',
                           background: '#e4dce0',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           color: '#71636a',
-                          fontSize: '12px',
+                          fontSize: '13px',
                           flexShrink: 0,
                         }}
                       >
@@ -1762,17 +1773,19 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                       </div>
                     ) : foto.erro ? (
                       <div
+                        className="noticia-foto-preview-box"
                         style={{
-                          width: '124px',
-                          height: '88px',
-                          borderRadius: '5px',
+                          width: '290px',
+                          maxWidth: '100%',
+                          aspectRatio: '3 / 2',
+                          borderRadius: '6px',
                           background: '#fce4ea',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           color: '#861e32',
-                          fontSize: '11.5px',
-                          padding: '6px',
+                          fontSize: '12.5px',
+                          padding: '10px',
                           textAlign: 'center',
                           flexShrink: 0,
                           boxSizing: 'border-box',
@@ -1783,26 +1796,26 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                     ) : (
                       <button
                         type="button"
+                        className="noticia-foto-preview-box"
                         onClick={() =>
                           setImagemAmpliada({
                             url: foto.url || foto.preview,
-                            titulo: idx === 0 ? 'Foto principal da notícia' : `Foto ${idx + 1}`,
+                            titulo: idx === 0 ? 'Foto principal da notícia (original completa)' : `Foto ${idx + 1} (original completa)`,
                             subtitulo: [foto.legenda, foto.credito].filter(Boolean).join(' · ') || undefined,
                           })
                         }
-                        aria-label={`Ampliar ${idx === 0 ? 'foto principal' : `foto ${idx + 1}`}`}
-                        title="Clique para visualizar em tamanho maior"
+                        aria-label={`Ampliar ${idx === 0 ? 'foto principal' : `foto ${idx + 1}`} no formato original`}
+                        title="Clique para visualizar a foto inteira em tamanho maior"
                         style={{
-                          width: '124px',
-                          height: '88px',
-                          padding: '3px',
-                          borderRadius: '5px',
+                          width: '290px',
+                          maxWidth: '100%',
+                          aspectRatio: '3 / 2',
+                          padding: 0,
+                          borderRadius: '6px',
                           background: '#efebed',
                           border: '1px solid #d9ced3',
                           cursor: 'zoom-in',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
+                          display: 'block',
                           flexShrink: 0,
                           position: 'relative',
                           overflow: 'hidden',
@@ -1811,13 +1824,12 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={foto.preview}
-                          alt={`Miniatura da foto ${idx + 1}`}
+                          alt={`Prévia de recorte 3:2 da foto ${idx + 1}`}
                           style={{
-                            maxWidth: '100%',
-                            maxHeight: '100%',
-                            width: 'auto',
-                            height: 'auto',
-                            objectFit: 'contain',
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            objectPosition: `50% ${foto.foco}%`,
                             display: 'block',
                           }}
                         />
@@ -1825,44 +1837,60 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                           <span
                             style={{
                               position: 'absolute',
-                              top: '3px',
-                              left: '3px',
+                              top: '6px',
+                              left: '6px',
                               background: '#861e32',
                               color: '#ffffff',
-                              fontSize: '9.5px',
+                              fontSize: '10px',
                               fontWeight: 700,
-                              padding: '1px 5px',
-                              borderRadius: '3px',
+                              padding: '2px 7px',
+                              borderRadius: '4px',
                               letterSpacing: '0.4px',
                               textTransform: 'uppercase',
+                              boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
                             }}
                           >
-                            Capa
+                            Foto principal
                           </span>
                         )}
+                        <span
+                          style={{
+                            position: 'absolute',
+                            bottom: '6px',
+                            right: '6px',
+                            background: 'rgba(28, 20, 24, 0.72)',
+                            color: '#ffffff',
+                            fontSize: '10.5px',
+                            fontWeight: 600,
+                            padding: '2px 7px',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          Recorte 3:2 ({foto.foco}%) · Ampliar
+                        </span>
                       </button>
                     )}
 
-                    {/* Campos e ações compactos ao lado da miniatura */}
-                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {/* Campos e ações ao lado da prévia */}
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '12px', fontWeight: 700, color: idx === 0 ? '#861e32' : '#30252a' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 700, color: idx === 0 ? '#861e32' : '#30252a' }}>
                           {idx === 0 ? 'Foto principal' : `Foto ${idx + 1}`}
                         </span>
-                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                           {!foto.enviando && !foto.erro && (
                             <button
                               type="button"
                               onClick={() =>
                                 setImagemAmpliada({
                                   url: foto.url || foto.preview,
-                                  titulo: idx === 0 ? 'Foto principal da notícia' : `Foto ${idx + 1}`,
+                                  titulo: idx === 0 ? 'Foto principal da notícia (original completa)' : `Foto ${idx + 1} (original completa)`,
                                   subtitulo: [foto.legenda, foto.credito].filter(Boolean).join(' · ') || undefined,
                                 })
                               }
-                              style={{ ...btnNeutro, padding: '3px 8px', fontSize: '11.5px', color: '#183b4b', fontWeight: 600 }}
+                              style={{ ...btnNeutro, padding: '4px 9px', fontSize: '12px', color: '#183b4b', fontWeight: 600 }}
                             >
-                              Ampliar
+                              Ver inteira
                             </button>
                           )}
                           <button
@@ -1870,23 +1898,23 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                             onClick={() => subirFoto(idx)}
                             disabled={idx === 0}
                             title="Subir posição"
-                            style={{ ...btnNeutro, padding: '3px 7px', fontSize: '11.5px', opacity: idx === 0 ? 0.4 : 1, cursor: idx === 0 ? 'default' : 'pointer' }}
+                            style={{ ...btnNeutro, padding: '4px 8px', fontSize: '12px', opacity: idx === 0 ? 0.4 : 1, cursor: idx === 0 ? 'default' : 'pointer' }}
                           >
                             ↑
                           </button>
                           <button
                             type="button"
                             onClick={() => descerFoto(idx)}
-                            disabled={idx === fotosValidas.length - 1}
+                            disabled={idx === fotos.length - 1}
                             title="Descer posição"
-                            style={{ ...btnNeutro, padding: '3px 7px', fontSize: '11.5px', opacity: idx === fotosValidas.length - 1 ? 0.4 : 1, cursor: idx === fotosValidas.length - 1 ? 'default' : 'pointer' }}
+                            style={{ ...btnNeutro, padding: '4px 8px', fontSize: '12px', opacity: idx === fotos.length - 1 ? 0.4 : 1, cursor: idx === fotos.length - 1 ? 'default' : 'pointer' }}
                           >
                             ↓
                           </button>
                           <button
                             type="button"
                             onClick={() => removerFoto(idx)}
-                            style={{ ...btnNeutro, padding: '3px 8px', fontSize: '11.5px', color: '#861e32', borderColor: '#e8c8ce' }}
+                            style={{ ...btnNeutro, padding: '4px 9px', fontSize: '12px', color: '#861e32', borderColor: '#e8c8ce' }}
                           >
                             Remover
                           </button>
@@ -1895,36 +1923,30 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
 
                       {!foto.enviando && !foto.erro && (
                         <>
-                          {/* Legenda + crédito */}
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                            <input
-                              type="text"
-                              value={foto.legenda}
-                              maxLength={150}
-                              onChange={(e) => { if (e.target.value.length <= 150) atualizarFoto(idx, { legenda: e.target.value }) }}
-                              placeholder="Legenda da foto (opcional)…"
-                              aria-label={`Legenda da foto ${idx + 1}`}
-                              style={{ ...inputStyle, fontSize: '12px', padding: '6px 8px' }}
-                            />
-                            <input
-                              type="text"
-                              value={foto.credito}
-                              maxLength={60}
-                              onChange={(e) => { if (e.target.value.length <= 60) atualizarFoto(idx, { credito: e.target.value }) }}
-                              placeholder="Crédito / fotógrafo (opcional)…"
-                              aria-label={`Crédito da foto ${idx + 1}`}
-                              style={{ ...inputStyle, fontSize: '12px', padding: '6px 8px' }}
-                            />
-                          </div>
-
-                          {/* Foco vertical compacto */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                            <label
-                              htmlFor={`foco-foto-${idx}`}
-                              style={{ fontSize: '11.5px', color: '#71636a', whiteSpace: 'nowrap' }}
-                            >
-                              Enquadramento nos cartões ({foto.foco}%):
-                            </label>
+                          {/* Controle de recorte / foco vertical (essencial para fotos verticais) */}
+                          <div
+                            style={{
+                              background: '#ffffff',
+                              border: '1px solid #e4dce0',
+                              borderRadius: '6px',
+                              padding: '8px 10px',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '4px' }}>
+                              <label
+                                htmlFor={`foco-foto-${idx}`}
+                                style={{ fontSize: '12px', fontWeight: 600, color: '#30252a' }}
+                              >
+                                Posição da foto (recorte vertical): {foto.foco}%
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => atualizarFoto(idx, { foco: 50 })}
+                                style={{ ...btnNeutro, padding: '2px 8px', fontSize: '11px' }}
+                              >
+                                Centralizar
+                              </button>
+                            </div>
                             <input
                               id={`foco-foto-${idx}`}
                               type="range"
@@ -1932,15 +1954,45 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                               max="100"
                               value={foto.foco}
                               onChange={(e) => atualizarFoto(idx, { foco: Number(e.target.value) })}
-                              style={{ flex: '1 1 110px', accentColor: '#861e32' }}
+                              style={{ width: '100%', accentColor: '#861e32', cursor: 'pointer' }}
                             />
-                            <button
-                              type="button"
-                              onClick={() => atualizarFoto(idx, { foco: 50 })}
-                              style={{ ...btnNeutro, padding: '2px 7px', fontSize: '11px' }}
-                            >
-                              50%
-                            </button>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', color: '#71636a', marginTop: '2px' }}>
+                              <span>Topo (0%)</span>
+                              <span>Arraste para enquadrar fotos verticais nos cartões</span>
+                              <span>Base (100%)</span>
+                            </div>
+                          </div>
+
+                          {/* Legenda + crédito */}
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }} className="noticia-fields-sub-resumo">
+                            <div>
+                              <label htmlFor={`legenda-foto-${idx}`} style={{ fontSize: '11.5px', fontWeight: 600, color: '#30252a', display: 'block', marginBottom: '3px' }}>
+                                Legenda
+                              </label>
+                              <input
+                                id={`legenda-foto-${idx}`}
+                                type="text"
+                                value={foto.legenda}
+                                maxLength={150}
+                                onChange={(e) => { if (e.target.value.length <= 150) atualizarFoto(idx, { legenda: e.target.value }) }}
+                                placeholder="Descreva a foto (opcional)…"
+                                style={{ ...inputStyle, fontSize: '12.5px', padding: '6px 9px' }}
+                              />
+                            </div>
+                            <div>
+                              <label htmlFor={`credito-foto-${idx}`} style={{ fontSize: '11.5px', fontWeight: 600, color: '#30252a', display: 'block', marginBottom: '3px' }}>
+                                Crédito
+                              </label>
+                              <input
+                                id={`credito-foto-${idx}`}
+                                type="text"
+                                value={foto.credito}
+                                maxLength={60}
+                                onChange={(e) => { if (e.target.value.length <= 60) atualizarFoto(idx, { credito: e.target.value }) }}
+                                placeholder="Fotógrafo / fonte…"
+                                style={{ ...inputStyle, fontSize: '12.5px', padding: '6px 9px' }}
+                              />
+                            </div>
                           </div>
                         </>
                       )}
@@ -2265,18 +2317,16 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                       }
                       aria-label="Ampliar imagem da prévia"
                       style={{
-                        width: '108px',
-                        height: '74px',
-                        padding: '2px',
+                        width: '168px',
+                        aspectRatio: '3 / 2',
+                        padding: 0,
                         borderRadius: '4px',
                         background: '#e7edf2',
                         border: '1px solid #cbd7de',
                         overflow: 'hidden',
                         flexShrink: 0,
                         cursor: 'zoom-in',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        display: 'block',
                       }}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -2284,11 +2334,10 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
                         src={fotos[0].url}
                         alt="Prévia"
                         style={{
-                          maxWidth: '100%',
-                          maxHeight: '100%',
-                          width: 'auto',
-                          height: 'auto',
-                          objectFit: 'contain',
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          objectPosition: `50% ${fotos[0].foco ?? 50}%`,
                           display: 'block',
                         }}
                       />
@@ -2771,9 +2820,13 @@ export default function NoticiaEditor({ noticia }: NoticiaEditorProps) {
             font-size: 16px !important;
           }
         }
-        @media (max-width: 540px) {
+        @media (max-width: 720px) {
           .noticia-foto-row {
             flex-direction: column !important;
+          }
+          .noticia-foto-preview-box {
+            width: 100% !important;
+            max-width: 340px !important;
           }
         }
         @media (min-width: 769px) {

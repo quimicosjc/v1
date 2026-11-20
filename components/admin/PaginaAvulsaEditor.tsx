@@ -789,7 +789,7 @@ export default function PaginaAvulsaEditor({ pagina }: PaginaAvulsaEditorProps) 
                       alignItems: 'center',
                     }}
                   >
-                    {/* Miniatura compacta preservando proporção original */}
+                    {/* Prévia 3:2 proporcional (~40%) refletindo o foco vertical em tempo real */}
                     <button
                       type="button"
                       onClick={() =>
@@ -799,32 +799,31 @@ export default function PaginaAvulsaEditor({ pagina }: PaginaAvulsaEditorProps) 
                         })
                       }
                       aria-label={`Ampliar foto ${i + 1}`}
-                      title="Clique para visualizar em tamanho maior"
+                      title="Clique para visualizar a foto inteira em tamanho maior"
                       style={{
-                        width: '124px',
-                        height: '86px',
-                        padding: '3px',
-                        borderRadius: '4px',
+                        width: '240px',
+                        maxWidth: '100%',
+                        aspectRatio: '3 / 2',
+                        padding: 0,
+                        borderRadius: '5px',
                         overflow: 'hidden',
                         position: 'relative',
                         background: '#efebed',
                         border: '1px solid #d9ced3',
                         flexShrink: 0,
                         cursor: 'zoom-in',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        display: 'block',
                       }}
                     >
                       <img
                         src={f.url}
                         alt={`Foto ${i + 1}`}
                         style={{
-                          maxWidth: '100%',
-                          maxHeight: '100%',
-                          width: 'auto',
-                          height: 'auto',
-                          objectFit: 'contain',
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          objectPosition: `50% ${f.foco}%`,
+                          display: 'block',
                         }}
                       />
                       {i === 0 && (
@@ -1218,29 +1217,27 @@ export default function PaginaAvulsaEditor({ pagina }: PaginaAvulsaEditorProps) 
                       }
                       aria-label="Ampliar imagem da prévia"
                       style={{
-                        width: '112px',
-                        height: '78px',
-                        padding: '3px',
+                        width: '168px',
+                        aspectRatio: '3 / 2',
+                        padding: 0,
                         borderRadius: '5px',
                         background: '#e7edf2',
                         border: '1px solid #cbd7de',
                         overflow: 'hidden',
                         flexShrink: 0,
                         cursor: 'zoom-in',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        display: 'block',
                       }}
                     >
                       <img
                         src={fotos[0].url}
                         alt="Prévia de capa"
                         style={{
-                          maxWidth: '100%',
-                          maxHeight: '100%',
-                          width: 'auto',
-                          height: 'auto',
-                          objectFit: 'contain',
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          objectPosition: `50% ${fotos[0].foco}%`,
+                          display: 'block',
                         }}
                       />
                     </button>
