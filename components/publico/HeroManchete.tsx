@@ -61,6 +61,8 @@ export default function HeroManchete({
             <img
               src={fotoUrl}
               alt={titulo}
+              fetchPriority="high"
+              decoding="async"
               style={{
                 width: '100%',
                 height: '100%',

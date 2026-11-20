@@ -7,13 +7,18 @@ import FormularioCarteirinha from '@/components/publico/FormularioCarteirinha'
 import FormularioAtualizacao from '@/components/publico/FormularioAtualizacao'
 import FormularioDenuncia from '@/components/publico/FormularioDenuncia'
 import FormularioCadastroNoticias from '@/components/publico/FormularioCadastroNoticias'
+import FormularioFaleConosco from '@/components/publico/FormularioFaleConosco'
 import HeaderPublico from '@/components/publico/HeaderPublico'
 import FooterPublico from '@/components/publico/FooterPublico'
 import ColoniaNav from '@/components/publico/ColoniaNav'
 import ListaNoticiasPublica, { type NoticiaItemPublico } from '@/components/publico/ListaNoticiasPublica'
 import ListaConveniosPublica from '@/components/publico/ListaConveniosPublica'
+import ListaProcessosPublica from '@/components/publico/ListaProcessosPublica'
+import GaleriaColoniaPublica from '@/components/publico/GaleriaColoniaPublica'
 import { CONTAINER_STYLE } from '@/lib/design'
 import { sanitizarHtml } from '@/lib/security'
+
+export const revalidate = 300
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -566,15 +571,21 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
             </div>
           )}
 
-          {/* 5. CCTs E PROCESSOS COLETIVOS */}
-          {(tipoPagina === 'documents' || tipoPagina === 'processes' || tipoPagina === 'hours') && records.length > 0 && (
-            <div style={{ marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {/* 5.1 PROCESSOS COLETIVOS POR CIDADE E TRIBUNAL */}
+          {tipoPagina === 'processes' && records.length > 0 && (
+            <ListaProcessosPublica processosIniciais={records} />
+          )}
+
+          {/* 5.2 DOCUMENTOS / CCTs E PLANTÃO JURÍDICO */}
+          {(tipoPagina === 'documents' || tipoPagina === 'hours') && records.length > 0 && (
+            <div style={{ marginTop: '36px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {records.filter((r: any) => r.active !== false).map((item: any) => (
                 <div
                   key={item.id || item.name}
                   style={{
                     background: '#ffffff',
                     border: '1px solid #e4dce0',
+                    borderLeft: '4px solid #861e32',
                     borderRadius: '8px',
                     padding: '18px 22px',
                     display: 'flex',
@@ -586,25 +597,89 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
                   }}
                 >
                   <div style={{ flex: 1, minWidth: '220px' }}>
-                    <strong style={{ fontSize: '15.5px', color: '#30252a', display: 'block' }}>{item.name}</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                      <strong style={{ fontSize: '16px', color: '#30252a' }}>{item.name}</strong>
+                      {item.specialty && (
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            background: '#f8e9ec',
+                            color: '#861e32',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          {item.specialty}
+                        </span>
+                      )}
+                      {item.city && (
+                        <span
+                          style={{
+                            fontSize: '11.5px',
+                            fontWeight: 700,
+                            background: '#eef3f8',
+                            color: '#1B2E4B',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          📍 {item.city}
+                        </span>
+                      )}
+                    </div>
                     {item.company && (
                       <div style={{ fontSize: '13px', color: '#52434a', marginTop: '2px' }}>
-                        Empresa / Categoria: <strong>{item.company}</strong>
-                      </div>
-                    )}
-                    {item.number && (
-                      <div style={{ fontSize: '12px', color: '#71636a', marginTop: '2px' }}>
-                        Vara / Processo TRT: {item.number}
+                        Categoria: <strong>{item.company}</strong>
                       </div>
                     )}
                     {item.day && (
-                      <div style={{ fontSize: '13px', color: '#52434a', marginTop: '2px' }}>
-                        Plantão: {item.day} • {item.hours}
+                      <div style={{ fontSize: '13.5px', color: '#30252a', marginTop: '4px', lineHeight: 1.5 }}>
+                        <strong>Dias:</strong> {item.day} • <strong>Horário:</strong> {item.hours}
+                      </div>
+                    )}
+                    {item.schedules && Array.isArray(item.schedules) && (
+                      <div style={{ display: 'grid', gap: '6px', marginTop: '8px' }}>
+                        {item.schedules.map((sch: any, sIdx: number) => (
+                          <div
+                            key={sIdx}
+                            style={{
+                              fontSize: '13.5px',
+                              color: '#30252a',
+                              background: '#faf8f9',
+                              border: '1px solid #ebdbe0',
+                              borderRadius: '6px',
+                              padding: '8px 12px',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              gap: '8px',
+                            }}
+                          >
+                            <span>
+                              <strong>{sch.day}:</strong> {sch.hours}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                color: '#1B2E4B',
+                                background: '#e7eff7',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                              }}
+                            >
+                              📍 {sch.city}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     )}
                     {item.validity && (
-                      <div style={{ fontSize: '12px', color: '#861e32', fontWeight: 600, marginTop: '2px' }}>
-                        Vigência: {item.validity}
+                      <div style={{ fontSize: '12.5px', color: '#861e32', fontWeight: 700, marginTop: '4px' }}>
+                        Vigência: {item.validity} {item.size ? `• Tamanho: ${item.size}` : ''}
                       </div>
                     )}
                   </div>
@@ -630,7 +705,7 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                         <polyline points="14 2 14 8 20 8"/>
                       </svg>
-                      <span>Abrir Documento ↗</span>
+                      <span>Download PDF ↗</span>
                     </a>
                   )}
                 </div>
@@ -745,141 +820,9 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
             </div>
           )}
 
-          {/* 6.2 GALERIA DE FOTOS DA COLÔNIA COM FOTOS PROVISÓRIAS ORGANIZADAS POR UNIDADE (L01) */}
-          {tipoPagina === 'gallery' && (
-            <div style={{ marginTop: '36px' }}>
-              <div
-                style={{
-                  background: '#fff9ea',
-                  border: '1px solid #f3d489',
-                  borderRadius: '8px',
-                  padding: '14px 18px',
-                  marginBottom: '28px',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#825914" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '2px' }}>
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="12" />
-                  <line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-                <div style={{ fontSize: '13.5px', color: '#66450c', lineHeight: 1.5 }}>
-                  <strong>Galeria Provisória da Colônia de Férias:</strong> As fotografias abaixo são registros institucionais e demonstrativos do acervo das unidades de São Sebastião e Caraguatatuba. A catalogação fotográfica detalhada dos quartos e acomodações internas está em andamento pela equipe do Sindicato.
-                </div>
-              </div>
-
-              {['São Sebastião', 'Caraguatatuba'].map((unidade) => {
-                const fotosDaUnidade = (records as any[]).filter(
-                  (r) => !r.unidade || r.unidade.toLowerCase().includes(unidade.toLowerCase())
-                )
-                if (fotosDaUnidade.length === 0) return null
-
-                return (
-                  <section key={unidade} style={{ marginBottom: '40px' }}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        paddingBottom: '8px',
-                        borderBottom: '2px solid #861e32',
-                        marginBottom: '20px',
-                      }}
-                    >
-                      <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#861e32', margin: 0 }}>
-                        Unidade {unidade}
-                      </h2>
-                      <span style={{ fontSize: '12px', background: '#f8e9ec', color: '#861e32', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
-                        {fotosDaUnidade.length} {fotosDaUnidade.length === 1 ? 'registro' : 'registros'}
-                      </span>
-                    </div>
-
-                    <div
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                        gap: '20px',
-                      }}
-                    >
-                      {fotosDaUnidade.map((item: any, idx: number) => (
-                        <div
-                          key={item.id || item.url || idx}
-                          style={{
-                            background: '#ffffff',
-                            border: '1px solid #e4dce0',
-                            borderRadius: '8px',
-                            overflow: 'hidden',
-                            boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: '100%',
-                              height: '240px',
-                              background: '#f8fafb',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              borderBottom: '1px solid #e4dce0',
-                              position: 'relative',
-                            }}
-                          >
-                            <img
-                              src={item.url}
-                              alt={item.titulo || `Foto ${unidade}`}
-                              loading="lazy"
-                              style={{
-                                maxWidth: '100%',
-                                maxHeight: '100%',
-                                width: 'auto',
-                                height: 'auto',
-                                objectFit: 'contain',
-                                display: 'block',
-                              }}
-                            />
-                            {item.provisoria && (
-                              <span
-                                style={{
-                                  position: 'absolute',
-                                  top: '10px',
-                                  right: '10px',
-                                  background: 'rgba(48, 37, 42, 0.85)',
-                                  color: '#ffffff',
-                                  fontSize: '10.5px',
-                                  fontWeight: 700,
-                                  padding: '3px 7px',
-                                  borderRadius: '4px',
-                                  letterSpacing: '0.4px',
-                                }}
-                              >
-                                Foto Demonstrativa
-                              </span>
-                            )}
-                          </div>
-
-                          <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                            {item.titulo && (
-                              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#30252a', margin: '0 0 6px 0' }}>
-                                {item.titulo}
-                              </h3>
-                            )}
-                            {item.legenda && (
-                              <p style={{ fontSize: '12.5px', color: '#71636a', margin: 0, lineHeight: 1.45, fontStyle: 'italic' }}>
-                                {item.legenda}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                )
-              })}
-            </div>
+          {/* 6.2 GALERIA DE FOTOS REAL DA COLÔNIA (28 FOTOS CARAGUÁ + SÃO SEBASTIÃO) */}
+          {tipoPagina === 'gallery' && records.length > 0 && (
+            <GaleriaColoniaPublica fotos={records} />
           )}
 
           {/* 7. FORMULÁRIOS INTERATIVOS PÚBLICOS */}
@@ -888,6 +831,7 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
           {slug === 'atualizar-cadastro' && <FormularioAtualizacao />}
           {slug === 'denuncia' && <FormularioDenuncia />}
           {slug === 'cadastro-noticias' && <FormularioCadastroNoticias />}
+          {slug === 'fale-conosco' && <FormularioFaleConosco />}
 
           {/* 8. ÍNDICE DINÂMICO DE NOTÍCIAS */}
           {slug === 'lista-noticias' && (

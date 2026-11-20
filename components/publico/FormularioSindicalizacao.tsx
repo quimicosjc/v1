@@ -2,12 +2,48 @@
 
 import React, { useState } from 'react'
 import { submeterSindicalizacao } from '@/app/formularios/actions'
+import {
+  formatarCPF,
+  formatarTelefone,
+  formatarCEP,
+  buscarEnderecoPorCEP,
+} from '@/lib/masks-viacep'
 
 export default function FormularioSindicalizacao() {
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [protocolo, setProtocolo] = useState<string | null>(null)
   const [copiado, setCopiado] = useState(false)
+
+  const [cpf, setCpf] = useState('')
+  const [telefone, setTelefone] = useState('')
+  const [telefoneResidencial, setTelefoneResidencial] = useState('')
+  const [telefoneEmpresa, setTelefoneEmpresa] = useState('')
+  const [cep, setCep] = useState('')
+  const [endereco, setEndereco] = useState('')
+  const [bairro, setBairro] = useState('')
+  const [cidade, setCidade] = useState('')
+  const [buscandoCep, setBuscandoCep] = useState(false)
+  const [cepAutomatico, setCepAutomatico] = useState(false)
+
+  async function handleCepChange(valor: string) {
+    const formatado = formatarCEP(valor)
+    setCep(formatado)
+    const digitos = formatado.replace(/\D/g, '')
+    if (digitos.length === 8) {
+      setBuscandoCep(true)
+      const dados = await buscarEnderecoPorCEP(digitos)
+      setBuscandoCep(false)
+      if (dados) {
+        if (dados.logradouro) setEndereco(dados.logradouro)
+        if (dados.bairro) setBairro(dados.bairro)
+        if (dados.localidade) setCidade(dados.localidade)
+        setCepAutomatico(true)
+      }
+    } else {
+      setCepAutomatico(false)
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -65,8 +101,16 @@ export default function FormularioSindicalizacao() {
         <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#23634e', margin: '0 0 10px 0' }}>
           Ficha de Sindicalização Enviada com Sucesso!
         </h2>
-        <p style={{ fontSize: '15px', color: '#30252a', lineHeight: 1.6, maxWidth: '540px', margin: '0 auto 20px auto' }}>
-          Seu pedido de filiação foi recebido pela nossa secretaria. Em breve nossa equipe entrará em contato para concluir a validação.
+        <p style={{ fontSize: '15px', color: '#30252a', lineHeight: 1.6, maxWidth: '580px', margin: '0 auto 16px auto' }}>
+          Após o envio desse formulário você deverá aguardar até ser enviada a sua carteirinha pelo WhatsApp que você indicou. Caso não receba a sua carteirinha em até <strong>5 dias úteis</strong>, pedimos a gentileza de entrar em contato no telefone/WhatsApp:{' '}
+          <a
+            href="https://wa.me/5512997260926"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#23634e', fontWeight: 800, textDecoration: 'underline' }}
+          >
+            (12) 99726-0926
+          </a>.
         </p>
 
         <div
@@ -105,27 +149,12 @@ export default function FormularioSindicalizacao() {
               gap: '6px',
             }}
           >
-            {copiado ? (
-              <>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                <span>Protocolo copiado!</span>
-              </>
-            ) : (
-              <>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                </svg>
-                <span>Copiar protocolo</span>
-              </>
-            )}
+            {copiado ? 'Protocolo copiado!' : 'Copiar protocolo'}
           </button>
         </div>
 
         <p style={{ fontSize: '13px', color: '#71636a', margin: 0 }}>
-          Dúvidas? Entre em contato pelo telefone <strong>(12) 3921-8177</strong> ou WhatsApp.
+          Setor de Carteirinhas: <strong>(12) 99726-0926</strong> • Sede Central: <strong>(12) 3921-8177</strong>
         </p>
       </div>
     )
@@ -136,7 +165,7 @@ export default function FormularioSindicalizacao() {
     padding: '11px 12px',
     border: '1px solid #cbd7de',
     borderRadius: '5px',
-    fontSize: '16px',
+    fontSize: '15px',
     color: '#30252a',
     background: '#ffffff',
     outline: 'none',
@@ -163,12 +192,12 @@ export default function FormularioSindicalizacao() {
         boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
       }}
     >
-      <div style={{ borderBottom: '2px solid #861e32', paddingBottom: '8px', marginBottom: '22px' }}>
+      <div style={{ borderBottom: '2px solid #861e32', paddingBottom: '10px', marginBottom: '22px' }}>
         <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#861e32', margin: 0 }}>
-          Preencha sua Ficha de Filiação
+          Preencha sua Ficha de Filiação (Ficar Sócio)
         </h3>
-        <p style={{ fontSize: '13px', color: '#71636a', margin: '4px 0 0 0' }}>
-          Junte-se à luta da categoria química. Os campos com <span style={{ color: '#861e32' }}>*</span> são obrigatórios.
+        <p style={{ fontSize: '13.5px', color: '#71636a', margin: '4px 0 0 0' }}>
+          Preencha os campos abaixo corretamente. Os campos com <span style={{ color: '#861e32' }}>*</span> são obrigatórios.
         </p>
       </div>
 
@@ -190,20 +219,39 @@ export default function FormularioSindicalizacao() {
       <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#30252a', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
         1. Dados Pessoais
       </h4>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '22px' }}>
-        <div style={{ gridColumn: '1 / -1' }}>
-          <label style={labelStyle}>Nome completo <span style={{ color: '#861e32' }}>*</span></label>
-          <input type="text" name="nome" required placeholder="Seu nome completo" style={inputStyle} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '16px', marginBottom: '22px' }}>
+        <div style={{ gridColumn: 'span 2' }} className="form-sind-col-span-2">
+          <label style={labelStyle}>Nome completo (sem abreviação) <span style={{ color: '#861e32' }}>*</span></label>
+          <input type="text" name="nome" required placeholder="Seu nome completo (Sem abreviação)" style={inputStyle} />
+        </div>
+
+        <div>
+          <label style={labelStyle}>Conhecido por (Apelido se houver)</label>
+          <input type="text" name="apelido" placeholder="Apelido na fábrica (se houver)" style={inputStyle} />
         </div>
 
         <div>
           <label style={labelStyle}>CPF <span style={{ color: '#861e32' }}>*</span></label>
-          <input type="text" name="cpf" required placeholder="000.000.000-00" style={inputStyle} />
+          <input
+            type="text"
+            name="cpf"
+            required
+            value={cpf}
+            onChange={(e) => setCpf(formatarCPF(e.target.value))}
+            placeholder="000.000.000-00"
+            maxLength={14}
+            style={inputStyle}
+          />
         </div>
 
         <div>
-          <label style={labelStyle}>RG</label>
+          <label style={labelStyle}>R.G. (Com dígito se houver)</label>
           <input type="text" name="rg" placeholder="Número do RG" style={inputStyle} />
+        </div>
+
+        <div>
+          <label style={labelStyle}>Nº da Carteira de Trabalho (CTPS - Nº, Série e UF)</label>
+          <input type="text" name="ctps" placeholder="Ex: 123456 / Série 001 / SP" style={inputStyle} />
         </div>
 
         <div>
@@ -214,16 +262,50 @@ export default function FormularioSindicalizacao() {
         <div>
           <label style={labelStyle}>Estado Civil</label>
           <select name="estado_civil" style={inputStyle}>
-            <option value="solteiro">Solteiro(a)</option>
-            <option value="casado">Casado(a) / União Estável</option>
-            <option value="divorciado">Divorciado(a)</option>
-            <option value="viuvo">Viúvo(a)</option>
+            <option value="Solteiro(a)">Solteiro(a)</option>
+            <option value="Casado(a)">Casado(a)</option>
+            <option value="Separado(a)">Separado(a)</option>
+            <option value="Divorciado(a)">Divorciado(a)</option>
+            <option value="Viúvo(a)">Viúvo(a)</option>
           </select>
         </div>
 
         <div>
-          <label style={labelStyle}>Telefone / Celular (WhatsApp) <span style={{ color: '#861e32' }}>*</span></label>
-          <input type="tel" name="telefone" required placeholder="(12) 99999-9999" style={inputStyle} />
+          <label style={labelStyle}>Nº de dependentes (Filhos até 18 anos)</label>
+          <select name="numero_dependentes" style={inputStyle}>
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+              <option key={n} value={String(n)}>
+                Tenho ({n}) Filho(s) até os 18 anos
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label style={labelStyle}>Telefone Celular / WhatsApp <span style={{ color: '#861e32' }}>*</span></label>
+          <input
+            type="tel"
+            name="telefone"
+            required
+            value={telefone}
+            onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
+            placeholder="(12) 99999-9999"
+            maxLength={15}
+            style={inputStyle}
+          />
+        </div>
+
+        <div>
+          <label style={labelStyle}>Telefone Residencial</label>
+          <input
+            type="tel"
+            name="telefone_residencial"
+            value={telefoneResidencial}
+            onChange={(e) => setTelefoneResidencial(formatarTelefone(e.target.value))}
+            placeholder="(12) 3921-0000"
+            maxLength={15}
+            style={inputStyle}
+          />
         </div>
 
         <div>
@@ -232,26 +314,71 @@ export default function FormularioSindicalizacao() {
         </div>
       </div>
 
-      {/* BLOCO 2: ENDEREÇO */}
-      <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#30252a', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.5px', borderTop: '1px solid #e4dce0', paddingTop: '18px' }}>
-        2. Endereço Residencial
-      </h4>
-      <div className="form-sind-grid form-sind-grid-endereco" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '22px' }}>
+      {/* BLOCO 2: ENDEREÇO RESIDENCIAL (COM VIACEP AUTOMÁTICO) */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', borderTop: '1px solid #e4dce0', paddingTop: '18px', marginBottom: '14px' }}>
+        <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#30252a', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          2. Endereço Residencial
+        </h4>
+        {buscandoCep && (
+          <span style={{ fontSize: '12px', color: '#861e32', fontWeight: 600 }}>
+            Buscando endereço pelo CEP...
+          </span>
+        )}
+        {!buscandoCep && cepAutomatico && (
+          <span style={{ fontSize: '12px', color: '#23634e', fontWeight: 600 }}>
+            ✓ Endereço preenchido automaticamente via CEP
+          </span>
+        )}
+      </div>
+      <div className="form-sind-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '22px' }}>
+        <div>
+          <label style={labelStyle}>CEP (preenche endereço)</label>
+          <input
+            type="text"
+            name="cep"
+            value={cep}
+            onChange={(e) => handleCepChange(e.target.value)}
+            placeholder="12200-000"
+            maxLength={9}
+            style={inputStyle}
+          />
+        </div>
         <div className="form-sind-col-span-2" style={{ gridColumn: 'span 2' }}>
-          <label style={labelStyle}>Endereço (Rua, Av, Número, Compl.) <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span></label>
-          <input type="text" name="endereco" placeholder="Ex: Rua das Flores, 123, Apto 4" style={inputStyle} />
+          <label style={labelStyle}>Endereço Residencial (Rua / Av.)</label>
+          <input
+            type="text"
+            name="endereco"
+            value={endereco}
+            onChange={(e) => setEndereco(e.target.value)}
+            placeholder="Ex: Rua das Flores"
+            style={inputStyle}
+          />
         </div>
         <div>
-          <label style={labelStyle}>Bairro <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span></label>
-          <input type="text" name="bairro" placeholder="Bairro" style={inputStyle} />
+          <label style={labelStyle}>Nº do Endereço / Compl.</label>
+          <input type="text" name="numero_endereco" placeholder="Ex: 123, Apto 4" style={inputStyle} />
         </div>
         <div>
-          <label style={labelStyle}>Cidade <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span></label>
-          <input type="text" name="cidade" placeholder="São José dos Campos" style={inputStyle} />
+          <label style={labelStyle}>Bairro</label>
+          <input
+            type="text"
+            name="bairro"
+            value={bairro}
+            onChange={(e) => setBairro(e.target.value)}
+            placeholder="Bairro"
+            style={inputStyle}
+          />
         </div>
         <div>
-          <label style={labelStyle}>CEP <span style={{ color: '#71636a', fontWeight: 400 }}>(opcional)</span></label>
-          <input type="text" name="cep" placeholder="12200-000" style={inputStyle} />
+          <label style={labelStyle}>Cidade</label>
+          <input
+            type="text"
+            name="cidade"
+            value={cidade}
+            onChange={(e) => setCidade(e.target.value)}
+            placeholder="São José dos Campos"
+            style={inputStyle}
+          />
         </div>
       </div>
 
@@ -259,29 +386,85 @@ export default function FormularioSindicalizacao() {
       <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#30252a', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.5px', borderTop: '1px solid #e4dce0', paddingTop: '18px' }}>
         3. Dados da Empresa
       </h4>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         <div>
-          <label style={labelStyle}>Empresa em que trabalha <span style={{ color: '#861e32' }}>*</span></label>
-          <input type="text" name="empresa" required placeholder="Nome da empresa química ou farmacêutica" style={inputStyle} />
+          <label style={labelStyle}>Empresa que trabalha <span style={{ color: '#861e32' }}>*</span></label>
+          <input type="text" name="empresa" required placeholder="Nome da empresa química, plástica ou farmacêutica" style={inputStyle} />
+        </div>
+        <div>
+          <label style={labelStyle}>Setor atual</label>
+          <input type="text" name="setor" placeholder="Setor ou área onde trabalha" style={inputStyle} />
         </div>
         <div>
           <label style={labelStyle}>Função / Cargo</label>
           <input type="text" name="funcao" placeholder="Ex: Operador de Produção" style={inputStyle} />
         </div>
         <div>
+          <label style={labelStyle}>Crachá, Chapa, WWID ou Nº de Registro</label>
+          <input type="text" name="matricula_empresa" placeholder="Registro na empresa" style={inputStyle} />
+        </div>
+        <div>
           <label style={labelStyle}>Data de Admissão na Empresa</label>
           <input type="date" name="data_admissao" style={inputStyle} />
         </div>
+        <div>
+          <label style={labelStyle}>Selecione o turno que trabalha</label>
+          <select name="turno" style={inputStyle}>
+            <option value="1º Turno">1º Turno</option>
+            <option value="2º Turno">2º Turno</option>
+            <option value="3º Turno">3º Turno</option>
+            <option value="Administrativo">Administrativo</option>
+          </select>
+        </div>
+        <div>
+          <label style={labelStyle}>Telefone da Empresa</label>
+          <input
+            type="tel"
+            name="telefone_empresa"
+            value={telefoneEmpresa}
+            onChange={(e) => setTelefoneEmpresa(formatarTelefone(e.target.value))}
+            placeholder="(12) 3900-0000"
+            maxLength={15}
+            style={inputStyle}
+          />
+        </div>
+        <div>
+          <label style={labelStyle}>Ramal do setor onde trabalha</label>
+          <input type="text" name="ramal" placeholder="Ramal (se houver)" style={inputStyle} />
+        </div>
       </div>
 
-      {/* BLOCO 4: AUTORIZAÇÃO */}
-      <div style={{ background: '#f8fafb', border: '1px solid #cbd7de', borderRadius: '6px', padding: '16px 18px', marginBottom: '26px' }}>
-        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', fontSize: '13px', lineHeight: 1.5, color: '#30252a' }}>
-          <input type="checkbox" name="autorizacao" value="true" required style={{ marginTop: '3px', width: '16px', height: '16px' }} />
+      {/* BLOCO 4: AUTORIZAÇÃO E AVISO OFICIAL DA CARTEIRINHA */}
+      <div style={{ background: '#f8fafb', border: '1px solid #cbd7de', borderRadius: '6px', padding: '16px 18px', marginBottom: '16px' }}>
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', fontSize: '13.5px', lineHeight: 1.5, color: '#30252a' }}>
+          <input type="checkbox" name="autorizacao" value="true" required style={{ marginTop: '3px', width: '17px', height: '17px', flexShrink: 0 }} />
           <span>
-            <strong>Autorização de Filiação Sindical:</strong> Proponho minha filiação ao Sindicato dos Químicos de São José dos Campos e Região e autorizo o desconto mensal da mensalidade associativa em folha de pagamento, conforme previsto em Estatuto e legislação vigente. <span style={{ color: '#861e32' }}>*</span>
+            <strong>Autorizo meu cadastro como sócio e concordo com a Contribuição mensal de 1% conforme Art. 545 da CLT</strong> <span style={{ color: '#861e32' }}>*</span>
           </span>
         </label>
+      </div>
+
+      <div
+        style={{
+          background: '#fff9ea',
+          border: '1px solid #f3d489',
+          borderRadius: '6px',
+          padding: '14px 18px',
+          marginBottom: '24px',
+          fontSize: '13.5px',
+          color: '#5a3d0a',
+          lineHeight: 1.55,
+        }}
+      >
+        <strong>Importante:</strong> A Contribuição Sindical mensal para sócio é de <strong>1% do Salário</strong>. Após o envio desse formulário você deverá aguardar até ser enviada a sua carteirinha pelo WhatsApp que você indicou. Caso não receba a sua carteirinha em até <strong>5 dias úteis</strong>, pedimos a gentileza de entrar em contato no telefone/WhatsApp:{' '}
+        <a
+          href="https://wa.me/5512997260926"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: '#861e32', fontWeight: 800, textDecoration: 'underline' }}
+        >
+          (12) 99726-0926
+        </a>.
       </div>
 
       {/* BOTÃO DE ENVIO */}
@@ -304,7 +487,7 @@ export default function FormularioSindicalizacao() {
             gap: '8px',
           }}
         >
-          {enviando ? 'Enviando Ficha...' : 'Enviar Ficha de Filiação →'}
+          {enviando ? 'Enviando dados...' : 'Enviar dados para Sindicalização →'}
         </button>
       </div>
 

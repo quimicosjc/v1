@@ -25,41 +25,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]
 
-  // Páginas institucionais fixas
-  const paginasFixas = [
-    'quem-somos',
-    'diretoria',
-    'historia',
-    'estatuto',
-    'fique-socio',
-    'carteirinha',
-    'atualizacao-cadastral',
-    'denuncia',
-    'colonia-de-ferias',
-    'convenios',
-    'clube-de-campo',
-    'juridico',
-    'convencoes-coletivas',
-    'saude-do-trabalhador',
-    'contato',
-    'privacidade',
-  ]
-
-  for (const slug of paginasFixas) {
-    staticRoutes.push({
-      url: `${baseUrl}/paginas/${slug}`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    })
-  }
-
-  // Notícias dinâmicas publicadas no Supabase
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
+
+    // 1. Páginas institucionais e de serviços reais publicadas no banco
+    const { data: paginasDb } = await supabase
+      .from('conteudos')
+      .select('slug, atualizado_em, publicado_em')
+      .in('tipo', ['institucional', 'avulsa'])
+      .eq('status', 'publicado')
+      .order('slug', { ascending: true })
+
+    if (paginasDb && paginasDb.length > 0) {
+      for (const p of paginasDb) {
+        staticRoutes.push({
+          url: `${baseUrl}/paginas/${p.slug}`,
+          lastModified: new Date(p.atualizado_em || p.publicado_em || new Date()),
+          changeFrequency: 'monthly',
+          priority: 0.7,
+        })
+      }
+    }
+
+    // 2. Notícias dinâmicas publicadas no Supabase
     let todasNoticias: { slug: string; atualizado_em: string | null; publicado_em: string | null }[] = []
     let page = 0
     const pageSize = 500
@@ -104,7 +95,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     }
   } catch (err) {
-    console.error('[sitemap] Erro ao carregar notícias:', err)
+    console.error('[sitemap] Erro ao carregar rotas do sitemap:', err)
   }
 
   return staticRoutes

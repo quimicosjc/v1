@@ -179,10 +179,10 @@ export default async function HomePage() {
     }
   } catch {}
 
-  // 3. Busca notícias publicadas no Supabase em ordem cronológica (mais recente primeiro)
+  // 3. Busca notícias publicadas no Supabase em ordem cronológica (mais recente primeiro, sem trafegar corpo HTML pesado de 30 matérias)
   const { data: dbNews } = await supabase
     .from('conteudos')
-    .select('id, titulo, slug, chapeu, resumo, corpo, banner_url, imagem_y, publicado_em, criado_em, fotos_json, destaque, url_referencia')
+    .select('id, titulo, slug, chapeu, resumo, banner_url, imagem_y, publicado_em, criado_em, fotos_json, destaque, url_referencia')
     .eq('tipo', 'noticia')
     .eq('status', 'publicado')
     .order('publicado_em', { ascending: false })
@@ -198,7 +198,7 @@ export default async function HomePage() {
     if (idsFaltantes.length > 0) {
       const { data: extras } = await supabase
         .from('conteudos')
-        .select('id, titulo, slug, chapeu, resumo, corpo, banner_url, imagem_y, publicado_em, criado_em, fotos_json, destaque, url_referencia')
+        .select('id, titulo, slug, chapeu, resumo, banner_url, imagem_y, publicado_em, criado_em, fotos_json, destaque, url_referencia')
         .eq('tipo', 'noticia')
         .eq('status', 'publicado')
         .in('id', idsFaltantes)
@@ -210,6 +210,18 @@ export default async function HomePage() {
 
   // Organiza notícias: destaque automático cronológico + suporte a reordenação manual sem duplicações
   const orderedNews: NoticiaItem[] = resolverOrdemDestaquesHome(rawList, configDestaques)
+
+  // Busca o corpo apenas da manchete #1 se ela não possuir resumo cadastrado
+  if (orderedNews[0] && (!orderedNews[0].resumo || !orderedNews[0].resumo.trim())) {
+    const { data: mancheteCorpo } = await supabase
+      .from('conteudos')
+      .select('corpo')
+      .eq('id', orderedNews[0].id)
+      .maybeSingle()
+    if (mancheteCorpo?.corpo) {
+      orderedNews[0].corpo = mancheteCorpo.corpo
+    }
+  }
 
   // Complementa com notícias demo somente se o banco tiver menos de 5 publicadas
   for (const d of NOTICIAS_DEMO) {
