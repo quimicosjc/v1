@@ -67,8 +67,8 @@ export default function FormularioFaleConosco() {
             <polyline points="20 6 9 17 4 12" />
           </svg>
         </div>
-        <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#23634e', margin: '0 0 10px 0' }}>
-          Mensagem Enviada com Sucesso!
+        <h2 style={{ fontFamily: 'var(--font-condensed), sans-serif', fontSize: '26px', fontWeight: 800, color: '#23634e', textTransform: 'uppercase', margin: '0 0 10px 0' }}>
+          Mensagem Enviada!
         </h2>
         <p style={{ fontSize: '15px', color: '#30252a', lineHeight: 1.6, maxWidth: '540px', margin: '0 auto 20px auto' }}>
           Sua mensagem foi encaminhada diretamente à equipe do Sindicato dos Químicos.
@@ -140,6 +140,7 @@ export default function FormularioFaleConosco() {
       style={{
         background: '#ffffff',
         border: '1px solid #e4dce0',
+        borderTop: '4px solid #861e32',
         borderRadius: '8px',
         padding: '28px 32px',
         marginTop: '36px',
@@ -147,12 +148,9 @@ export default function FormularioFaleConosco() {
       }}
     >
       <div style={{ borderBottom: '2px solid #861e32', paddingBottom: '10px', marginBottom: '18px' }}>
-        <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#861e32', margin: 0 }}>
-          Envie sua Mensagem — Fale Conosco
+        <h3 style={{ fontFamily: 'var(--font-condensed), sans-serif', fontSize: '24px', fontWeight: 800, color: '#861e32', textTransform: 'uppercase', letterSpacing: '0.4px', margin: 0 }}>
+          Envie sua Mensagem
         </h3>
-        <p style={{ fontSize: '13.5px', color: '#71636a', margin: '4px 0 0 0' }}>
-          Preencha os campos abaixo corretamente para falar com o Sindicato.
-        </p>
       </div>
 
       <div
@@ -279,14 +277,17 @@ export default function FormularioFaleConosco() {
             background: enviando ? '#a25969' : '#861e32',
             color: '#ffffff',
             border: 'none',
-            borderRadius: '5px',
+            borderRadius: '6px',
             padding: '12px 26px',
-            fontSize: '15px',
+            fontFamily: 'var(--font-condensed), sans-serif',
+            fontSize: '16px',
             fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
             cursor: enviando ? 'not-allowed' : 'pointer',
           }}
         >
-          {enviando ? 'Enviando...' : 'Enviar mensagem →'}
+          {enviando ? 'Enviando...' : 'Enviar Mensagem →'}
         </button>
       </div>
     </form>

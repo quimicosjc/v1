@@ -63,8 +63,8 @@ export default function FormularioDenuncia() {
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>
         </div>
-        <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#861e32', margin: '0 0 12px 0' }}>
-          Denúncia Registrada com Sucesso!
+        <h2 style={{ fontFamily: 'var(--font-condensed), sans-serif', fontSize: '26px', fontWeight: 800, color: '#861e32', textTransform: 'uppercase', margin: '0 0 12px 0' }}>
+          Denúncia Registrada!
         </h2>
         <p style={{ fontSize: '15px', color: '#30252a', lineHeight: 1.6, maxWidth: '580px', margin: '0 auto 20px auto' }}>
           Sua manifestação foi recebida pelo departamento responsável do Sindicato. Ela será apurada com total sigilo e discrição pelo nosso departamento jurídico e fiscalização.
@@ -158,24 +158,13 @@ export default function FormularioDenuncia() {
       style={{
         background: '#ffffff',
         border: '1px solid #e4dce0',
+        borderTop: '4px solid #861e32',
         borderRadius: '8px',
         padding: '30px 34px',
-        marginTop: '28px',
+        marginTop: '24px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
       }}
     >
-      <div style={{ borderBottom: '2px solid #861e32', paddingBottom: '10px', marginBottom: '22px' }}>
-        <div style={{ display: 'inline-block', background: '#fff0f2', color: '#861e32', fontSize: '11px', fontWeight: 700, padding: '3px 8px', borderRadius: '3px', textTransform: 'uppercase', marginBottom: '6px' }}>
-          Canal Sigiloso e Confidencial
-        </div>
-        <h3 style={{ fontSize: '22px', fontWeight: 800, color: '#861e32', margin: 0 }}>
-          Denúncia Trabalhista
-        </h3>
-        <p style={{ fontSize: '13px', color: '#71636a', margin: '4px 0 0 0' }}>
-          Denuncie abusos, condições insalubres, descumprimento de direitos ou assédio. Sua segurança e sigilo são garantidos.
-        </p>
-      </div>
-
       <input type="text" name="website_extra" tabIndex={-1} autoComplete="off" style={{ display: 'none' }} />
 
       {erro && (
@@ -292,10 +281,14 @@ export default function FormularioDenuncia() {
             background: enviando ? '#a25969' : '#861e32',
             color: '#ffffff',
             border: 'none',
-            borderRadius: '5px',
+            borderRadius: '6px',
             padding: '13px 28px',
-            fontSize: '15px',
+            fontFamily: 'var(--font-condensed), sans-serif',
+            fontSize: '16px',
             fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            cursor: enviando ? 'not-allowed' : 'pointer',
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
@@ -304,7 +297,7 @@ export default function FormularioDenuncia() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>
-          <span>{enviando ? 'Enviando com Sigilo...' : 'Enviar Denúncia Sigilosa'}</span>
+          <span>{enviando ? 'Enviando...' : 'Enviar Denúncia'}</span>
         </button>
       </div>
 

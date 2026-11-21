@@ -64,12 +64,18 @@ export default function ListaProcessosPublica({ processosIniciais }: ListaProces
   }
 
   return (
-    <div style={{ marginTop: '28px' }}>
-      {/* Abas por Cidade */}
+    <div style={{ marginTop: '16px' }}>
+      {/* Faixa de Cidades em Bloco Bordô (Proposta B — sem caixas quadradas soltas) */}
       <div
         role="tablist"
         aria-label="Filtrar processos por cidade"
-        style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          background: '#65172A',
+          borderBottom: '3px solid #861E32',
+          marginBottom: '16px',
+        }}
       >
         <button
           type="button"
@@ -77,13 +83,16 @@ export default function ListaProcessosPublica({ processosIniciais }: ListaProces
           aria-selected={cidadeFiltro === ''}
           onClick={() => setCidadeFiltro('')}
           style={{
-            background: cidadeFiltro === '' ? '#861e32' : '#ffffff',
-            color: cidadeFiltro === '' ? '#ffffff' : '#30252a',
-            border: cidadeFiltro === '' ? '1px solid #861e32' : '1px solid #cbd7de',
-            borderRadius: '6px',
-            padding: '9px 16px',
-            fontSize: '13.5px',
+            background: cidadeFiltro === '' ? '#861E32' : 'transparent',
+            color: cidadeFiltro === '' ? '#FFFFFF' : '#F6E7EC',
+            border: 'none',
+            borderBottom: cidadeFiltro === '' ? '3px solid #FFB8C5' : '3px solid transparent',
+            padding: '11px 18px',
+            fontFamily: 'var(--font-condensed), sans-serif',
+            fontSize: '16.5px',
             fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.6px',
             cursor: 'pointer',
           }}
         >
@@ -100,13 +109,16 @@ export default function ListaProcessosPublica({ processosIniciais }: ListaProces
               aria-selected={ativo}
               onClick={() => setCidadeFiltro(ativo ? '' : cid)}
               style={{
-                background: ativo ? '#861e32' : '#ffffff',
-                color: ativo ? '#ffffff' : '#30252a',
-                border: ativo ? '1px solid #861e32' : '1px solid #cbd7de',
-                borderRadius: '6px',
-                padding: '9px 16px',
-                fontSize: '13.5px',
-                fontWeight: ativo ? 700 : 600,
+                background: ativo ? '#861E32' : 'transparent',
+                color: ativo ? '#FFFFFF' : '#F6E7EC',
+                border: 'none',
+                borderBottom: ativo ? '3px solid #FFB8C5' : '3px solid transparent',
+                padding: '11px 18px',
+                fontFamily: 'var(--font-condensed), sans-serif',
+                fontSize: '16.5px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.6px',
                 cursor: 'pointer',
               }}
             >
@@ -119,10 +131,10 @@ export default function ListaProcessosPublica({ processosIniciais }: ListaProces
       {/* Campo de Busca */}
       <div
         style={{
-          background: '#faf8f9',
-          border: '1px solid #ebdbe0',
-          borderRadius: '8px',
-          padding: '14px 18px',
+          background: '#FFFFFF',
+          border: '1px solid #E4DCE0',
+          borderRadius: '4px',
+          padding: '12px 16px',
           marginBottom: '24px',
           display: 'flex',
           flexWrap: 'wrap',
@@ -135,16 +147,16 @@ export default function ListaProcessosPublica({ processosIniciais }: ListaProces
           type="text"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          placeholder="Buscar por fábrica (ex: Johnson, Monsanto, Henkel, Teknia) ou número do processo…"
-          aria-label="Buscar processo coletivo"
+          placeholder="Pesquisar por fábrica (Johnson, Monsanto, Henkel, Teknia) ou nº do processo…"
+          aria-label="Pesquisar processo coletivo"
           style={{
             flex: '1 1 300px',
             padding: '10px 14px',
-            border: '1px solid #cbd7de',
-            borderRadius: '6px',
+            border: '1px solid #CBD7DE',
+            borderRadius: '3px',
             fontSize: '14.5px',
-            background: '#ffffff',
-            color: '#1a1417',
+            background: '#FAF8F9',
+            color: '#1A1417',
             outline: 'none',
           }}
         />
@@ -153,95 +165,107 @@ export default function ListaProcessosPublica({ processosIniciais }: ListaProces
           target="_blank"
           rel="noopener noreferrer"
           style={{
-            background: '#1B2E4B',
-            color: '#ffffff',
-            padding: '10px 16px',
-            borderRadius: '6px',
-            fontSize: '13px',
+            background: '#65172A',
+            color: '#FFFFFF',
+            padding: '10px 18px',
+            borderRadius: '3px',
+            fontFamily: 'var(--font-condensed), sans-serif',
+            fontSize: '15px',
             fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
             textDecoration: 'none',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
             whiteSpace: 'nowrap',
           }}
         >
-          <span>Consultar no Portal TRT-15 ↗</span>
+          Consulta PJe TRT-15 ↗
         </a>
       </div>
 
-      {/* Lista agrupada por cidade */}
+      {/* Lista agrupada por cidade (sem rótulos redundantes) */}
       {cidades
         .filter((cid) => !cidadeFiltro || cid === cidadeFiltro)
         .map((cid) => {
           const itensCidade = filtrados.filter((p) => p.city === cid)
           if (itensCidade.length === 0) return null
           return (
-            <section key={cid} style={{ marginBottom: '36px' }}>
+            <section key={cid} style={{ marginBottom: '34px' }}>
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  borderBottom: '2px solid #861e32',
-                  paddingBottom: '8px',
+                  borderBottom: '3px solid #65172A',
+                  paddingBottom: '6px',
                   marginBottom: '16px',
                 }}
               >
-                <h2 style={{ fontSize: '21px', fontWeight: 800, color: '#861e32', margin: 0 }}>
-                  {cid}
-                </h2>
-                <span
+                <h2
                   style={{
-                    background: '#f8e9ec',
-                    color: '#861e32',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    padding: '2px 10px',
-                    borderRadius: '12px',
+                    fontFamily: 'var(--font-condensed), sans-serif',
+                    fontSize: '26px',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.4px',
+                    color: '#65172A',
+                    margin: 0,
                   }}
                 >
-                  {itensCidade.length} {itensCidade.length === 1 ? 'processo' : 'processos'}
-                </span>
+                  {cid}
+                </h2>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                  gap: '16px',
+                }}
+              >
                 {itensCidade.map((proc, idx) => {
                   const keyId = proc.id || `${cid}-${proc.company}-${idx}`
-                  const isCaixaFederal = proc.number.includes('.4.03.')
-                  const consultaUrl = isCaixaFederal
-                    ? 'https://pje1g.trf3.jus.br/pje/ConsultaPublica/listView.seam'
-                    : 'https://pje.trt15.jus.br/consultaprocessual/'
-
                   return (
                     <div
                       key={keyId}
                       style={{
-                        background: '#ffffff',
-                        border: '1px solid #e4dce0',
-                        borderLeft: '4px solid #861e32',
-                        borderRadius: '8px',
+                        background: '#FFFFFF',
+                        border: '1px solid #E4DCE0',
+                        borderTop: '4px solid #65172A',
+                        borderRadius: '4px',
                         padding: '18px 20px',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
-                        gap: '12px',
+                        gap: '10px',
                       }}
                     >
                       <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '6px' }}>
-                          <h3 style={{ fontSize: '16.5px', fontWeight: 800, color: '#30252a', margin: 0, lineHeight: 1.3 }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'baseline',
+                            gap: '8px',
+                            marginBottom: '6px',
+                          }}
+                        >
+                          <h3
+                            style={{
+                              fontFamily: 'var(--font-condensed), sans-serif',
+                              fontSize: '22px',
+                              fontWeight: 800,
+                              textTransform: 'uppercase',
+                              color: '#1A1417',
+                              margin: 0,
+                              lineHeight: 1.15,
+                            }}
+                          >
                             {proc.company}
                           </h3>
                           <span
                             style={{
-                              fontSize: '11px',
-                              fontWeight: 700,
-                              background: '#f0f4f8',
-                              color: '#1B2E4B',
-                              padding: '3px 8px',
-                              borderRadius: '4px',
+                              fontFamily: 'var(--font-condensed), sans-serif',
+                              fontSize: '13px',
+                              fontWeight: 800,
+                              textTransform: 'uppercase',
+                              color: '#861E32',
                               whiteSpace: 'nowrap',
                             }}
                           >
@@ -254,70 +278,61 @@ export default function ListaProcessosPublica({ processosIniciais }: ListaProces
                             fontFamily: 'monospace',
                             fontSize: '13px',
                             fontWeight: 700,
-                            color: '#861e32',
-                            background: '#faf6f7',
+                            color: '#65172A',
+                            background: '#FAF8F9',
                             padding: '6px 10px',
-                            borderRadius: '5px',
-                            border: '1px solid #ebdbe0',
+                            borderRadius: '3px',
+                            border: '1px solid #E4DCE0',
                             marginBottom: '10px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             gap: '8px',
-                            flexWrap: 'wrap',
                           }}
                         >
-                          <span>Processo nº {proc.number}</span>
+                          <span>Processo n.º {proc.number}</span>
                           <button
                             type="button"
                             onClick={() => copiarNumero(proc.number, keyId)}
                             style={{
-                              background: copiadoId === keyId ? '#23634e' : '#ffffff',
-                              color: copiadoId === keyId ? '#ffffff' : '#30252a',
-                              border: '1px solid #cbd7de',
-                              borderRadius: '4px',
+                              background: copiadoId === keyId ? '#23634E' : '#FFFFFF',
+                              color: copiadoId === keyId ? '#FFFFFF' : '#1A1417',
+                              border: '1px solid #CBD7DE',
+                              borderRadius: '3px',
                               padding: '2px 8px',
-                              fontSize: '11px',
-                              fontFamily: 'sans-serif',
-                              fontWeight: 600,
+                              fontFamily: 'var(--font-condensed), sans-serif',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              textTransform: 'uppercase',
                               cursor: 'pointer',
                             }}
                           >
-                            {copiadoId === keyId ? '✓ Copiado' : 'Copiar nº'}
+                            {copiadoId === keyId ? 'Copiado' : 'Copiar'}
                           </button>
                         </div>
 
-                        {proc.subject && (
-                          <div style={{ fontSize: '13.5px', color: '#30252a', marginBottom: '6px' }}>
-                            <strong>Objeto:</strong> {proc.subject}
+                        {proc.subject && proc.subject !== 'Ação Coletiva Trabalhista' && (
+                          <div
+                            style={{
+                              fontSize: '14px',
+                              fontWeight: 700,
+                              color: '#1A1417',
+                              marginBottom: '4px',
+                            }}
+                          >
+                            {proc.subject}
                           </div>
                         )}
 
                         <div
                           style={{
-                            fontSize: '13.5px',
-                            color: '#1a3a2a',
-                            background: '#eef7f2',
-                            border: '1px solid #bce0cc',
-                            borderRadius: '6px',
-                            padding: '9px 12px',
-                            lineHeight: 1.45,
+                            fontSize: '14px',
+                            color: '#4F4248',
+                            lineHeight: 1.5,
                           }}
                         >
-                          <strong>Andamento / Situação:</strong> {proc.status}
+                          {proc.status}
                         </div>
-                      </div>
-
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid #f0e8ea', fontSize: '12px' }}>
-                        <span style={{ color: '#71636a' }}>Dúvidas: (12) 3921-8177</span>
-                        <a
-                          href={consultaUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ color: '#861e32', fontWeight: 700, textDecoration: 'underline' }}
-                        >
-                          Consultar no Tribunal ↗
-                        </a>
                       </div>
                     </div>
                   )

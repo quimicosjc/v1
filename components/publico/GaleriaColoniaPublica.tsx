@@ -35,81 +35,56 @@ export default function GaleriaColoniaPublica({ fotos }: GaleriaColoniaPublicaPr
   const fotoAtiva = lightboxIdx !== null ? fotosVisiveis[lightboxIdx] : null
 
   return (
-    <div style={{ marginTop: '28px' }}>
-      {/* Filtros por Unidade */}
+    <div style={{ marginTop: '12px' }}>
+      {/* Faixa integrada de filtro por unidade — Proposta B (sem caixas quadradas soltas) */}
       <div
         role="tablist"
-        aria-label="Filtrar fotos da colônia por unidade"
-        style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '24px' }}
+        aria-label="Filtrar por unidade"
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          background: '#65172A',
+          borderBottom: '3px solid #861E32',
+          marginBottom: '28px',
+        }}
       >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={unidadeFiltro === ''}
-          onClick={() => {
-            setUnidadeFiltro('')
-            setLightboxIdx(null)
-          }}
-          style={{
-            background: unidadeFiltro === '' ? '#861e32' : '#ffffff',
-            color: unidadeFiltro === '' ? '#ffffff' : '#30252a',
-            border: unidadeFiltro === '' ? '1px solid #861e32' : '1px solid #cbd7de',
-            borderRadius: '6px',
-            padding: '10px 18px',
-            fontSize: '14px',
-            fontWeight: 700,
-            cursor: 'pointer',
-          }}
-        >
-          Todas as Fotos ({fotos.length})
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={unidadeFiltro === 'Caraguatatuba'}
-          onClick={() => {
-            setUnidadeFiltro('Caraguatatuba')
-            setLightboxIdx(null)
-          }}
-          style={{
-            background: unidadeFiltro === 'Caraguatatuba' ? '#861e32' : '#ffffff',
-            color: unidadeFiltro === 'Caraguatatuba' ? '#ffffff' : '#30252a',
-            border: unidadeFiltro === 'Caraguatatuba' ? '1px solid #861e32' : '1px solid #cbd7de',
-            borderRadius: '6px',
-            padding: '10px 18px',
-            fontSize: '14px',
-            fontWeight: 700,
-            cursor: 'pointer',
-          }}
-        >
-          Fotos Caraguá ({fotosCaragua.length})
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={unidadeFiltro === 'São Sebastião'}
-          onClick={() => {
-            setUnidadeFiltro('São Sebastião')
-            setLightboxIdx(null)
-          }}
-          style={{
-            background: unidadeFiltro === 'São Sebastião' ? '#861e32' : '#ffffff',
-            color: unidadeFiltro === 'São Sebastião' ? '#ffffff' : '#30252a',
-            border: unidadeFiltro === 'São Sebastião' ? '1px solid #861e32' : '1px solid #cbd7de',
-            borderRadius: '6px',
-            padding: '10px 18px',
-            fontSize: '14px',
-            fontWeight: 700,
-            cursor: 'pointer',
-          }}
-        >
-          Fotos São Sebastião ({fotosSaoSebastiao.length})
-        </button>
+        {[
+          { id: '', label: `Todas as Fotos (${fotos.length})` },
+          { id: 'Caraguatatuba', label: `Caraguá (${fotosCaragua.length})` },
+          { id: 'São Sebastião', label: `São Sebastião (${fotosSaoSebastiao.length})` },
+        ].map((tab) => {
+          const ativo = unidadeFiltro === tab.id
+          return (
+            <button
+              key={tab.id || 'todas'}
+              type="button"
+              role="tab"
+              aria-selected={ativo}
+              onClick={() => {
+                setUnidadeFiltro(tab.id)
+                setLightboxIdx(null)
+              }}
+              style={{
+                background: ativo ? '#861E32' : 'transparent',
+                color: ativo ? '#FFFFFF' : '#F6E7EC',
+                border: 'none',
+                borderBottom: ativo ? '3px solid #FFB8C5' : '3px solid transparent',
+                padding: '11px 20px',
+                fontFamily: 'var(--font-condensed), sans-serif',
+                fontSize: '16.5px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.6px',
+                cursor: 'pointer',
+              }}
+            >
+              {tab.label}
+            </button>
+          )
+        })}
       </div>
 
-      {/* Grade de Fotos por Unidade */}
+      {/* Grade limpa de fotos por unidade (sem legendas óbvias ou redundantes embaixo de cada foto) */}
       {['Caraguatatuba', 'São Sebastião']
         .filter((u) => !unidadeFiltro || u === unidadeFiltro)
         .map((unidade) => {
@@ -117,39 +92,34 @@ export default function GaleriaColoniaPublica({ fotos }: GaleriaColoniaPublicaPr
           if (lista.length === 0) return null
 
           return (
-            <section key={unidade} style={{ marginBottom: '40px' }}>
+            <section key={unidade} style={{ marginBottom: '36px' }}>
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  paddingBottom: '8px',
-                  borderBottom: '2px solid #861e32',
-                  marginBottom: '18px',
+                  paddingBottom: '6px',
+                  borderBottom: '3px solid #65172A',
+                  marginBottom: '16px',
                 }}
               >
-                <h2 style={{ fontSize: '21px', fontWeight: 800, color: '#861e32', margin: 0 }}>
-                  Fotos ({unidade === 'Caraguatatuba' ? 'Caraguá' : 'São Sebastião'})
-                </h2>
-                <span
+                <h2
                   style={{
-                    fontSize: '12px',
-                    background: '#f8e9ec',
-                    color: '#861e32',
-                    padding: '2px 10px',
-                    borderRadius: '12px',
-                    fontWeight: 700,
+                    fontFamily: 'var(--font-condensed), sans-serif',
+                    fontSize: '26px',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.4px',
+                    color: '#65172A',
+                    margin: 0,
                   }}
                 >
-                  {lista.length} fotos
-                </span>
+                  {unidade === 'Caraguatatuba' ? 'Caraguá' : 'São Sebastião'}
+                </h2>
               </div>
 
               <div
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-                  gap: '16px',
+                  gap: '14px',
                 }}
               >
                 {lista.map((item, idx) => {
@@ -160,52 +130,32 @@ export default function GaleriaColoniaPublica({ fotos }: GaleriaColoniaPublicaPr
                       onClick={() => setLightboxIdx(globalIdx)}
                       role="button"
                       tabIndex={0}
+                      aria-label={`Ampliar imagem ${idx + 1} de ${unidade}`}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') setLightboxIdx(globalIdx)
                       }}
+                      className="foto-colonia-card"
                       style={{
-                        background: '#ffffff',
-                        border: '1px solid #e4dce0',
-                        borderRadius: '8px',
+                        background: '#FFFFFF',
+                        border: '1px solid #E4DCE0',
+                        borderRadius: '3px',
                         overflow: 'hidden',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
                         cursor: 'pointer',
-                        display: 'flex',
-                        flexDirection: 'column',
+                        height: '205px',
                       }}
                     >
-                      <div
+                      <img
+                        src={item.url}
+                        alt={`${unidade} ${idx + 1}`}
+                        loading="lazy"
                         style={{
                           width: '100%',
-                          height: '200px',
-                          background: '#f4f6f8',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          overflow: 'hidden',
-                          position: 'relative',
+                          height: '100%',
+                          objectFit: 'cover',
+                          display: 'block',
+                          transition: 'transform 0.25s ease',
                         }}
-                      >
-                        <img
-                          src={item.url}
-                          alt={item.titulo || `Colônia de Férias ${unidade}`}
-                          loading="lazy"
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            display: 'block',
-                          }}
-                        />
-                      </div>
-                      <div style={{ padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#30252a' }}>
-                          {item.titulo || `${unidade} #${idx + 1}`}
-                        </span>
-                        <span style={{ fontSize: '11.5px', color: '#861e32', fontWeight: 600 }}>
-                          Ampliar ⤢
-                        </span>
-                      </div>
+                      />
                     </div>
                   )
                 })}
@@ -214,14 +164,14 @@ export default function GaleriaColoniaPublica({ fotos }: GaleriaColoniaPublicaPr
           )
         })}
 
-      {/* Lightbox Modal */}
+      {/* Lightbox */}
       {fotoAtiva && lightboxIdx !== null && (
         <div
           onClick={() => setLightboxIdx(null)}
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(15, 20, 28, 0.92)',
+            background: 'rgba(15, 12, 14, 0.92)',
             zIndex: 9999,
             display: 'flex',
             flexDirection: 'column',
@@ -235,10 +185,10 @@ export default function GaleriaColoniaPublica({ fotos }: GaleriaColoniaPublicaPr
             style={{
               maxWidth: '960px',
               width: '100%',
-              background: '#ffffff',
-              borderRadius: '10px',
+              background: '#FFFFFF',
+              borderRadius: '4px',
               overflow: 'hidden',
-              boxShadow: '0 12px 36px rgba(0,0,0,0.4)',
+              boxShadow: '0 12px 36px rgba(0,0,0,0.45)',
             }}
           >
             <div
@@ -246,30 +196,36 @@ export default function GaleriaColoniaPublica({ fotos }: GaleriaColoniaPublicaPr
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '12px 18px',
-                borderBottom: '1px solid #e4dce0',
-                background: '#faf8f9',
+                padding: '10px 18px',
+                background: '#65172A',
+                color: '#FFFFFF',
               }}
             >
-              <div>
-                <strong style={{ fontSize: '15px', color: '#30252a' }}>
-                  {fotoAtiva.titulo || `Colônia de Férias - ${fotoAtiva.unidade}`}
-                </strong>
-                <span style={{ fontSize: '12.5px', color: '#71636a', marginLeft: '10px' }}>
-                  ({lightboxIdx + 1} de {fotosVisiveis.length})
-                </span>
-              </div>
+              <strong
+                style={{
+                  fontFamily: 'var(--font-condensed), sans-serif',
+                  fontSize: '18px',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                {fotoAtiva.unidade === 'Caraguatatuba' ? 'Caraguá' : 'São Sebastião'} ({lightboxIdx + 1}/
+                {fotosVisiveis.length})
+              </strong>
               <button
                 type="button"
                 onClick={() => setLightboxIdx(null)}
                 style={{
-                  background: '#861e32',
-                  color: '#ffffff',
+                  background: '#861E32',
+                  color: '#FFFFFF',
                   border: 'none',
-                  borderRadius: '5px',
+                  borderRadius: '3px',
                   padding: '6px 14px',
-                  fontSize: '13px',
+                  fontFamily: 'var(--font-condensed), sans-serif',
+                  fontSize: '15px',
                   fontWeight: 700,
+                  textTransform: 'uppercase',
                   cursor: 'pointer',
                 }}
               >
@@ -279,21 +235,20 @@ export default function GaleriaColoniaPublica({ fotos }: GaleriaColoniaPublicaPr
 
             <div
               style={{
-                background: '#11161d',
+                background: '#110E10',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                maxHeight: '72vh',
+                maxHeight: '74vh',
                 minHeight: '320px',
-                position: 'relative',
               }}
             >
               <img
                 src={fotoAtiva.url}
-                alt={fotoAtiva.titulo || fotoAtiva.unidade}
+                alt={fotoAtiva.unidade}
                 style={{
                   maxWidth: '100%',
-                  maxHeight: '72vh',
+                  maxHeight: '74vh',
                   width: 'auto',
                   height: 'auto',
                   objectFit: 'contain',
@@ -307,9 +262,9 @@ export default function GaleriaColoniaPublica({ fotos }: GaleriaColoniaPublicaPr
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '12px 18px',
-                background: '#ffffff',
-                borderTop: '1px solid #e4dce0',
+                padding: '10px 18px',
+                background: '#FAF8F9',
+                borderTop: '1px solid #E4DCE0',
               }}
             >
               <button
@@ -318,43 +273,48 @@ export default function GaleriaColoniaPublica({ fotos }: GaleriaColoniaPublicaPr
                   setLightboxIdx((lightboxIdx - 1 + fotosVisiveis.length) % fotosVisiveis.length)
                 }
                 style={{
-                  background: '#f8fafb',
-                  border: '1px solid #cbd7de',
-                  borderRadius: '5px',
-                  padding: '8px 16px',
-                  fontSize: '13px',
+                  background: '#FFFFFF',
+                  border: '1px solid #CBD7DE',
+                  borderRadius: '3px',
+                  padding: '7px 16px',
+                  fontFamily: 'var(--font-condensed), sans-serif',
+                  fontSize: '15px',
                   fontWeight: 700,
-                  color: '#30252a',
+                  textTransform: 'uppercase',
+                  color: '#1A1417',
                   cursor: 'pointer',
                 }}
               >
-                ← Foto Anterior
+                ← Anterior
               </button>
-
-              <span style={{ fontSize: '13px', color: '#52434a', fontWeight: 600 }}>
-                Unidade {fotoAtiva.unidade}
-              </span>
-
               <button
                 type="button"
                 onClick={() => setLightboxIdx((lightboxIdx + 1) % fotosVisiveis.length)}
                 style={{
-                  background: '#f8fafb',
-                  border: '1px solid #cbd7de',
-                  borderRadius: '5px',
-                  padding: '8px 16px',
-                  fontSize: '13px',
+                  background: '#FFFFFF',
+                  border: '1px solid #CBD7DE',
+                  borderRadius: '3px',
+                  padding: '7px 16px',
+                  fontFamily: 'var(--font-condensed), sans-serif',
+                  fontSize: '15px',
                   fontWeight: 700,
-                  color: '#30252a',
+                  textTransform: 'uppercase',
+                  color: '#1A1417',
                   cursor: 'pointer',
                 }}
               >
-                Próxima Foto →
+                Próxima →
               </button>
             </div>
           </div>
         </div>
       )}
+
+      <style>{`
+        .foto-colonia-card:hover img {
+          transform: scale(1.03);
+        }
+      `}</style>
     </div>
   )
 }

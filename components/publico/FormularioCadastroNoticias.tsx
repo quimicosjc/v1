@@ -53,8 +53,8 @@ export default function FormularioCadastroNoticias() {
             <polyline points="20 6 9 17 4 12" />
           </svg>
         </div>
-        <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#23634e', margin: '0 0 8px 0' }}>
-          Cadastro Realizado com Sucesso!
+        <h3 style={{ fontFamily: 'var(--font-condensed), sans-serif', fontSize: '24px', fontWeight: 800, color: '#23634e', textTransform: 'uppercase', margin: '0 0 8px 0' }}>
+          Cadastro Realizado!
         </h3>
         <p style={{ fontSize: '14px', color: '#30252a', margin: 0 }}>
           Você receberá informativos, comunicados de assembleias e notícias da categoria diretamente em seus canais.
@@ -89,20 +89,12 @@ export default function FormularioCadastroNoticias() {
       style={{
         background: '#ffffff',
         border: '1px solid #e4dce0',
+        borderTop: '4px solid #861e32',
         borderRadius: '8px',
         padding: '28px 32px',
-        marginTop: '28px',
+        marginTop: '24px',
       }}
     >
-      <div style={{ borderBottom: '2px solid #861e32', paddingBottom: '8px', marginBottom: '20px' }}>
-        <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#861e32', margin: 0 }}>
-          Receba Notícias no seu WhatsApp e E-mail
-        </h3>
-        <p style={{ fontSize: '13px', color: '#71636a', margin: '4px 0 0 0' }}>
-          Fique por dentro das lutas, campanhas salariais e benefícios do Sindicato.
-        </p>
-      </div>
-
       <input type="text" name="website_extra" tabIndex={-1} autoComplete="off" style={{ display: 'none' }} />
 
       {erro && (
@@ -141,14 +133,17 @@ export default function FormularioCadastroNoticias() {
             background: enviando ? '#a25969' : '#861e32',
             color: '#ffffff',
             border: 'none',
-            borderRadius: '5px',
-            padding: '11px 24px',
-            fontSize: '14px',
+            borderRadius: '6px',
+            padding: '12px 24px',
+            fontFamily: 'var(--font-condensed), sans-serif',
+            fontSize: '15.5px',
             fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
             cursor: enviando ? 'not-allowed' : 'pointer',
           }}
         >
-          {enviando ? 'Cadastrando...' : 'Quero Receber Notícias →'}
+          {enviando ? 'Cadastrando...' : 'Receber Notícias →'}
         </button>
       </div>
     </form>

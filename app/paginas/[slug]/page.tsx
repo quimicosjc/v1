@@ -62,16 +62,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
   }
 
-  const descricao = pagina.subtitulo || stripHtml(pagina.corpo || '').slice(0, 160) || 'Página do Sindicato dos Químicos de São José dos Campos e Região.'
+  const descricao =
+    pagina.subtitulo ||
+    stripHtml(pagina.corpo || '').slice(0, 160) ||
+    'Página do Sindicato dos Químicos de São José dos Campos e Região.'
   const isDominioOficial = Boolean(
     process.env.NEXT_PUBLIC_SITE_URL &&
-    process.env.NEXT_PUBLIC_SITE_URL.includes('quimicosjc.org.br')
+      process.env.NEXT_PUBLIC_SITE_URL.includes('quimicosjc.org.br')
   )
 
   return {
     title: `${pagina.titulo} · Sindicato dos Químicos SJC`,
     description: descricao,
-    robots: (!isDominioOficial || pagina.noindex) ? { index: false, follow: false } : { index: true, follow: true },
+    robots:
+      !isDominioOficial || pagina.noindex
+        ? { index: false, follow: false }
+        : { index: true, follow: true },
     openGraph: {
       title: pagina.titulo,
       description: descricao,
@@ -108,13 +114,18 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
     }
   }
 
-  // Se fotos estiver vazio mas houver banner_url, usa como primeira foto
-  if (fotos.length === 0 && pagina.banner_url) {
+  if (fotos.length === 0 && pagina.banner_url && !slugNormalizado.startsWith('colonia')) {
     fotos = [{ url: pagina.banner_url, foco: pagina.imagem_y ?? 50 }]
   }
 
-  const fotoPrincipal = fotos.length > 0 ? fotos[0] : null
-  const fotosGaleria = fotos.length > 1 ? fotos.slice(1) : []
+  const fotoPrincipal =
+    fotos.length > 0 && !slugNormalizado.startsWith('colonia') && slugNormalizado !== 'historia'
+      ? fotos[0]
+      : null
+  const fotosGaleria =
+    fotos.length > 1 && !slugNormalizado.startsWith('colonia') && slugNormalizado !== 'historia'
+      ? fotos.slice(1)
+      : []
 
   // Parse de documentos
   let documentos: DocumentoItem[] = []
@@ -126,7 +137,7 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
     }
   }
 
-  // Parse de tags / dados estruturados adicionais
+  // Parse de dados estruturados adicionais
   let dadosEstruturados: any = null
   if (pagina.tags_json) {
     try {
@@ -143,7 +154,6 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
     }
   }
 
-  // Recupera tags de iframe reais caso tenham sido salvas como texto escapado e sanitiza HTML
   const corpoBruto = (pagina.corpo || '')
     .replace(/&lt;iframe([\s\S]*?)&gt;&lt;\/iframe&gt;/gi, '<iframe$1></iframe>')
     .replace(/&lt;iframe([\s\S]*?)\/&gt;/gi, '<iframe$1></iframe>')
@@ -151,8 +161,8 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
 
   const records = dadosEstruturados?.records || []
   const tipoPagina = dadosEstruturados?.tipoPagina || ''
+  const isColonia = slugNormalizado.startsWith('colonia')
 
-  // Se for a página de lista de notícias, busca todas as notícias publicadas para exibir o índice
   let noticiasParaLista: NoticiaItemPublico[] = []
   if (slug === 'lista-noticias') {
     const { data: nData } = await supabase
@@ -164,36 +174,60 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
     noticiasParaLista = (nData as any[]) || []
   }
 
-  // Mapeamento de pilar do Organograma para o Breadcrumb
   let grupoOrganograma = 'Sindicato'
   let grupoHref = '/paginas/historia'
-  if (slug.startsWith('colonia') || slug === 'convenios' || slug === 'carteirinha' || slug === 'atualizar-cadastro') {
+  if (
+    slugNormalizado.startsWith('colonia') ||
+    slugNormalizado === 'convenios' ||
+    slugNormalizado === 'carteirinha' ||
+    slugNormalizado === 'atualizar-cadastro'
+  ) {
     grupoOrganograma = 'Serviços'
     grupoHref = '/paginas/colonia'
-  } else if (slug === 'cct' || slug === 'juridico' || slug === 'processos' || slug === 'homologacao' || slug === 'homologacoes' || slug === 'denuncia') {
+  } else if (
+    slugNormalizado === 'cct' ||
+    slugNormalizado === 'juridico' ||
+    slugNormalizado === 'processos' ||
+    slugNormalizado === 'homologacoes' ||
+    slugNormalizado === 'denuncia'
+  ) {
     grupoOrganograma = 'Jurídico'
     grupoHref = '/paginas/cct'
-  } else if (slug === 'lista-noticias' || slug === 'cadastro-noticias' || slug === 'noticias' || slug === 'jornais') {
+  } else if (
+    slugNormalizado === 'lista-noticias' ||
+    slugNormalizado === 'cadastro-noticias' ||
+    slugNormalizado === 'noticias' ||
+    slugNormalizado === 'jornais'
+  ) {
     grupoOrganograma = 'Imprensa'
     grupoHref = '/noticias'
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#ffffff', display: 'flex', flexDirection: 'column', color: '#1a1417' }}>
-      {/* Topo institucional unificado */}
-      <HeaderPublico slugAtivo={slug} />
+    <div
+      style={{
+        minHeight: '100vh',
+        background: '#F7F5F6',
+        display: 'flex',
+        flexDirection: 'column',
+        color: '#1A1417',
+        fontFamily: 'var(--font-barlow), sans-serif',
+      }}
+    >
+      <HeaderPublico slugAtivo={slugNormalizado} />
 
-      {/* ── FAIXA HERO INSTITUCIONAL COM BREADCRUMB ── */}
+      {/* ── FAIXA HERO DE IMPACTO SINDICAL BORDÔ (PROPOSTA B) ── */}
       <section
         className="pagina-hero-section"
         style={{
-          background: '#faf8f9',
-          borderBottom: '1px solid #ebdbe0',
-          padding: '24px 0 28px 0',
+          background: '#48101E',
+          color: '#FFFFFF',
+          borderBottom: '4px solid #861E32',
+          padding: isColonia ? '24px 0 0 0' : '24px 0 26px 0',
         }}
       >
         <div style={CONTAINER_STYLE}>
-          {/* Breadcrumb navegável (ocultado no mobile para economia vertical) */}
+          {/* Breadcrumb limpo */}
           <nav
             className="pagina-breadcrumb"
             style={{
@@ -201,92 +235,97 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
               alignItems: 'center',
               gap: '8px',
               fontSize: '12.5px',
-              color: '#71636a',
-              marginBottom: '16px',
+              color: '#E4DCE0',
+              marginBottom: '12px',
               flexWrap: 'wrap',
             }}
           >
-            <Link href="/" style={{ color: '#71636a', textDecoration: 'none' }} className="breadcrumb-link">
+            <Link href="/" style={{ color: '#E4DCE0', textDecoration: 'none' }} className="breadcrumb-link">
               Início
             </Link>
-            <span style={{ opacity: 0.4 }}>›</span>
-            <Link href={grupoHref} style={{ color: '#861e32', textDecoration: 'none', fontWeight: 600 }} className="breadcrumb-link">
+            <span style={{ opacity: 0.45 }}>›</span>
+            <Link
+              href={grupoHref}
+              style={{ color: '#FFB8C5', textDecoration: 'none', fontWeight: 700 }}
+              className="breadcrumb-link"
+            >
               {grupoOrganograma}
             </Link>
-            <span style={{ opacity: 0.4 }}>›</span>
-            <span style={{ color: '#30252a', fontWeight: 600 }}>{pagina.titulo}</span>
+            <span style={{ opacity: 0.45 }}>›</span>
+            <span style={{ color: '#FFFFFF', fontWeight: 600 }}>{pagina.titulo}</span>
           </nav>
 
-          {/* Chapéu / Assunto */}
+          {/* Chapéu em Barlow Condensed */}
           {pagina.chapeu && (
             <div
               className="pagina-hero-chapeu"
               style={{
-                color: '#861e32',
-                fontSize: '12px',
+                fontFamily: 'var(--font-condensed), sans-serif',
+                color: '#FFB8C5',
+                fontSize: '13.5px',
                 fontWeight: 800,
                 textTransform: 'uppercase',
                 letterSpacing: '1px',
-                marginBottom: '8px',
+                marginBottom: '6px',
               }}
             >
               {pagina.chapeu}
             </div>
           )}
 
-          {/* Título Principal */}
+          {/* Título Principal em Barlow Condensed 800 Uppercase (Mesma força da Home e Notícias) */}
           <h1
             className="pagina-hero-titulo"
             style={{
-              fontSize: '34px',
+              fontFamily: 'var(--font-condensed), sans-serif',
+              fontSize: '44px',
               fontWeight: 800,
-              lineHeight: 1.2,
-              color: '#30252a',
-              margin: '0 0 12px 0',
-              letterSpacing: '-0.5px',
+              lineHeight: 1.06,
+              textTransform: 'uppercase',
+              color: '#FFFFFF',
+              margin: 0,
+              letterSpacing: '0.4px',
             }}
           >
             {pagina.titulo}
           </h1>
 
-          {/* Subtítulo / Lead */}
+          {/* Subtítulo objetivo */}
           {pagina.subtitulo && (
             <div
               className="pagina-hero-subtitulo"
               style={{
-                fontSize: '17px',
-                lineHeight: 1.6,
-                color: '#65575e',
-                borderLeft: '3px solid #861e32',
-                paddingLeft: '14px',
-                marginTop: '14px',
+                fontFamily: 'var(--font-barlow), sans-serif',
+                fontSize: '16.5px',
+                lineHeight: 1.5,
+                color: '#F6E7EC',
+                marginTop: '10px',
+                maxWidth: '880px',
               }}
             >
               {pagina.subtitulo}
             </div>
           )}
+
+          {/* Barra de seções da Colônia integrada direto no bloco bordô (Sem seletores quadrados de IA) */}
+          {isColonia && <ColoniaNav slugAtual={slugNormalizado} integradoHero />}
         </div>
       </section>
 
-      {/* Conteúdo principal fluido */}
-      <main className="pagina-main" style={{ flex: 1, padding: '36px 0 64px 0' }}>
-        <article
-          style={CONTAINER_STYLE}
-        >
-          {/* Navegação por Abas das Subpáginas da Colônia de Férias */}
-          <ColoniaNav slugAtual={slug} />
-
-          {/* Foto Principal com Preservação de Orientação Original (Regra de Ouro) */}
+      {/* Conteúdo principal */}
+      <main className="pagina-main" style={{ flex: 1, padding: '32px 0 64px 0' }}>
+        <article style={CONTAINER_STYLE}>
+          {/* Foto Principal com Preservação de Orientação Original */}
           {fotoPrincipal && tipoPagina !== 'gallery' && (
-            <div style={{ marginBottom: '32px' }}>
+            <div style={{ marginBottom: '28px' }}>
               <div
                 style={{
                   width: '100%',
                   maxHeight: '520px',
-                  borderRadius: '8px',
+                  borderRadius: '4px',
                   overflow: 'hidden',
-                  background: '#f8fafb',
-                  border: '1px solid #e4dce0',
+                  background: '#FFFFFF',
+                  border: '1px solid #E4DCE0',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -306,9 +345,9 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
                 />
               </div>
               {fotoPrincipal.legenda && (
-                <div style={{ fontSize: '12.5px', color: '#71636a', marginTop: '8px', fontStyle: 'italic', paddingLeft: '4px' }}>
+                <div style={{ fontSize: '12.5px', color: '#71636a', marginTop: '6px', paddingLeft: '2px' }}>
                   {fotoPrincipal.legenda}
-                  {fotoPrincipal.credito && ` • Foto: ${fotoPrincipal.credito}`}
+                  {fotoPrincipal.credito && ` • ${fotoPrincipal.credito}`}
                 </div>
               )}
             </div>
@@ -319,89 +358,140 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
             <div
               className="pagina-conteudo"
               style={{
+                fontFamily: 'var(--font-barlow), sans-serif',
                 fontSize: '16.5px',
-                lineHeight: 1.8,
-                color: '#30252a',
-                marginTop: '16px',
+                lineHeight: 1.75,
+                color: '#1A1417',
               }}
               dangerouslySetInnerHTML={{ __html: corpoFormatado }}
             />
           )}
 
-          {/* ── SEÇÃO DE DADOS ESTRUTURADOS INSTITUCIONAIS ── */}
-
-          {/* 1. DIRETORIA ELEITA */}
+          {/* ── 1. DIRETORIA ELEITA ── */}
           {tipoPagina === 'directors' && records.length > 0 && (
-            <div style={{ marginTop: '40px' }}>
+            <div style={{ marginTop: '32px' }}>
               {['Executiva', 'Colegiado', 'Conselho Fiscal'].map((grupo) => {
-                const membros = records.filter((r: any) => (r.group === grupo || (grupo === 'Colegiado' && r.group === 'Colegiada')) && r.active !== false)
+                const membros = records.filter(
+                  (r: any) =>
+                    (r.group === grupo || (grupo === 'Colegiado' && r.group === 'Colegiada')) &&
+                    r.active !== false
+                )
                 if (membros.length === 0) return null
                 return (
                   <div key={grupo} style={{ marginBottom: '36px' }}>
                     <div
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        marginBottom: '18px',
+                        marginBottom: '16px',
                         paddingBottom: '8px',
-                        borderBottom: '2px solid #861e32',
+                        borderBottom: '3px solid #65172A',
                       }}
                     >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                      </svg>
-                      <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#861e32', margin: 0 }}>
-                        {grupo === 'Executiva' ? 'Diretoria Executiva' : grupo === 'Conselho Fiscal' ? 'Conselho Fiscal' : 'Diretoria Colegiada / Base'}
+                      <h2
+                        style={{
+                          fontFamily: 'var(--font-condensed), sans-serif',
+                          fontSize: '26px',
+                          fontWeight: 800,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.4px',
+                          color: '#65172A',
+                          margin: 0,
+                        }}
+                      >
+                        {grupo === 'Executiva'
+                          ? 'Executiva'
+                          : grupo === 'Conselho Fiscal'
+                            ? 'Conselho Fiscal'
+                            : 'Colegiado'}
                       </h2>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px' }}>
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                        gap: '14px',
+                      }}
+                    >
                       {membros.map((m: any) => (
                         <div
                           key={m.id || m.name}
                           style={{
-                            background: '#fcfbfa',
-                            border: '1px solid #e4dce0',
-                            borderRadius: '8px',
+                            background: '#FFFFFF',
+                            border: '1px solid #E4DCE0',
+                            borderTop: '3px solid #65172A',
+                            borderRadius: '4px',
                             padding: '16px',
                             display: 'flex',
                             gap: '14px',
                             alignItems: 'center',
-                            boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
                           }}
                         >
                           <div
                             style={{
-                              width: '52px',
-                              height: '52px',
+                              width: '54px',
+                              height: '54px',
                               borderRadius: '50%',
-                              background: '#f0e8ea',
+                              background: '#F0E8EA',
                               overflow: 'hidden',
                               flexShrink: 0,
-                              border: '2px solid #861e32',
+                              border: '2px solid #861E32',
                             }}
                           >
                             {m.image ? (
-                              <img src={m.image} alt={m.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              <img
+                                src={m.image}
+                                alt={m.name}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
                             ) : (
-                              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: '#861e32', fontSize: '18px' }}>
+                              <div
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontFamily: 'var(--font-condensed), sans-serif',
+                                  fontWeight: 800,
+                                  color: '#65172A',
+                                  fontSize: '20px',
+                                }}
+                              >
                                 {m.name ? m.name[0] : 'Q'}
                               </div>
                             )}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <strong style={{ fontSize: '14px', color: '#30252a', display: 'block', lineHeight: 1.25 }}>
+                            <strong
+                              style={{
+                                fontFamily: 'var(--font-condensed), sans-serif',
+                                fontSize: '18px',
+                                fontWeight: 800,
+                                textTransform: 'uppercase',
+                                color: '#1A1417',
+                                display: 'block',
+                                lineHeight: 1.15,
+                              }}
+                            >
                               {m.name}
                             </strong>
-                            <div style={{ fontSize: '12px', color: '#71636a', marginTop: '3px' }}>
-                              Empresa: <strong>{m.company || 'Químicos'}</strong>
-                            </div>
+                            {m.company && (
+                              <div style={{ fontSize: '13px', color: '#4F4248', fontWeight: 600, marginTop: '2px' }}>
+                                {m.company}
+                              </div>
+                            )}
                             {m.role && (
-                              <div style={{ fontSize: '11px', color: '#861e32', fontWeight: 700, marginTop: '4px', textTransform: 'uppercase' }}>
+                              <div
+                                style={{
+                                  fontFamily: 'var(--font-condensed), sans-serif',
+                                  fontSize: '13px',
+                                  color: '#861E32',
+                                  fontWeight: 700,
+                                  marginTop: '3px',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.4px',
+                                }}
+                              >
                                 {m.role}
                               </div>
                             )}
@@ -415,483 +505,547 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
             </div>
           )}
 
-          {/* 2. CONVÊNIOS E BENEFÍCIOS PESQUISÁVEIS (L03) */}
+          {/* ── 2. CONVÊNIOS ── */}
           {tipoPagina === 'partners' && records.length > 0 && (
             <ListaConveniosPublica conveniosIniciais={records} />
           )}
 
-          {/* 3. CONTATOS E SEDES */}
-          {tipoPagina === 'contacts' && records.length > 0 && (
-            <div style={{ marginTop: '40px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-              {records.filter((r: any) => r.active !== false).map((s: any) => (
-                <div
-                  key={s.id || s.name}
-                  style={{
-                    background: '#fcfbfa',
-                    border: '1px solid #e4dce0',
-                    borderRadius: '8px',
-                    padding: '20px',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
-                  }}
-                >
-                  <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#30252a', margin: '0 0 6px 0' }}>
-                    {s.name}
-                  </h3>
-                  {s.description && (
-                    <p style={{ fontSize: '13px', color: '#861e32', margin: '0 0 12px 0', fontWeight: 600 }}>
-                      {s.description}
-                    </p>
-                  )}
-                  <div style={{ fontSize: '13px', color: '#4a3f45', lineHeight: 1.7, display: 'grid', gap: '6px' }}>
-                    {s.address && (
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginTop: '3px', flexShrink: 0 }}>
-                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                          <circle cx="12" cy="10" r="3"/>
-                        </svg>
-                        <span>
-                          <strong>Endereço:</strong>{' '}
-                          <a
-                            href={s.url || `https://maps.google.com/?q=${encodeURIComponent(`${s.name} ${s.address}`)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ color: '#861e32', textDecoration: 'underline' }}
-                          >
-                            {s.address} <span style={{ fontSize: '11px' }}>(Abrir rota ↗)</span>
-                          </a>
-                        </span>
-                      </div>
-                    )}
-                    {s.hours && (
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginTop: '3px', flexShrink: 0 }}>
-                          <circle cx="12" cy="12" r="10"/>
-                          <polyline points="12 6 12 12 16 14"/>
-                        </svg>
-                        <span><strong>Horário:</strong> {s.hours}</span>
-                      </div>
-                    )}
-                    {s.phone && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                        </svg>
-                        <span>
-                          <strong>Telefone:</strong>{' '}
-                          <a
-                            href={`tel:${s.phone.replace(/[^\d+]/g, '')}`}
-                            style={{ color: '#861e32', fontWeight: 600, textDecoration: 'none' }}
-                          >
-                            {s.phone} <span style={{ fontSize: '11px', fontWeight: 400 }}>(Ligar)</span>
-                          </a>
-                        </span>
-                      </div>
-                    )}
-                    {s.whatsapp && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-                        </svg>
-                        <span>
-                          <strong>WhatsApp:</strong>{' '}
-                          <a
-                            href={`https://wa.me/55${s.whatsapp.replace(/\D/g, '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ color: '#16a34a', fontWeight: 600, textDecoration: 'none' }}
-                          >
-                            {s.whatsapp} <span style={{ fontSize: '11px', fontWeight: 400 }}>(WhatsApp ↗)</span>
-                          </a>
-                        </span>
-                      </div>
-                    )}
-                    {s.email && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                          <polyline points="22,6 12,13 2,6"/>
-                        </svg>
-                        <span>
-                          <strong>E-mail:</strong>{' '}
-                          <a
-                            href={`mailto:${s.email}`}
-                            style={{ color: '#861e32', textDecoration: 'underline' }}
-                          >
-                            {s.email}
-                          </a>
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* 4. LINKS ÚTEIS */}
-          {tipoPagina === 'links' && records.length > 0 && (
-            <div style={{ marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {records.filter((r: any) => r.active !== false).map((l: any) => (
-                <div
-                  key={l.id || l.name}
-                  style={{
-                    background: '#fcfbfa',
-                    border: '1px solid #e4dce0',
-                    borderRadius: '8px',
-                    padding: '16px 20px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: '16px',
-                  }}
-                >
-                  <div>
-                    <strong style={{ fontSize: '15px', color: '#30252a', display: 'block' }}>{l.name}</strong>
-                    {l.description && <small style={{ fontSize: '12.5px', color: '#71636a' }}>{l.description}</small>}
-                  </div>
-                  <a
-                    href={l.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+          {/* ── 3. CONTATOS E SEDES ── */}
+          {tipoPagina === 'contacts' && slugNormalizado !== 'colonia-reservas' && records.length > 0 && (
+            <div
+              style={{
+                marginTop: '24px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '18px',
+              }}
+            >
+              {records
+                .filter((r: any) => r.active !== false)
+                .map((s: any) => (
+                  <div
+                    key={s.id || s.name}
                     style={{
-                      background: '#861e32',
-                      color: '#ffffff',
-                      padding: '8px 16px',
-                      borderRadius: '5px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      textDecoration: 'none',
-                      whiteSpace: 'nowrap',
+                      background: '#FFFFFF',
+                      border: '1px solid #E4DCE0',
+                      borderTop: '4px solid #65172A',
+                      borderRadius: '4px',
+                      padding: '20px',
                     }}
                   >
-                    Acessar ↗
-                  </a>
-                </div>
-              ))}
+                    <h3
+                      style={{
+                        fontFamily: 'var(--font-condensed), sans-serif',
+                        fontSize: '22px',
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        color: '#1A1417',
+                        margin: '0 0 8px 0',
+                        lineHeight: 1.15,
+                      }}
+                    >
+                      {s.name}
+                    </h3>
+                    <div style={{ fontSize: '14px', color: '#30252A', lineHeight: 1.6, display: 'grid', gap: '8px' }}>
+                      {s.address && (
+                        <div>
+                          <a
+                            href={
+                              s.url ||
+                              `https://maps.google.com/?q=${encodeURIComponent(`${s.name} ${s.address}`)}`
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: '#30252A', textDecoration: 'none' }}
+                          >
+                            {s.address}{' '}
+                            <span
+                              style={{
+                                fontFamily: 'var(--font-condensed), sans-serif',
+                                fontSize: '13px',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                color: '#861E32',
+                                textDecoration: 'underline',
+                              }}
+                            >
+                              Abrir mapa ↗
+                            </span>
+                          </a>
+                        </div>
+                      )}
+                      {s.phone && (
+                        <div>
+                          <a
+                            href={`tel:${s.phone.split('/')[0].replace(/[^\d+]/g, '')}`}
+                            style={{
+                              fontFamily: 'var(--font-condensed), sans-serif',
+                              fontSize: '18px',
+                              color: '#65172A',
+                              fontWeight: 800,
+                              textDecoration: 'none',
+                            }}
+                          >
+                            {s.phone}
+                          </a>
+                        </div>
+                      )}
+                      {s.hours && (
+                        <div style={{ fontSize: '13px', color: '#71636A' }}>{s.hours}</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
             </div>
           )}
 
-          {/* 5.1 PROCESSOS COLETIVOS POR CIDADE E TRIBUNAL */}
+          {/* ── 4. LINKS ÚTEIS ── */}
+          {tipoPagina === 'links' && records.length > 0 && (
+            <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {records
+                .filter((r: any) => r.active !== false)
+                .map((l: any) => (
+                  <div
+                    key={l.id || l.name}
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid #E4DCE0',
+                      borderLeft: '4px solid #65172A',
+                      borderRadius: '4px',
+                      padding: '16px 20px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '16px',
+                    }}
+                  >
+                    <div>
+                      <strong
+                        style={{
+                          fontFamily: 'var(--font-condensed), sans-serif',
+                          fontSize: '19px',
+                          fontWeight: 800,
+                          textTransform: 'uppercase',
+                          color: '#1A1417',
+                          display: 'block',
+                        }}
+                      >
+                        {l.name}
+                      </strong>
+                      {l.description && (
+                        <small style={{ fontSize: '13px', color: '#71636a' }}>{l.description}</small>
+                      )}
+                    </div>
+                    <a
+                      href={l.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        background: '#861E32',
+                        color: '#FFFFFF',
+                        padding: '8px 16px',
+                        borderRadius: '4px',
+                        fontFamily: 'var(--font-condensed), sans-serif',
+                        fontSize: '15px',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        textDecoration: 'none',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      Acessar ↗
+                    </a>
+                  </div>
+                ))}
+            </div>
+          )}
+
+          {/* ── 5.1 PROCESSOS COLETIVOS ── */}
           {tipoPagina === 'processes' && records.length > 0 && (
             <ListaProcessosPublica processosIniciais={records} />
           )}
 
-          {/* 5.2 DOCUMENTOS / CCTs E PLANTÃO JURÍDICO */}
+          {/* ── 5.2 DOCUMENTOS / CCTs E PLANTÃO JURÍDICO ── */}
           {(tipoPagina === 'documents' || tipoPagina === 'hours') && records.length > 0 && (
-            <div style={{ marginTop: '36px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {records.filter((r: any) => r.active !== false).map((item: any) => (
-                <div
-                  key={item.id || item.name}
-                  style={{
-                    background: '#ffffff',
-                    border: '1px solid #e4dce0',
-                    borderLeft: '4px solid #861e32',
-                    borderRadius: '8px',
-                    padding: '18px 22px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: '14px',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
-                  }}
-                >
-                  <div style={{ flex: 1, minWidth: '220px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
-                      <strong style={{ fontSize: '16px', color: '#30252a' }}>{item.name}</strong>
-                      {item.specialty && (
-                        <span
-                          style={{
-                            fontSize: '11px',
-                            fontWeight: 800,
-                            background: '#f8e9ec',
-                            color: '#861e32',
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                            textTransform: 'uppercase',
-                          }}
-                        >
-                          {item.specialty}
-                        </span>
-                      )}
-                      {item.city && (
-                        <span
-                          style={{
-                            fontSize: '11.5px',
-                            fontWeight: 700,
-                            background: '#eef3f8',
-                            color: '#1B2E4B',
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                          }}
-                        >
-                          📍 {item.city}
-                        </span>
-                      )}
-                    </div>
-                    {item.company && (
-                      <div style={{ fontSize: '13px', color: '#52434a', marginTop: '2px' }}>
-                        Categoria: <strong>{item.company}</strong>
-                      </div>
-                    )}
-                    {item.day && (
-                      <div style={{ fontSize: '13.5px', color: '#30252a', marginTop: '4px', lineHeight: 1.5 }}>
-                        <strong>Dias:</strong> {item.day} • <strong>Horário:</strong> {item.hours}
-                      </div>
-                    )}
-                    {item.schedules && Array.isArray(item.schedules) && (
-                      <div style={{ display: 'grid', gap: '6px', marginTop: '8px' }}>
-                        {item.schedules.map((sch: any, sIdx: number) => (
-                          <div
-                            key={sIdx}
-                            style={{
-                              fontSize: '13.5px',
-                              color: '#30252a',
-                              background: '#faf8f9',
-                              border: '1px solid #ebdbe0',
-                              borderRadius: '6px',
-                              padding: '8px 12px',
-                              display: 'flex',
-                              flexWrap: 'wrap',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              gap: '8px',
-                            }}
-                          >
-                            <span>
-                              <strong>{sch.day}:</strong> {sch.hours}
-                            </span>
-                            <span
-                              style={{
-                                fontSize: '12px',
-                                fontWeight: 700,
-                                color: '#1B2E4B',
-                                background: '#e7eff7',
-                                padding: '2px 8px',
-                                borderRadius: '4px',
-                              }}
-                            >
-                              📍 {sch.city}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {item.validity && (
-                      <div style={{ fontSize: '12.5px', color: '#861e32', fontWeight: 700, marginTop: '4px' }}>
-                        Vigência: {item.validity} {item.size ? `• Tamanho: ${item.size}` : ''}
-                      </div>
-                    )}
-                  </div>
-                  {item.file && (
-                    <a
-                      href={item.file}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        background: '#861e32',
-                        color: '#ffffff',
-                        padding: '9px 18px',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        fontWeight: 700,
-                        textDecoration: 'none',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                      }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                      </svg>
-                      <span>Download PDF ↗</span>
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* 6. TABELA DE PREÇOS DA COLÔNIA DE FÉRIAS */}
-          {tipoPagina === 'prices' && records.length > 0 && (
-            <div style={{ marginTop: '40px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
-                {records.filter((r: any) => r.active !== false).map((p: any) => (
+            <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {records
+                .filter((r: any) => r.active !== false)
+                .map((item: any) => (
                   <div
-                    key={p.id || p.type}
+                    key={item.id || item.name}
                     style={{
-                      background: '#ffffff',
-                      border: '1px solid #e4dce0',
-                      borderRadius: '8px',
-                      padding: '20px',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
-                      borderTop: '4px solid #861e32',
+                      background: '#FFFFFF',
+                      border: '1px solid #E4DCE0',
+                      borderLeft: '4px solid #65172A',
+                      borderRadius: '4px',
+                      padding: '18px 22px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '14px',
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 800, color: '#861e32', textTransform: 'uppercase' }}>
-                        {p.unit}
-                      </span>
-                      <span style={{ fontSize: '11.5px', color: '#71636a' }}>{p.public}</span>
-                    </div>
-                    <strong style={{ fontSize: '16px', color: '#30252a', display: 'block', marginBottom: '6px' }}>
-                      {p.type}
-                    </strong>
-                    <div style={{ fontSize: '24px', fontWeight: 800, color: '#861e32', marginBottom: '8px' }}>
-                      R$ {p.value?.toFixed(2).replace('.', ',')}{' '}
-                      <small style={{ fontSize: '12px', color: '#71636a', fontWeight: 500 }}>
-                        / {p.charge}
-                      </small>
-                    </div>
-                    {p.capacity && (
-                      <div style={{ fontSize: '12.5px', color: '#52434a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                          <circle cx="9" cy="7" r="4"/>
-                        </svg>
-                        <span>Capacidade: {p.capacity}</span>
+                    <div style={{ flex: 1, minWidth: '220px' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'baseline',
+                          gap: '10px',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        {item.specialty && (
+                          <span
+                            style={{
+                              fontFamily: 'var(--font-condensed), sans-serif',
+                              fontSize: '15px',
+                              fontWeight: 800,
+                              color: '#861E32',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.6px',
+                            }}
+                          >
+                            {item.specialty} •
+                          </span>
+                        )}
+                        <strong
+                          style={{
+                            fontFamily: 'var(--font-condensed), sans-serif',
+                            fontSize: '21px',
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            color: '#1A1417',
+                          }}
+                        >
+                          {item.name}
+                        </strong>
                       </div>
-                    )}
-                    {p.notes && (
-                      <p style={{ fontSize: '12px', color: '#71636a', marginTop: '8px', lineHeight: 1.4, borderTop: '1px solid #f0e8ea', paddingTop: '8px' }}>
-                        {p.notes}
-                      </p>
+
+                      {item.day && (
+                        <div style={{ fontSize: '14.5px', color: '#30252A', marginTop: '4px' }}>
+                          <strong>{item.day}</strong> • {item.hours}
+                        </div>
+                      )}
+
+                      {item.schedules && Array.isArray(item.schedules) && (
+                        <div style={{ display: 'grid', gap: '6px', marginTop: '10px' }}>
+                          {item.schedules.map((sch: any, sIdx: number) => (
+                            <div
+                              key={sIdx}
+                              style={{
+                                fontSize: '14.5px',
+                                color: '#1A1417',
+                                background: '#FAF8F9',
+                                border: '1px solid #E4DCE0',
+                                borderRadius: '3px',
+                                padding: '8px 14px',
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                gap: '8px',
+                              }}
+                            >
+                              <span>
+                                <strong>{sch.day}</strong>, {sch.hours}
+                              </span>
+                              <span
+                                style={{
+                                  fontFamily: 'var(--font-condensed), sans-serif',
+                                  fontSize: '14px',
+                                  fontWeight: 800,
+                                  textTransform: 'uppercase',
+                                  color: '#65172A',
+                                  letterSpacing: '0.4px',
+                                }}
+                              >
+                                {sch.city}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {item.file && (
+                      <a
+                        href={item.file}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          background: '#861E32',
+                          color: '#FFFFFF',
+                          padding: '9px 18px',
+                          borderRadius: '4px',
+                          fontFamily: 'var(--font-condensed), sans-serif',
+                          fontSize: '15px',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                        }}
+                      >
+                        <span>Download ↗</span>
+                      </a>
                     )}
                   </div>
                 ))}
+            </div>
+          )}
+
+          {/* ── 6. VALORES DA COLÔNIA DE FÉRIAS ── */}
+          {tipoPagina === 'prices' && records.length > 0 && (
+            <div style={{ marginTop: '24px' }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                  gap: '16px',
+                }}
+              >
+                {records
+                  .filter((r: any) => r.active !== false)
+                  .map((p: any) => (
+                    <div
+                      key={p.id || p.type}
+                      style={{
+                        background: '#FFFFFF',
+                        border: '1px solid #E4DCE0',
+                        borderTop: '4px solid #65172A',
+                        borderRadius: '4px',
+                        padding: '20px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'baseline',
+                          marginBottom: '6px',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-condensed), sans-serif',
+                            fontSize: '14px',
+                            fontWeight: 800,
+                            color: '#861E32',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.6px',
+                          }}
+                        >
+                          {p.unit}
+                        </span>
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-condensed), sans-serif',
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            color: '#4F4248',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          {p.public}
+                        </span>
+                      </div>
+                      <strong
+                        style={{
+                          fontFamily: 'var(--font-condensed), sans-serif',
+                          fontSize: '21px',
+                          fontWeight: 800,
+                          textTransform: 'uppercase',
+                          color: '#1A1417',
+                          display: 'block',
+                          marginBottom: '6px',
+                        }}
+                      >
+                        {p.type}
+                      </strong>
+                      <div
+                        style={{
+                          fontFamily: 'var(--font-condensed), sans-serif',
+                          fontSize: '30px',
+                          fontWeight: 800,
+                          color: '#65172A',
+                          marginBottom: '6px',
+                          lineHeight: 1.1,
+                        }}
+                      >
+                        R$ {p.value?.toFixed(2).replace('.', ',')}{' '}
+                        <small
+                          style={{
+                            fontFamily: 'var(--font-barlow), sans-serif',
+                            fontSize: '13px',
+                            color: '#71636A',
+                            fontWeight: 500,
+                          }}
+                        >
+                          {p.charge}
+                        </small>
+                      </div>
+                      {p.capacity && (
+                        <div style={{ fontSize: '13.5px', color: '#4F4248' }}>{p.capacity}</div>
+                      )}
+                    </div>
+                  ))}
               </div>
             </div>
           )}
 
-          {/* 6.1 LOCALIZAÇÃO E ROTAS (COLÔNIA COMO CHEGAR — L01) */}
+          {/* ── 6.1 COMO CHEGAR (COLÔNIA) ── */}
           {tipoPagina === 'locations' && records.length > 0 && (
-            <div style={{ marginTop: '36px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+            <div
+              style={{
+                marginTop: '24px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gap: '18px',
+              }}
+            >
               {records.map((loc: any) => (
                 <div
                   key={loc.name}
                   style={{
-                    background: '#ffffff',
-                    border: '1px solid #e4dce0',
-                    borderRadius: '8px',
-                    padding: '24px',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
-                    borderTop: '4px solid #861e32',
+                    background: '#FFFFFF',
+                    border: '1px solid #E4DCE0',
+                    borderTop: '4px solid #65172A',
+                    borderRadius: '4px',
+                    padding: '22px',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg>
-                    <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#30252a', margin: 0 }}>
-                      {loc.name}
-                    </h3>
+                  <h3
+                    style={{
+                      fontFamily: 'var(--font-condensed), sans-serif',
+                      fontSize: '22px',
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      color: '#1A1417',
+                      margin: '0 0 8px 0',
+                    }}
+                  >
+                    {loc.name}
+                  </h3>
+                  <div
+                    style={{
+                      fontSize: '15px',
+                      fontWeight: 600,
+                      color: '#1A1417',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    {loc.address}
                   </div>
                   {loc.description && (
-                    <p style={{ fontSize: '13.5px', color: '#52434a', margin: '0 0 14px 0', lineHeight: 1.5 }}>
+                    <p
+                      style={{
+                        fontSize: '13.5px',
+                        color: '#4F4248',
+                        margin: '0 0 16px 0',
+                        lineHeight: 1.5,
+                      }}
+                    >
                       {loc.description}
                     </p>
                   )}
-                  <div style={{ fontSize: '13.5px', color: '#30252a', marginBottom: '18px', padding: '10px 12px', background: '#faf8f9', borderRadius: '6px', border: '1px solid #ebdbe0' }}>
-                    <strong>Endereço:</strong> {loc.address}
-                  </div>
                   <a
-                    href={loc.url || `https://maps.google.com/?q=${encodeURIComponent(`${loc.name} ${loc.address}`)}`}
+                    href={
+                      loc.url ||
+                      `https://maps.google.com/?q=${encodeURIComponent(`${loc.name} ${loc.address}`)}`
+                    }
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '6px',
-                      background: '#861e32',
-                      color: '#ffffff',
-                      padding: '10px 18px',
-                      borderRadius: '6px',
-                      fontSize: '13px',
+                      background: '#861E32',
+                      color: '#FFFFFF',
+                      padding: '9px 18px',
+                      borderRadius: '4px',
+                      fontFamily: 'var(--font-condensed), sans-serif',
+                      fontSize: '15px',
                       fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
                       textDecoration: 'none',
                     }}
                   >
-                    <span>Abrir rota no Maps ↗</span>
+                    <span>Abrir mapa ↗</span>
                   </a>
                 </div>
               ))}
             </div>
           )}
 
-          {/* 6.2 GALERIA DE FOTOS REAL DA COLÔNIA (28 FOTOS CARAGUÁ + SÃO SEBASTIÃO) */}
+          {/* ── 6.2 FOTOS DA COLÔNIA ── */}
           {tipoPagina === 'gallery' && records.length > 0 && (
             <GaleriaColoniaPublica fotos={records} />
           )}
 
-          {/* 7. FORMULÁRIOS INTERATIVOS PÚBLICOS */}
-          {slug === 'fique-socio' && <FormularioSindicalizacao />}
-          {slug === 'carteirinha' && <FormularioCarteirinha />}
-          {slug === 'atualizar-cadastro' && <FormularioAtualizacao />}
-          {slug === 'denuncia' && <FormularioDenuncia />}
-          {slug === 'cadastro-noticias' && <FormularioCadastroNoticias />}
-          {slug === 'fale-conosco' && <FormularioFaleConosco />}
+          {/* ── 7. FORMULÁRIOS PÚBLICOS ── */}
+          {slugNormalizado === 'fique-socio' && <FormularioSindicalizacao />}
+          {slugNormalizado === 'carteirinha' && <FormularioCarteirinha />}
+          {slugNormalizado === 'atualizar-cadastro' && <FormularioAtualizacao />}
+          {slugNormalizado === 'denuncia' && <FormularioDenuncia />}
+          {slugNormalizado === 'cadastro-noticias' && <FormularioCadastroNoticias />}
+          {slugNormalizado === 'fale-conosco' && <FormularioFaleConosco />}
 
-          {/* 8. ÍNDICE DINÂMICO DE NOTÍCIAS */}
-          {slug === 'lista-noticias' && (
-            <div style={{ marginTop: '36px' }}>
+          {/* ── 8. LISTA DE NOTÍCIAS ── */}
+          {slugNormalizado === 'lista-noticias' && (
+            <div style={{ marginTop: '28px' }}>
               <ListaNoticiasPublica noticiasIniciais={noticiasParaLista} />
             </div>
           )}
 
-          {/* Galeria de Fotos Adicionais (se houver e não for página de galeria dedicada) */}
+          {/* Fotos adicionais (sem título redundante "Fotos complementares do acervo") */}
           {fotosGaleria.length > 0 && tipoPagina !== 'gallery' && (
-            <div style={{ marginTop: '40px', borderTop: '1px solid #e4dce0', paddingTop: '28px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#30252a', marginBottom: '16px' }}>
-                Fotos complementares do acervo
-              </h3>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-                  gap: '14px',
-                }}
-              >
-                {fotosGaleria.map((fg, idx) => (
-                  <div
-                    key={fg.url}
+            <div
+              style={{
+                marginTop: '32px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+                gap: '14px',
+              }}
+            >
+              {fotosGaleria.map((fg, idx) => (
+                <div
+                  key={fg.url}
+                  style={{
+                    borderRadius: '4px',
+                    overflow: 'hidden',
+                    background: '#FFFFFF',
+                    border: '1px solid #E4DCE0',
+                  }}
+                >
+                  <img
+                    src={fg.url}
+                    alt={fg.legenda || `${pagina.titulo} ${idx + 2}`}
                     style={{
-                      borderRadius: '6px',
-                      overflow: 'hidden',
-                      background: '#f8fafb',
-                      border: '1px solid #e4dce0',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                      width: '100%',
+                      height: 'auto',
+                      maxHeight: '320px',
+                      objectFit: 'contain',
+                      display: 'block',
                     }}
-                  >
-                    <img
-                      src={fg.url}
-                      alt={`Foto complementar ${idx + 2}`}
-                      style={{
-                        width: '100%',
-                        height: 'auto',
-                        maxHeight: '320px',
-                        objectFit: 'contain',
-                        display: 'block',
-                      }}
-                    />
-                    {fg.legenda && (
-                      <div style={{ padding: '8px 10px', fontSize: '12px', color: '#71636a', fontStyle: 'italic' }}>
-                        {fg.legenda}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  />
+                  {fg.legenda && (
+                    <div style={{ padding: '8px 10px', fontSize: '12px', color: '#71636a' }}>
+                      {fg.legenda}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
 
-          {/* Documentos Anexos */}
+          {/* Documentos */}
           {documentos.length > 0 && (
-            <div style={{ marginTop: '40px', borderTop: '1px solid #e4dce0', paddingTop: '28px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#30252a', marginBottom: '16px' }}>
-                Documentos e Anexos Oficiais
-              </h3>
+            <div style={{ marginTop: '32px', borderTop: '2px solid #65172A', paddingTop: '20px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {documentos.map((doc) => (
                   <div
@@ -900,59 +1054,44 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      background: '#fcfbfa',
-                      border: '1px solid #cbd7de',
-                      borderRadius: '8px',
+                      background: '#FFFFFF',
+                      border: '1px solid #E4DCE0',
+                      borderLeft: '4px solid #65172A',
+                      borderRadius: '4px',
                       padding: '14px 20px',
                       gap: '14px',
                       flexWrap: 'wrap',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div
-                        style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '6px',
-                          background: '#f8f2f4',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                        }}
-                      >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#861e32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                          <polyline points="14 2 14 8 20 8"/>
-                        </svg>
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 700, fontSize: '14px', color: '#30252a' }}>
-                          {doc.nome}
-                        </div>
-                        <small style={{ color: '#71636a', textTransform: 'uppercase', fontSize: '11px' }}>
-                          Arquivo {doc.tipo}
-                        </small>
-                      </div>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-condensed), sans-serif',
+                        fontWeight: 800,
+                        fontSize: '18px',
+                        textTransform: 'uppercase',
+                        color: '#1A1417',
+                      }}
+                    >
+                      {doc.nome}
                     </div>
                     <a
                       href={doc.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{
-                        background: '#861e32',
+                        background: '#861E32',
                         color: 'white',
                         padding: '8px 16px',
-                        borderRadius: '6px',
-                        fontSize: '12.5px',
+                        borderRadius: '4px',
+                        fontFamily: 'var(--font-condensed), sans-serif',
+                        fontSize: '14px',
                         fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
                         textDecoration: 'none',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
                       }}
                     >
-                      {doc.tipo === 'pdf' ? 'Visualizar PDF ↗' : 'Baixar Arquivo ⤓'}
+                      Download ↗
                     </a>
                   </div>
                 ))}
@@ -960,18 +1099,43 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
             </div>
           )}
 
-          {/* Estilos para elementos internos renderizados do RichEditor e Responsividade */}
           <style>{`
-            .pagina-conteudo p { margin: 0 0 18px 0; }
-            .pagina-conteudo h2 { font-size: 24px; font-weight: 800; color: #30252a; margin: 32px 0 14px 0; border-bottom: 1px solid #f0e8ea; padding-bottom: 6px; }
-            .pagina-conteudo h3 { font-size: 19px; font-weight: 700; color: #30252a; margin: 24px 0 10px 0; }
-            .pagina-conteudo blockquote { border-left: 4px solid #861e32; margin: 24px 0; padding: 12px 18px; background: #faf6f7; color: #65172a; font-style: italic; border-radius: 0 6px 6px 0; }
-            .pagina-conteudo ul, .pagina-conteudo ol { padding-left: 24px; margin-bottom: 18px; }
-            .pagina-conteudo li { margin-bottom: 8px; }
-            .pagina-conteudo a { color: #861e32; text-decoration: underline; font-weight: 600; }
-            .pagina-conteudo img { max-width: 100%; height: auto; display: block; margin: 20px auto; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+            .pagina-conteudo p { margin: 0 0 16px 0; }
+            .pagina-conteudo h2 {
+              font-family: var(--font-condensed), sans-serif;
+              font-size: 28px;
+              font-weight: 800;
+              text-transform: uppercase;
+              letter-spacing: 0.4px;
+              color: #65172A;
+              margin: 28px 0 14px 0;
+              border-bottom: 2px solid #65172A;
+              padding-bottom: 6px;
+              line-height: 1.15;
+            }
+            .pagina-conteudo h3 {
+              font-family: var(--font-condensed), sans-serif;
+              font-size: 21px;
+              font-weight: 800;
+              text-transform: uppercase;
+              letter-spacing: 0.3px;
+              color: #1A1417;
+              margin: 20px 0 8px 0;
+              line-height: 1.2;
+            }
+            .pagina-conteudo blockquote {
+              border-left: 4px solid #861E32;
+              margin: 20px 0;
+              padding: 12px 18px;
+              background: #FAF6F7;
+              color: #65172A;
+              border-radius: 0 4px 4px 0;
+            }
+            .pagina-conteudo ul, .pagina-conteudo ol { padding-left: 22px; margin-bottom: 16px; }
+            .pagina-conteudo li { margin-bottom: 7px; }
+            .pagina-conteudo a { color: #861E32; text-decoration: underline; font-weight: 600; }
+            .pagina-conteudo img { max-width: 100%; height: auto; display: block; margin: 16px auto; border-radius: 4px; }
             
-            /* Tabelas responsivas com rolagem horizontal touch-friendly */
             .pagina-conteudo table {
               display: block;
               width: 100%;
@@ -979,51 +1143,47 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
               overflow-x: auto;
               -webkit-overflow-scrolling: touch;
               border-collapse: collapse;
-              margin: 24px 0;
+              margin: 20px 0;
               font-size: 14.5px;
               background: #ffffff;
             }
             .pagina-conteudo th, .pagina-conteudo td {
-              border: 1px solid #cbd7de;
-              padding: 12px 16px;
+              border: 1px solid #E4DCE0;
+              padding: 11px 14px;
               text-align: left;
               min-width: 120px;
             }
             .pagina-conteudo th {
-              background: #f8fafb;
+              background: #65172A;
+              font-family: var(--font-condensed), sans-serif;
+              font-size: 15px;
               font-weight: 700;
-              color: #30252a;
-            }
-            .pagina-conteudo table::-webkit-scrollbar {
-              height: 5px;
-            }
-            .pagina-conteudo table::-webkit-scrollbar-thumb {
-              background: #cbd7de;
-              border-radius: 4px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              color: #FFFFFF;
             }
 
-            .pagina-conteudo .iframe-wrapper { position: relative; width: 100%; aspect-ratio: 16 / 9; margin: 24px 0; border-radius: 8px; overflow: hidden; background: #000; }
+            .pagina-conteudo .iframe-wrapper { position: relative; width: 100%; aspect-ratio: 16 / 9; margin: 20px 0; border-radius: 4px; overflow: hidden; background: #000; }
             .pagina-conteudo .iframe-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-            .breadcrumb-link:hover { text-decoration: underline !important; color: #861e32 !important; }
+            .breadcrumb-link:hover { text-decoration: underline !important; }
 
-            /* Adaptação Responsiva Mobile Específica */
             @media (max-width: 768px) {
               .pagina-breadcrumb {
                 display: none !important;
               }
               .pagina-hero-section {
-                padding: 16px 0 20px 0 !important;
+                padding: 18px 0 0 0 !important;
               }
               .pagina-hero-titulo {
-                font-size: 26px !important;
-                line-height: 1.18 !important;
-                margin-bottom: 8px !important;
+                font-size: 30px !important;
+                line-height: 1.1 !important;
+                margin-bottom: 6px !important;
               }
               .pagina-hero-subtitulo {
                 font-size: 15px !important;
                 line-height: 1.45 !important;
-                padding-left: 10px !important;
-                margin-top: 10px !important;
+                margin-top: 8px !important;
+                padding-bottom: 16px !important;
               }
               .pagina-main {
                 padding: 20px 0 48px 0 !important;
@@ -1033,25 +1193,16 @@ export default async function PaginaInstitucionalPublica({ params }: PageProps) 
                 line-height: 1.65 !important;
               }
               .pagina-conteudo h2 {
-                font-size: 20px !important;
-                line-height: 1.25 !important;
-                margin: 24px 0 10px 0 !important;
+                font-size: 23px !important;
               }
               .pagina-conteudo h3 {
-                font-size: 17px !important;
-                line-height: 1.3 !important;
-                margin: 20px 0 8px 0 !important;
-              }
-              .pagina-conteudo blockquote {
-                padding: 10px 14px !important;
-                font-size: 14.5px !important;
+                font-size: 18px !important;
               }
             }
           `}</style>
         </article>
       </main>
 
-      {/* Rodapé institucional oficial */}
       <FooterPublico />
     </div>
   )

@@ -98,8 +98,8 @@ export default function FormularioSindicalizacao() {
             <polyline points="20 6 9 17 4 12" />
           </svg>
         </div>
-        <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#23634e', margin: '0 0 10px 0' }}>
-          Ficha de Sindicalização Enviada com Sucesso!
+        <h2 style={{ fontFamily: 'var(--font-condensed), sans-serif', fontSize: '26px', fontWeight: 800, color: '#23634e', textTransform: 'uppercase', margin: '0 0 10px 0' }}>
+          Ficha de Sindicalização Enviada!
         </h2>
         <p style={{ fontSize: '15px', color: '#30252a', lineHeight: 1.6, maxWidth: '580px', margin: '0 auto 16px auto' }}>
           Após o envio desse formulário você deverá aguardar até ser enviada a sua carteirinha pelo WhatsApp que você indicou. Caso não receba a sua carteirinha em até <strong>5 dias úteis</strong>, pedimos a gentileza de entrar em contato no telefone/WhatsApp:{' '}
@@ -186,21 +186,13 @@ export default function FormularioSindicalizacao() {
       style={{
         background: '#ffffff',
         border: '1px solid #e4dce0',
+        borderTop: '4px solid #861e32',
         borderRadius: '8px',
         padding: '28px 32px',
-        marginTop: '28px',
+        marginTop: '24px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
       }}
     >
-      <div style={{ borderBottom: '2px solid #861e32', paddingBottom: '10px', marginBottom: '22px' }}>
-        <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#861e32', margin: 0 }}>
-          Preencha sua Ficha de Filiação (Ficar Sócio)
-        </h3>
-        <p style={{ fontSize: '13.5px', color: '#71636a', margin: '4px 0 0 0' }}>
-          Preencha os campos abaixo corretamente. Os campos com <span style={{ color: '#861e32' }}>*</span> são obrigatórios.
-        </p>
-      </div>
-
       {/* Honeypot invisível contra bots */}
       <input type="text" name="website_extra" tabIndex={-1} autoComplete="off" style={{ display: 'none' }} />
 
@@ -216,7 +208,7 @@ export default function FormularioSindicalizacao() {
       )}
 
       {/* BLOCO 1: DADOS PESSOAIS */}
-      <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#30252a', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+      <h4 style={{ fontFamily: 'var(--font-condensed), sans-serif', fontSize: '18px', fontWeight: 800, color: '#65172A', margin: '0 0 14px 0', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
         1. Dados Pessoais
       </h4>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '16px', marginBottom: '22px' }}>
@@ -316,7 +308,7 @@ export default function FormularioSindicalizacao() {
 
       {/* BLOCO 2: ENDEREÇO RESIDENCIAL (COM VIACEP AUTOMÁTICO) */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', borderTop: '1px solid #e4dce0', paddingTop: '18px', marginBottom: '14px' }}>
-        <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#30252a', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        <h4 style={{ fontFamily: 'var(--font-condensed), sans-serif', fontSize: '18px', fontWeight: 800, color: '#65172A', margin: 0, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
           2. Endereço Residencial
         </h4>
         {buscandoCep && (
@@ -383,7 +375,7 @@ export default function FormularioSindicalizacao() {
       </div>
 
       {/* BLOCO 3: DADOS PROFISSIONAIS */}
-      <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#30252a', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.5px', borderTop: '1px solid #e4dce0', paddingTop: '18px' }}>
+      <h4 style={{ fontFamily: 'var(--font-condensed), sans-serif', fontSize: '18px', fontWeight: 800, color: '#65172A', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.4px', borderTop: '1px solid #e4dce0', paddingTop: '18px' }}>
         3. Dados da Empresa
       </h4>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '16px', marginBottom: '24px' }}>
@@ -476,10 +468,13 @@ export default function FormularioSindicalizacao() {
             background: enviando ? '#a25969' : '#861e32',
             color: '#ffffff',
             border: 'none',
-            borderRadius: '5px',
+            borderRadius: '6px',
             padding: '13px 28px',
-            fontSize: '15px',
+            fontFamily: 'var(--font-condensed), sans-serif',
+            fontSize: '16px',
             fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
             cursor: enviando ? 'not-allowed' : 'pointer',
             transition: 'background 0.15s ease',
             display: 'inline-flex',
@@ -487,7 +482,7 @@ export default function FormularioSindicalizacao() {
             gap: '8px',
           }}
         >
-          {enviando ? 'Enviando dados...' : 'Enviar dados para Sindicalização →'}
+          {enviando ? 'Enviando...' : 'Enviar Sindicalização →'}
         </button>
       </div>
 
