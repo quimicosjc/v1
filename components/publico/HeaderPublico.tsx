@@ -24,8 +24,90 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
   const [dropdownAtivo, setDropdownAtivo] = useState<string | null>(null)
   const [mobileMenuAberto, setMobileMenuAberto] = useState(false)
   const [mobileAcordeon, setMobileAcordeon] = useState<string | null>(null)
+  const [linguinhaAtiva, setLinguinhaAtiva] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const headerRef = useRef<HTMLElement | null>(null)
+
+  // Microanimação da cobrinha do logo: 5s após o 1º acesso e depois a cada 40s, durante 1s
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const prefereReduzido = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+    if (prefereReduzido) return
+
+    const KEY_FIRST = 'quimicos_logo_first_access_ts'
+    const KEY_LAST = 'quimicos_logo_last_flick_ts'
+    const DELAY_INICIAL_MS = 5000
+    const RECORRENCIA_MS = 40000
+    const DURACAO_MS = 1000
+
+    let mainTimer: ReturnType<typeof setTimeout> | null = null
+    let hideTimer: ReturnType<typeof setTimeout> | null = null
+
+    let firstAccessTs = Number(sessionStorage.getItem(KEY_FIRST) || '0')
+    let lastFlickTs = Number(sessionStorage.getItem(KEY_LAST) || '0')
+
+    if (!firstAccessTs || Number.isNaN(firstAccessTs)) {
+      firstAccessTs = Date.now()
+      lastFlickTs = 0
+      try {
+        sessionStorage.setItem(KEY_FIRST, String(firstAccessTs))
+        sessionStorage.removeItem(KEY_LAST)
+      } catch {}
+    }
+
+    function dispararLinguinha() {
+      if (document.hidden) {
+        mainTimer = setTimeout(dispararLinguinha, RECORRENCIA_MS)
+        return
+      }
+      const agora = Date.now()
+      lastFlickTs = agora
+      try {
+        sessionStorage.setItem(KEY_LAST, String(agora))
+      } catch {}
+
+      setLinguinhaAtiva(true)
+      if (hideTimer) clearTimeout(hideTimer)
+      hideTimer = setTimeout(() => {
+        setLinguinhaAtiva(false)
+      }, DURACAO_MS)
+
+      if (mainTimer) clearTimeout(mainTimer)
+      mainTimer = setTimeout(dispararLinguinha, RECORRENCIA_MS)
+    }
+
+    function agendarCicloInicialOuContinuo() {
+      if (mainTimer) clearTimeout(mainTimer)
+      const agora = Date.now()
+
+      let esperaMs = DELAY_INICIAL_MS
+      if (!lastFlickTs) {
+        const decorrido = agora - firstAccessTs
+        esperaMs = decorrido < DELAY_INICIAL_MS ? Math.max(100, DELAY_INICIAL_MS - decorrido) : DELAY_INICIAL_MS
+      } else {
+        const desdeUltimo = agora - lastFlickTs
+        const resto = desdeUltimo % RECORRENCIA_MS
+        esperaMs = Math.max(500, RECORRENCIA_MS - resto)
+      }
+
+      mainTimer = setTimeout(dispararLinguinha, esperaMs)
+    }
+
+    agendarCicloInicialOuContinuo()
+
+    function handleVisibilityChange() {
+      if (!document.hidden) {
+        agendarCicloInicialOuContinuo()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      if (mainTimer) clearTimeout(mainTimer)
+      if (hideTimer) clearTimeout(hideTimer)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
 
   // Fecha menus ao redimensionar
   useEffect(() => {
@@ -369,16 +451,69 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
                 title="Sindicato dos Químicos de São José dos Campos e Região"
               >
                 <div style={{ height: '104px', display: 'flex', alignItems: 'center' }} className="header-logo-container">
-                  <img
-                    src="/logo-sindicato.svg"
-                    alt="Sindicato dos Químicos de São José dos Campos e Região"
-                    style={{
-                      height: '104px',
-                      width: 'auto',
-                      display: 'block',
-                    }}
+                  <div
                     className="header-logo-img"
-                  />
+                    style={{
+                      position: 'relative',
+                      height: '104px',
+                      display: 'inline-block',
+                      lineHeight: 0,
+                    }}
+                  >
+                    <img
+                      src="/logo-sindicato.svg"
+                      alt="Sindicato dos Químicos de São José dos Campos e Região"
+                      style={{
+                        height: '100%',
+                        width: 'auto',
+                        display: 'block',
+                      }}
+                    />
+                    {/* Overlay vetorial cirúrgico da linguinha da cobrinha (mesmo viewBox 0 0 148 90 do logo-sindicato.svg) */}
+                    <svg
+                      viewBox="0 0 148 90"
+                      aria-hidden="true"
+                      focusable="false"
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        width: '100%',
+                        height: '100%',
+                        pointerEvents: 'none',
+                        overflow: 'visible',
+                      }}
+                    >
+                      <g
+                        className={linguinhaAtiva ? 'cobrinha-lingua-ativa' : 'cobrinha-lingua-repouso'}
+                        style={{
+                          transformOrigin: '31.7px 27.8px',
+                        }}
+                      >
+                        <path
+                          d="M31.5,27.4 C33.5,27.7 35.4,28.1 37.0,28.5 L40.2,27.3 L37.9,29.1 L39.8,31.1 L36.6,29.6 C35.0,29.1 33.3,28.6 31.3,28.1 Z"
+                          fill="#FF2E55"
+                          stroke="#0A0A0A"
+                          strokeWidth="0.45"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </g>
+                      {/* Redesenha as duas presas e a linha labial superior por cima da raiz da língua para acabamento anatômico perfeito */}
+                      {linguinhaAtiva && (
+                        <g>
+                          <path
+                            d="M28.2,28.3 C30.4,28.4 32.8,27.9 34.8,27.0"
+                            fill="none"
+                            stroke="#0A0A0A"
+                            strokeWidth="0.65"
+                            strokeLinecap="round"
+                          />
+                          <path d="M28.2,28.4c0,0,1,0.8,0.5,2.3c0,0.1,0.1,0.1,0.1,0.1c0.3-0.2,0.9-0.9,1.1-2.4L28.2,28.4z" fill="#0A0A0A" />
+                          <path d="M34.8,27c0,0,0.1,1.3-1.2,2.6c0,0-0.1,0-0.1,0c0.2-0.7,0.2-1.4,0.1-2L34.8,27z" fill="#0A0A0A" />
+                        </g>
+                      )}
+                    </svg>
+                  </div>
                 </div>
               </Link>
             </div>
@@ -903,6 +1038,53 @@ export default function HeaderPublico({ slugAtivo }: HeaderPublicoProps) {
         .header-affiliation-link:hover {
           opacity: 1 !important;
           transform: translateY(-1px);
+        }
+        .cobrinha-lingua-repouso {
+          opacity: 0;
+          transform: scale(0);
+          pointer-events: none;
+        }
+        .cobrinha-lingua-ativa {
+          animation: cobrinhaFlick 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          will-change: transform, opacity;
+        }
+        @keyframes cobrinhaFlick {
+          0% {
+            opacity: 0;
+            transform: scale(0, 0.4) rotate(0deg);
+          }
+          8% {
+            opacity: 1;
+            transform: scale(0.55, 0.9) rotate(-5deg);
+          }
+          18% {
+            opacity: 1;
+            transform: scale(1, 1) rotate(-14deg);
+          }
+          32% {
+            opacity: 1;
+            transform: scale(1.08, 1) rotate(11deg);
+          }
+          48% {
+            opacity: 1;
+            transform: scale(0.92, 1) rotate(-13deg);
+          }
+          64% {
+            opacity: 1;
+            transform: scale(1.06, 1) rotate(10deg);
+          }
+          78% {
+            opacity: 1;
+            transform: scale(0.95, 1) rotate(-9deg);
+          }
+          88% {
+            opacity: 1;
+            transform: scale(0.55, 0.85) rotate(2deg);
+          }
+          100% {
+            opacity: 0;
+            transform: scale(0, 0.3) rotate(0deg);
+          }
         }
       `}</style>
     </>
